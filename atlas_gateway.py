@@ -31,7 +31,7 @@ if not payload:
     if not command:
         return jsonify({"status": "error", "message": "No command provided"})
 
-    if command == "log_decision":
+    if "log_decision" in command:
     return jsonify(log_decision(payload))
 
 return jsonify({
