@@ -31,3 +31,35 @@ def atlas_command():
 
     except Exception as e:
         return jsonify({"error": str(e)})
+        
+import datetime
+
+def log_decision(payload):
+    if not payload.get("Decision") or not payload.get("Reason") or not payload.get("System_Affected"):
+        return {"status": "rejected", "message": "Missing required fields"}
+
+    decision_id = f"D-{int(datetime.datetime.now().timestamp()*1000)}"
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    record = {
+        "Decision_ID": decision_id,
+        "Date": today,
+        "Decision": payload["Decision"],
+        "Reason": payload["Reason"],
+        "System_Affected": payload["System_Affected"],
+        "Decision_Owner": payload.get("Decision_Owner", "Naushad")
+    }
+
+    # send to Apps Script (only for storage)
+    response = requests.post(
+        APPS_SCRIPT_URL,
+        json={
+            "action": "append_decision",
+            "data": record
+        }
+    )
+
+    return {
+        "status": "logged",
+        "decision_id": decision_id
+    }
