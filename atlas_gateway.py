@@ -15,7 +15,18 @@ def home():
 def atlas_command():
     data = request.json
     command = data.get("command", "").strip().lower().replace(" ", "_")
-    payload = data.get("payload", {})
+
+# 🔥 FLEXIBLE PAYLOAD HANDLING
+payload = data.get("payload")
+
+if not payload:
+    # If payload missing → extract from root (GPT behavior)
+    payload = {
+        "Decision": data.get("Decision"),
+        "Reason": data.get("Reason"),
+        "System_Affected": data.get("System_Affected"),
+        "Decision_Owner": data.get("Decision_Owner")
+    }
 
     if not command:
         return jsonify({"status": "error", "message": "No command provided"})
