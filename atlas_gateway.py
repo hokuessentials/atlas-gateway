@@ -14,7 +14,7 @@ def home():
 @app.route("/atlas/command", methods=["POST"])
 def atlas_command():
     data = request.json
-    command = data.get("command")
+    command = data.get("command", "").strip().lower().replace(" ", "_")
     payload = data.get("payload", {})
 
     if not command:
