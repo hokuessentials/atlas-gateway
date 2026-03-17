@@ -50,6 +50,18 @@ def log_decision(payload):
         "Decision_Owner": payload.get("Decision_Owner", "Naushad")
     }
 
+    response = requests.post(
+        APPS_SCRIPT_URL,
+        json={
+            "action": "append_decision",
+            "data": record
+        }
+    )
+
+    return {
+        "status": "logged",
+        "decision_id": decision_id
+    }
     # send to Apps Script (only for storage)
     response = requests.post(
         APPS_SCRIPT_URL,
