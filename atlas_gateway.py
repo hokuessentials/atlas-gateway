@@ -99,7 +99,7 @@ def log_decision(payload):
         return {
             "status": "logged",
             "decision_id": decision_id,
-            "sheet_response": response.text
+            "sheet_response": response.json()
         }
 
     except Exception as e:
