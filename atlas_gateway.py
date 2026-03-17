@@ -21,9 +21,12 @@ def atlas_command():
         return jsonify({"status": "error", "message": "No command provided"})
 
     if command == "log_decision":
-        return jsonify(log_decision(payload))
+    return jsonify(log_decision(payload))
 
-    return jsonify({"status": "error", "message": "Unknown command"})
+return jsonify({
+    "status": "error",
+    "message": f"Unknown command received: {command}"
+})
 
 
 def log_decision(payload):
