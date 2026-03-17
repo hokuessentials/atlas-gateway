@@ -14,10 +14,17 @@ def home():
 @app.route("/atlas/command", methods=["POST"])
 def atlas_command():
     data = request.json
-    command = data.get("command", "").strip().lower().replace(" ", "_")
 
-# 🔥 FLEXIBLE PAYLOAD HANDLING
-payload = data.get("payload")
+raw_input = data.get("input", "").lower()
+
+# 🔥 SIMPLE PARSER
+if "log decision" in raw_input:
+    return jsonify(log_decision_from_text(raw_input))
+
+return jsonify({
+    "status": "error",
+    "message": f"Could not understand input: {raw_input}"
+})
 
 if not payload:
     # If payload missing → extract from root (GPT behavior)
@@ -69,7 +76,19 @@ def log_decision(payload):
         "status": "logged",
         "decision_id": decision_id
     }
+def log_decision_from_text(text):
 
+    # Very simple parsing (we improve later)
+    decision = text
+
+    record = {
+        "Decision": decision,
+        "Reason": "Auto-parsed from input",
+        "System_Affected": "General",
+        "Decision_Owner": "Naushad"
+    }
+
+    return log_decision(record)
 
 # 🔥 IMPORTANT FOR RAILWAY
 if __name__ == "__main__":
