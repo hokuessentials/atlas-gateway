@@ -67,7 +67,11 @@ def atlas_command():
 # ---------------- LOG DECISION ----------------
 def log_decision(payload):
 
-    if not payload.get("Decision") or not payload.get("Reason") or not payload.get("System_Affected"):
+    if not payload.get("title") or not payload.get("description") or not payload.get("module"):
+    return {
+        "status": "rejected",
+        "message": "Missing required fields"
+    }
         return {
             "status": "rejected",
             "message": "Missing required fields"
