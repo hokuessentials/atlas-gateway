@@ -172,31 +172,18 @@ def home():
 @app.route("/atlas/command", methods=["POST"])
 def atlas_command():
     try:
-        data = request.get_json(force=True)
+        ...
+    except Exception as e:
+        return jsonify(...)
 
-        raw_input = data.get("input", "").lower()
-        if raw_input:
-            if "log decision" in raw_input:
-                return jsonify(log_decision_from_text(raw_input))
-            return jsonify({"status": "error", "message": "Could not understand input"})
 
-        @app.route("/atlas/state", methods=["GET"])
+# ✅ THIS MUST BE HERE (OUTSIDE)
+@app.route("/atlas/state", methods=["GET"])
 def get_state():
     return jsonify({
         "status": "success",
         "current_state": CURRENT_STATE
     })
-
-        command = data.get("command", "").strip().lower()
-        payload = data.get("payload")
-
-        if "log_decision" in command:
-            return jsonify(log_decision(payload))
-
-        return jsonify({"status": "error", "message": "Unknown command"})
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
 
 
 # ================================
