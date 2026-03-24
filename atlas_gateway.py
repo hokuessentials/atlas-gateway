@@ -52,7 +52,55 @@ def atlas_command():
             "status": "error",
             "message": str(e)
         })
+def calculate_scores(payload):
+    module = (payload.get("module") or "General").lower()
+    reversible = payload.get("reversible_flag", True)
+    description = payload.get("description", "")
+    tags = payload.get("tags", "")
+    decision_type = payload.get("decision_type", "general")
 
+    # --- Risk ---
+    base_risk = {
+        "finance": 0.6,
+        "supplier": 0.5,
+        "product": 0.4,
+        "marketing": 0.5,
+        "general": 0.3
+    }.get(module, 0.3)
+
+    if reversible:
+        base_risk -= 0.2
+    else:
+        base_risk += 0.2
+
+    risk_score = max(0, min(1, base_risk))
+
+    # --- Confidence ---
+    confidence = 0.5
+
+    if len(description) > 50:
+        confidence += 0.2
+
+    if tags:
+        confidence += 0.1
+
+    if decision_type == "strategic":
+        confidence += 0.1
+
+    confidence = min(1, confidence)
+
+    # --- ROI ---
+    roi_map = {
+        "product": 25,
+        "finance": 20,
+        "supplier": 15,
+        "marketing": 30,
+        "general": 10
+    }
+
+    expected_roi = roi_map.get(module, 10)
+
+    return risk_score, confidence, expected_roi
 
 # ---------------- LOG DECISION ----------------
 def log_decision(payload):
@@ -71,6 +119,7 @@ def log_decision(payload):
         }
 
     decision_id = f"D-{int(datetime.datetime.now().timestamp()*1000)}"
+    risk_score, confidence_level, expected_roi = calculate_scores(payload)
 
     record = {
         "Decision_ID": decision_id,
@@ -79,9 +128,9 @@ def log_decision(payload):
         "Title": payload.get("title"),
         "Description": payload.get("description"),
         "Module": payload.get("module"),
-        "Expected_ROI": payload.get("expected_roi", 0),
-        "Risk_Score": payload.get("risk_score", 0),
-        "Confidence_Level": payload.get("confidence_level", 0),
+        "Expected_ROI": expected_roi,
+        "Risk_Score": risk_score,
+        "Confidence_Level": confidence_level,
         "Reversible_Flag": payload.get("reversible_flag", True),
         "Decision_Owner": payload.get("decision_owner", "Naushad"),
         "Tags": payload.get("tags", ""),
