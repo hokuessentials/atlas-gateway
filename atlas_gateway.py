@@ -98,7 +98,7 @@ def log_decision(payload):
                 "action": "append_decision",
                 "data": record
             },
-            timeout=5
+            timeout=15
         )
 
         return {
