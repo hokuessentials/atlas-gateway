@@ -292,7 +292,6 @@ def atlas_command():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-
 @app.route("/atlas/state", methods=["GET"])
 def get_state():
     return jsonify({
@@ -310,6 +309,7 @@ def get_session():
         "status": "success",
         "session_data": SESSION_DATA
     })
+    
 load_session_from_sheet()
 
 @app.route("/atlas/progress", methods=["GET"])
@@ -324,6 +324,7 @@ def get_progress():
         "status": "success",
         "progress": progress
     })
+    
     @app.route("/atlas/trigger", methods=["GET"])
 def get_triggers():
 
@@ -336,6 +337,7 @@ def get_triggers():
         "status": "success",
         "triggers": triggers
     })
+    
 # ================================
 # 8. SERVER START
 # ================================
