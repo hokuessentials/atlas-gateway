@@ -197,7 +197,6 @@ def log_decision_from_text(text):
         "decision_type": "general"
     })
 
-load_session_from_sheet()
 # ================================
 # 7. API ROUTES
 # ================================
@@ -238,6 +237,11 @@ def get_state():
     })
 @app.route("/atlas/session", methods=["GET"])
 def get_session():
+
+    # 🔥 Load only if empty (prevents duplicate + crash)
+    if not SESSION_DATA["decisions"]:
+        load_session_from_sheet()
+
     return jsonify({
         "status": "success",
         "session_data": SESSION_DATA
