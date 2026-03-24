@@ -102,6 +102,9 @@ def calculate_scores(payload):
 
     return risk_score, confidence, expected_roi
 
+def generate_session_id():
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    return f"S-{today}"
 # ---------------- LOG DECISION ----------------
 def log_decision(payload):
 
@@ -123,7 +126,7 @@ def log_decision(payload):
 
     record = {
         "Decision_ID": decision_id,
-        "Session_ID": payload.get("session_id", "S-1"),
+        "Session_ID": generate_session_id(),
         "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "Title": payload.get("title"),
         "Description": payload.get("description"),
