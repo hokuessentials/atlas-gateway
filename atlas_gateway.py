@@ -96,7 +96,8 @@ def update_session_data(record):
         SESSION_DATA["module_count"][module] = 0
 
     SESSION_DATA["module_count"][module] += 1
-
+SESSION_DATA["decisions"] = []
+SESSION_DATA["module_count"] = {}
 def load_session_from_sheet():
     try:
         import json
