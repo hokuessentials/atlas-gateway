@@ -13,7 +13,6 @@ import datetime
 app = Flask(__name__)
 APPS_SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL")
 
-
 # ================================
 # 3. GLOBAL STATE
 # ================================
