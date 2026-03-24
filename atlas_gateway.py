@@ -40,10 +40,16 @@ def atlas_command():
 
         @app.route("/atlas/state", methods=["GET"])
 def get_state():
-    return jsonify({
-        "status": "success",
-        "current_state": CURRENT_STATE
-    })
+    try:
+        return jsonify({
+            "status": "success",
+            "current_state": CURRENT_STATE
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
         # ----------- MODE 2: STRUCTURED (command + payload) -----------
         command = data.get("command", "").strip().lower().replace(" ", "_")
         payload = data.get("payload")
