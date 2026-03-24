@@ -96,6 +96,34 @@ def update_session_data(record):
         SESSION_DATA["module_count"][module] = 0
 
     SESSION_DATA["module_count"][module] += 1
+
+def load_session_from_sheet():
+    try:
+        response = requests.get(APPS_SCRIPT_URL + "?action=get_last_session", timeout=10)
+        data = response.json()
+
+        if not data or "records" not in data:
+            return
+
+        records = data["records"]
+
+        for r in records:
+            SESSION_DATA["session_id"] = r.get("Session_ID")
+            SESSION_DATA["decisions"].append(r.get("Title"))
+
+            module = r.get("Module")
+            if module not in SESSION_DATA["module_count"]:
+                SESSION_DATA["module_count"][module] = 0
+            SESSION_DATA["module_count"][module] += 1
+
+            CURRENT_STATE["last_decision"] = r.get("Title")
+            CURRENT_STATE["active_module"] = module
+            CURRENT_STATE["total_decisions"] += 1
+            CURRENT_STATE["last_updated"] = r.get("Timestamp")
+
+    except Exception as e:
+        print("Load session failed:", e)
+        
 # ================================
 # 6. BUSINESS LOGIC
 # ================================
@@ -208,7 +236,7 @@ def get_session():
         "status": "success",
         "session_data": SESSION_DATA
     })
-
+load_session_from_sheet()
 # ================================
 # 8. SERVER START
 # ================================
