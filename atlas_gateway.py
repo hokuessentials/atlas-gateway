@@ -36,8 +36,6 @@ def generate_session_id():
 # ================================
 # 5. CORE ENGINES
 # ================================
-
-# ---- Decision Scoring Engine ----
 def calculate_scores(payload):
     module = (payload.get("module") or "General").lower()
     reversible = payload.get("reversible_flag", True)
@@ -45,7 +43,6 @@ def calculate_scores(payload):
     tags = payload.get("tags", "")
     decision_type = payload.get("decision_type", "general")
 
-    # Risk
     base_risk = {
         "finance": 0.6,
         "supplier": 0.5,
@@ -57,7 +54,6 @@ def calculate_scores(payload):
     base_risk += 0.2 if not reversible else -0.2
     risk_score = max(0, min(1, base_risk))
 
-    # Confidence
     confidence = 0.5
     if len(description) > 50:
         confidence += 0.2
@@ -67,7 +63,6 @@ def calculate_scores(payload):
         confidence += 0.1
     confidence = min(1, confidence)
 
-    # ROI
     roi_map = {
         "product": 25,
         "finance": 20,
@@ -75,12 +70,12 @@ def calculate_scores(payload):
         "marketing": 30,
         "general": 10
     }
+
     expected_roi = roi_map.get(module, 10)
 
     return risk_score, confidence, expected_roi
 
 
-# ---- State Engine ----
 def update_current_state(record):
     CURRENT_STATE["last_decision"] = record.get("Title")
     CURRENT_STATE["active_module"] = record.get("Module")
@@ -101,7 +96,6 @@ def log_decision(payload):
 
     decision_id = f"D-{int(datetime.datetime.now().timestamp()*1000)}"
 
-    # 🔥 AUTO SCORING
     risk_score, confidence_level, expected_roi = calculate_scores(payload)
 
     record = {
@@ -122,10 +116,8 @@ def log_decision(payload):
         "Lesson_Learned": ""
     }
 
-    # 🔥 UPDATE STATE
     update_current_state(record)
 
-    # 🔥 SEND TO SHEET
     try:
         response = requests.post(
             APPS_SCRIPT_URL,
@@ -147,7 +139,6 @@ def log_decision(payload):
         }
 
 
-# ---- NLP ----
 def log_decision_from_text(text):
     return log_decision({
         "title": text[:50],
@@ -163,7 +154,6 @@ def log_decision_from_text(text):
 # ================================
 # 7. API ROUTES
 # ================================
-
 @app.route("/")
 def home():
     return "Atlas is running"
@@ -172,12 +162,26 @@ def home():
 @app.route("/atlas/command", methods=["POST"])
 def atlas_command():
     try:
-        ...
+        data = request.get_json(force=True)
+
+        raw_input = data.get("input", "").lower()
+        if raw_input:
+            if "log decision" in raw_input:
+                return jsonify(log_decision_from_text(raw_input))
+            return jsonify({"status": "error", "message": "Could not understand input"})
+
+        command = data.get("command", "").strip().lower()
+        payload = data.get("payload")
+
+        if "log_decision" in command:
+            return jsonify(log_decision(payload))
+
+        return jsonify({"status": "error", "message": "Unknown command"})
+
     except Exception as e:
-        return jsonify(...)
+        return jsonify({"status": "error", "message": str(e)})
 
 
-# ✅ THIS MUST BE HERE (OUTSIDE)
 @app.route("/atlas/state", methods=["GET"])
 def get_state():
     return jsonify({
