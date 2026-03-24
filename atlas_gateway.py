@@ -4,6 +4,12 @@ import os
 import datetime
 
 app = Flask(__name__)
+CURRENT_STATE = {
+    "last_decision": None,
+    "active_module": None,
+    "total_decisions": 0,
+    "last_updated": None
+}
 
 APPS_SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL")
 
@@ -32,6 +38,12 @@ def atlas_command():
                 "message": f"Could not understand input: {raw_input}"
             })
 
+        @app.route("/atlas/state", methods=["GET"])
+def get_state():
+    return jsonify({
+        "status": "success",
+        "current_state": CURRENT_STATE
+    })
         # ----------- MODE 2: STRUCTURED (command + payload) -----------
         command = data.get("command", "").strip().lower().replace(" ", "_")
         payload = data.get("payload")
@@ -105,6 +117,20 @@ def calculate_scores(payload):
 def generate_session_id():
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     return f"S-{today}"
+
+CURRENT_STATE = {
+    "last_decision": None,
+    "active_module": None,
+    "total_decisions": 0,
+    "last_updated": None
+}
+
+def update_current_state(record):
+    CURRENT_STATE["last_decision"] = record.get("Title")
+    CURRENT_STATE["active_module"] = record.get("Module")
+    CURRENT_STATE["total_decisions"] += 1
+    CURRENT_STATE["last_updated"] = record.get("Timestamp")
+
 # ---------------- LOG DECISION ----------------
 def log_decision(payload):
 
@@ -141,6 +167,7 @@ def log_decision(payload):
         "Outcome_Status": "pending",
         "Lesson_Learned": ""
     }
+    update_current_state(record)
 
     # 🔥 SEND TO GOOGLE SHEET
     try:
