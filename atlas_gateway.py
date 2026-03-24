@@ -11,7 +11,8 @@ import datetime
 # 2. APP INITIALIZATION
 # ================================
 app = Flask(__name__)
-APPS_SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL")
+load_session_from_sheet()
+APPS_SCRIPT_URL = os.environ.get("https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec")
 
 # ================================
 # 3. GLOBAL STATE
