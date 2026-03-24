@@ -77,14 +77,22 @@ def log_decision(payload):
     today = datetime.datetime.now().strftime("%Y-%m-%d")
 
     record = {
-        "Decision_ID": decision_id,
-        "Date": today,
-        "Decision": payload["Decision"],
-        "Reason": payload["Reason"],
-        "System_Affected": payload["System_Affected"],
-        "Decision_Owner": payload.get("Decision_Owner", "Naushad")
-    }
-
+    "Decision_ID": decision_id,
+    "Session_ID": payload.get("session_id", "S-1"),
+    "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "Title": payload.get("title"),
+    "Description": payload.get("description"),
+    "Module": payload.get("module"),
+    "Expected_ROI": payload.get("expected_roi", 0),
+    "Risk_Score": payload.get("risk_score", 0),
+    "Confidence_Level": payload.get("confidence_level", 0),
+    "Reversible_Flag": payload.get("reversible_flag", True),
+    "Decision_Owner": payload.get("decision_owner", "Naushad"),
+    "Tags": payload.get("tags", ""),
+    "Decision_Type": payload.get("decision_type", "general"),
+    "Outcome_Status": "pending",
+    "Lesson_Learned": ""
+}
     # 🔥 SAFE CALL TO APPS SCRIPT
     try:
         response = requests.post(
