@@ -191,8 +191,7 @@ def atlas_command():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-
-@app.route("/atlas/state", methods=["GET"])
+    @app.route("/atlas/state", methods=["GET"])
 def get_state():
     return jsonify({
         "status": "success",
