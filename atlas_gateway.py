@@ -99,8 +99,13 @@ def update_session_data(record):
 
 def load_session_from_sheet():
     try:
+        import json
+
         response = requests.get(APPS_SCRIPT_URL + "?action=get_last_session", timeout=10)
-        data = response.json()
+
+        data = json.loads(response.text)
+
+        print("LOADED DATA:", data)
 
         if not data or "records" not in data:
             return
