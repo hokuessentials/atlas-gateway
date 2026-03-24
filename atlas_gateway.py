@@ -160,7 +160,39 @@ def calculate_progress():
         "focus_score": round(focus_score, 2),
         "momentum": momentum
     }
-        
+
+def generate_triggers():
+
+    total = len(SESSION_DATA["decisions"])
+    modules = SESSION_DATA["module_count"]
+
+    alerts = []
+    recommendation = None
+
+    # Low productivity
+    if total < 5:
+        alerts.append("Increase decision velocity")
+
+    # Focus imbalance
+    if modules:
+        max_module = max(modules, key=modules.get)
+        focus_ratio = modules[max_module] / total
+
+        if focus_ratio > 0.7:
+            alerts.append(f"Over-focus on {max_module}")
+
+    # Recommendation logic
+    if modules:
+        all_modules = ["Product", "Supplier", "Finance", "Marketing"]
+        missing = [m for m in all_modules if m not in modules]
+
+        if missing:
+            recommendation = f"Take next decision in {missing[0]}"
+
+    return {
+        "alerts": alerts,
+        "recommendation": recommendation
+    }
 # ================================
 # 6. BUSINESS LOGIC
 # ================================
@@ -291,6 +323,18 @@ def get_progress():
     return jsonify({
         "status": "success",
         "progress": progress
+    })
+    @app.route("/atlas/trigger", methods=["GET"])
+def get_triggers():
+
+    if not SESSION_DATA["decisions"]:
+        load_session_from_sheet()
+
+    triggers = generate_triggers()
+
+    return jsonify({
+        "status": "success",
+        "triggers": triggers
     })
 # ================================
 # 8. SERVER START
