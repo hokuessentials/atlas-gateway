@@ -3,15 +3,17 @@
 # ================================
 from flask import Flask, request, jsonify
 import requests
-import os
 import datetime
+import json
 
 
 # ================================
 # 2. APP INITIALIZATION
 # ================================
 app = Flask(__name__)
-APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
+
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"
+
 
 # ================================
 # 3. GLOBAL STATE
@@ -22,11 +24,13 @@ CURRENT_STATE = {
     "total_decisions": 0,
     "last_updated": None
 }
+
 SESSION_DATA = {
     "session_id": None,
     "decisions": [],
     "module_count": {}
 }
+
 
 # ================================
 # 4. UTILITY FUNCTIONS
@@ -39,6 +43,7 @@ def generate_session_id():
 # ================================
 # 5. CORE ENGINES
 # ================================
+
 def calculate_scores(payload):
     module = (payload.get("module") or "General").lower()
     reversible = payload.get("reversible_flag", True)
@@ -85,35 +90,32 @@ def update_current_state(record):
     CURRENT_STATE["total_decisions"] += 1
     CURRENT_STATE["last_updated"] = record.get("Timestamp")
 
+
 def update_session_data(record):
-    session_id = record.get("Session_ID")
     module = record.get("Module")
 
-    SESSION_DATA["session_id"] = session_id
+    SESSION_DATA["session_id"] = record.get("Session_ID")
     SESSION_DATA["decisions"].append(record.get("Title"))
 
     if module not in SESSION_DATA["module_count"]:
         SESSION_DATA["module_count"][module] = 0
 
     SESSION_DATA["module_count"][module] += 1
-SESSION_DATA["decisions"] = []
-SESSION_DATA["module_count"] = {}
+
+
 def load_session_from_sheet():
     try:
-        import json
+        # Reset before loading (prevents duplicates)
+        SESSION_DATA["decisions"] = []
+        SESSION_DATA["module_count"] = {}
 
         response = requests.get(APPS_SCRIPT_URL + "?action=get_last_session", timeout=10)
-
         data = json.loads(response.text)
-
-        print("LOADED DATA:", data)
 
         if not data or "records" not in data:
             return
 
-        records = data["records"]
-
-        for r in records:
+        for r in data["records"]:
             SESSION_DATA["session_id"] = r.get("Session_ID")
             SESSION_DATA["decisions"].append(r.get("Title"))
 
@@ -130,22 +132,19 @@ def load_session_from_sheet():
     except Exception as e:
         print("Load session failed:", e)
 
-def calculate_progress():
 
+def calculate_progress():
     total = len(SESSION_DATA["decisions"])
     modules = SESSION_DATA["module_count"]
 
     if total == 0:
         return {}
 
-    # Productivity
     productivity = min(1, total / 10)
 
-    # Focus
     max_module = max(modules, key=modules.get)
     focus_score = modules[max_module] / total
 
-    # Momentum
     if total >= 5:
         momentum = "High"
     elif total >= 3:
@@ -161,38 +160,34 @@ def calculate_progress():
         "momentum": momentum
     }
 
-def generate_triggers():
 
+def generate_triggers():
     total = len(SESSION_DATA["decisions"])
     modules = SESSION_DATA["module_count"]
 
     alerts = []
     recommendation = None
 
-    # Low productivity
     if total < 5:
         alerts.append("Increase decision velocity")
 
-    # Focus imbalance
     if modules:
         max_module = max(modules, key=modules.get)
-        focus_ratio = modules[max_module] / total
-
-        if focus_ratio > 0.7:
+        if modules[max_module] / total > 0.7:
             alerts.append(f"Over-focus on {max_module}")
 
-    # Recommendation logic
-    if modules:
-        all_modules = ["Product", "Supplier", "Finance", "Marketing"]
-        missing = [m for m in all_modules if m not in modules]
+    all_modules = ["Product", "Supplier", "Finance", "Marketing"]
+    missing = [m for m in all_modules if m not in modules]
 
-        if missing:
-            recommendation = f"Take next decision in {missing[0]}"
+    if missing:
+        recommendation = f"Take next decision in {missing[0]}"
 
     return {
         "alerts": alerts,
         "recommendation": recommendation
     }
+
+
 # ================================
 # 6. BUSINESS LOGIC
 # ================================
@@ -206,7 +201,7 @@ def log_decision(payload):
 
     decision_id = f"D-{int(datetime.datetime.now().timestamp()*1000)}"
 
-    risk_score, confidence_level, expected_roi = calculate_scores(payload)
+    risk, confidence, roi = calculate_scores(payload)
 
     record = {
         "Decision_ID": decision_id,
@@ -215,9 +210,9 @@ def log_decision(payload):
         "Title": payload.get("title"),
         "Description": payload.get("description"),
         "Module": payload.get("module"),
-        "Expected_ROI": expected_roi,
-        "Risk_Score": risk_score,
-        "Confidence_Level": confidence_level,
+        "Expected_ROI": roi,
+        "Risk_Score": risk,
+        "Confidence_Level": confidence,
         "Reversible_Flag": payload.get("reversible_flag", True),
         "Decision_Owner": payload.get("decision_owner", "Naushad"),
         "Tags": payload.get("tags", ""),
@@ -230,41 +225,24 @@ def log_decision(payload):
     update_session_data(record)
 
     try:
-        response = requests.post(
-            APPS_SCRIPT_URL,
-            json={"action": "append_decision", "data": record},
-            timeout=15
-        )
-
-        return {
-            "status": "logged",
-            "decision_id": decision_id,
-            "sheet_response": response.text
-        }
+        requests.post(APPS_SCRIPT_URL, json={"action": "append_decision", "data": record}, timeout=10)
+        return {"status": "logged", "decision_id": decision_id}
 
     except Exception as e:
-        return {
-            "status": "partial_success",
-            "decision_id": decision_id,
-            "error": str(e)
-        }
+        return {"status": "partial_success", "error": str(e)}
 
 
 def log_decision_from_text(text):
     return log_decision({
         "title": text[:50],
         "description": text,
-        "module": "General",
-        "reversible_flag": True,
-        "decision_owner": "Naushad",
-        "tags": "auto",
-        "decision_type": "general"
+        "module": "General"
     })
+
 
 # ================================
 # 7. API ROUTES
 # ================================
-
 @app.route("/")
 def home():
     return "Atlas is running"
@@ -275,72 +253,46 @@ def atlas_command():
     try:
         data = request.get_json(force=True)
 
-        raw_input = data.get("input", "").lower()
-        if raw_input:
-            if "log decision" in raw_input:
-                return jsonify(log_decision_from_text(raw_input))
-            return jsonify({"status": "error", "message": "Could not understand input"})
+        if data.get("input"):
+            return jsonify(log_decision_from_text(data["input"]))
 
-        command = data.get("command", "").strip().lower()
-        payload = data.get("payload")
+        if data.get("command") == "log_decision":
+            return jsonify(log_decision(data.get("payload")))
 
-        if "log_decision" in command:
-            return jsonify(log_decision(payload))
-
-        return jsonify({"status": "error", "message": "Unknown command"})
+        return jsonify({"status": "error"})
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-@app.route("/atlas/state", methods=["GET"])
+
+@app.route("/atlas/state")
 def get_state():
-    return jsonify({
-        "status": "success",
-        "current_state": CURRENT_STATE
-    })
-@app.route("/atlas/session", methods=["GET"])
+    return jsonify({"current_state": CURRENT_STATE})
+
+
+@app.route("/atlas/session")
 def get_session():
-
-    # 🔥 Load only if empty (prevents duplicate + crash)
     if not SESSION_DATA["decisions"]:
         load_session_from_sheet()
+    return jsonify({"session_data": SESSION_DATA})
 
-    return jsonify({
-        "status": "success",
-        "session_data": SESSION_DATA
-    })
-    
-load_session_from_sheet()
 
-@app.route("/atlas/progress", methods=["GET"])
+@app.route("/atlas/progress")
 def get_progress():
-
     if not SESSION_DATA["decisions"]:
         load_session_from_sheet()
+    return jsonify({"progress": calculate_progress()})
 
-    progress = calculate_progress()
 
-    return jsonify({
-        "status": "success",
-        "progress": progress
-    })
-    
-    @app.route("/atlas/trigger", methods=["GET"])
-def get_triggers():
-
+@app.route("/atlas/trigger")
+def get_trigger():
     if not SESSION_DATA["decisions"]:
         load_session_from_sheet()
+    return jsonify({"triggers": generate_triggers()})
 
-    triggers = generate_triggers()
 
-    return jsonify({
-        "status": "success",
-        "triggers": triggers
-    })
-    
 # ================================
 # 8. SERVER START
 # ================================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=8080)
