@@ -180,6 +180,13 @@ def atlas_command():
                 return jsonify(log_decision_from_text(raw_input))
             return jsonify({"status": "error", "message": "Could not understand input"})
 
+        @app.route("/atlas/state", methods=["GET"])
+def get_state():
+    return jsonify({
+        "status": "success",
+        "current_state": CURRENT_STATE
+    })
+
         command = data.get("command", "").strip().lower()
         payload = data.get("payload")
 
@@ -190,13 +197,6 @@ def atlas_command():
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
-
-    @app.route("/atlas/state", methods=["GET"])
-def get_state():
-    return jsonify({
-        "status": "success",
-        "current_state": CURRENT_STATE
-    })
 
 
 # ================================
