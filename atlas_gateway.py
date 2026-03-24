@@ -1,9 +1,22 @@
+# ================================
+# 1. IMPORTS
+# ================================
 from flask import Flask, request, jsonify
 import requests
 import os
 import datetime
 
+
+# ================================
+# 2. APP INITIALIZATION
+# ================================
 app = Flask(__name__)
+APPS_SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL")
+
+
+# ================================
+# 3. GLOBAL STATE
+# ================================
 CURRENT_STATE = {
     "last_decision": None,
     "active_module": None,
@@ -11,65 +24,20 @@ CURRENT_STATE = {
     "last_updated": None
 }
 
-APPS_SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL")
+
+# ================================
+# 4. UTILITY FUNCTIONS
+# ================================
+def generate_session_id():
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    return f"S-{today}"
 
 
-# ---------------- HOME ----------------
-@app.route("/")
-def home():
-    return "Atlas is running"
+# ================================
+# 5. CORE ENGINES
+# ================================
 
-
-# ---------------- MAIN ROUTE ----------------
-@app.route("/atlas/command", methods=["POST"])
-def atlas_command():
-    try:
-        data = request.get_json(force=True)
-
-        # ----------- MODE 1: NATURAL LANGUAGE (input) -----------
-        raw_input = data.get("input", "").lower()
-
-        if raw_input:
-            if "log decision" in raw_input:
-                return jsonify(log_decision_from_text(raw_input))
-
-            return jsonify({
-                "status": "error",
-                "message": f"Could not understand input: {raw_input}"
-            })
-
-        @app.route("/atlas/state", methods=["GET"])
-def get_state():
-    try:
-        return jsonify({
-            "status": "success",
-            "current_state": CURRENT_STATE
-        })
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        })
-        # ----------- MODE 2: STRUCTURED (command + payload) -----------
-        command = data.get("command", "").strip().lower().replace(" ", "_")
-        payload = data.get("payload")
-
-        if not command:
-            return jsonify({"status": "error", "message": "No command provided"})
-
-        if "log_decision" in command:
-            return jsonify(log_decision(payload))
-
-        return jsonify({
-            "status": "error",
-            "message": f"Unknown command received: {command}"
-        })
-
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        })
+# ---- Decision Scoring Engine ----
 def calculate_scores(payload):
     module = (payload.get("module") or "General").lower()
     reversible = payload.get("reversible_flag", True)
@@ -77,7 +45,7 @@ def calculate_scores(payload):
     tags = payload.get("tags", "")
     decision_type = payload.get("decision_type", "general")
 
-    # --- Risk ---
+    # Risk
     base_risk = {
         "finance": 0.6,
         "supplier": 0.5,
@@ -86,28 +54,20 @@ def calculate_scores(payload):
         "general": 0.3
     }.get(module, 0.3)
 
-    if reversible:
-        base_risk -= 0.2
-    else:
-        base_risk += 0.2
-
+    base_risk += 0.2 if not reversible else -0.2
     risk_score = max(0, min(1, base_risk))
 
-    # --- Confidence ---
+    # Confidence
     confidence = 0.5
-
     if len(description) > 50:
         confidence += 0.2
-
     if tags:
         confidence += 0.1
-
     if decision_type == "strategic":
         confidence += 0.1
-
     confidence = min(1, confidence)
 
-    # --- ROI ---
+    # ROI
     roi_map = {
         "product": 25,
         "finance": 20,
@@ -115,45 +75,33 @@ def calculate_scores(payload):
         "marketing": 30,
         "general": 10
     }
-
     expected_roi = roi_map.get(module, 10)
 
     return risk_score, confidence, expected_roi
 
-def generate_session_id():
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    return f"S-{today}"
 
-CURRENT_STATE = {
-    "last_decision": None,
-    "active_module": None,
-    "total_decisions": 0,
-    "last_updated": None
-}
-
+# ---- State Engine ----
 def update_current_state(record):
     CURRENT_STATE["last_decision"] = record.get("Title")
     CURRENT_STATE["active_module"] = record.get("Module")
     CURRENT_STATE["total_decisions"] += 1
     CURRENT_STATE["last_updated"] = record.get("Timestamp")
 
-# ---------------- LOG DECISION ----------------
+
+# ================================
+# 6. BUSINESS LOGIC
+# ================================
 def log_decision(payload):
 
     if not payload:
-        return {
-            "status": "rejected",
-            "message": "Payload missing"
-        }
+        return {"status": "rejected", "message": "Payload missing"}
 
-    # ✅ NEW VALIDATION (UPDATED)
     if not payload.get("title") or not payload.get("description") or not payload.get("module"):
-        return {
-            "status": "rejected",
-            "message": "Missing required fields (title, description, module)"
-        }
+        return {"status": "rejected", "message": "Missing required fields"}
 
     decision_id = f"D-{int(datetime.datetime.now().timestamp()*1000)}"
+
+    # 🔥 AUTO SCORING
     risk_score, confidence_level, expected_roi = calculate_scores(payload)
 
     record = {
@@ -173,16 +121,15 @@ def log_decision(payload):
         "Outcome_Status": "pending",
         "Lesson_Learned": ""
     }
+
+    # 🔥 UPDATE STATE
     update_current_state(record)
 
-    # 🔥 SEND TO GOOGLE SHEET
+    # 🔥 SEND TO SHEET
     try:
         response = requests.post(
             APPS_SCRIPT_URL,
-            json={
-                "action": "append_decision",
-                "data": record
-            },
+            json={"action": "append_decision", "data": record},
             timeout=15
         )
 
@@ -196,21 +143,16 @@ def log_decision(payload):
         return {
             "status": "partial_success",
             "decision_id": decision_id,
-            "error": str(e),
-            "note": "Saved in system but not in sheet"
+            "error": str(e)
         }
 
 
-# ---------------- NLP PARSER ----------------
+# ---- NLP ----
 def log_decision_from_text(text):
-
     return log_decision({
         "title": text[:50],
         "description": text,
         "module": "General",
-        "expected_roi": 0,
-        "risk_score": 0.5,
-        "confidence_level": 0.5,
         "reversible_flag": True,
         "decision_owner": "Naushad",
         "tags": "auto",
@@ -218,7 +160,49 @@ def log_decision_from_text(text):
     })
 
 
-# ---------------- START SERVER ----------------
+# ================================
+# 7. API ROUTES
+# ================================
+
+@app.route("/")
+def home():
+    return "Atlas is running"
+
+
+@app.route("/atlas/command", methods=["POST"])
+def atlas_command():
+    try:
+        data = request.get_json(force=True)
+
+        raw_input = data.get("input", "").lower()
+        if raw_input:
+            if "log decision" in raw_input:
+                return jsonify(log_decision_from_text(raw_input))
+            return jsonify({"status": "error", "message": "Could not understand input"})
+
+        command = data.get("command", "").strip().lower()
+        payload = data.get("payload")
+
+        if "log_decision" in command:
+            return jsonify(log_decision(payload))
+
+        return jsonify({"status": "error", "message": "Unknown command"})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/atlas/state", methods=["GET"])
+def get_state():
+    return jsonify({
+        "status": "success",
+        "current_state": CURRENT_STATE
+    })
+
+
+# ================================
+# 8. SERVER START
+# ================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
