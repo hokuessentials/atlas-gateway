@@ -23,7 +23,11 @@ CURRENT_STATE = {
     "total_decisions": 0,
     "last_updated": None
 }
-
+SESSION_DATA = {
+    "session_id": None,
+    "decisions": [],
+    "module_count": {}
+}
 
 # ================================
 # 4. UTILITY FUNCTIONS
@@ -82,7 +86,17 @@ def update_current_state(record):
     CURRENT_STATE["total_decisions"] += 1
     CURRENT_STATE["last_updated"] = record.get("Timestamp")
 
+def update_session_data(record):
+    session_id = record.get("Session_ID")
+    module = record.get("Module")
 
+    SESSION_DATA["session_id"] = session_id
+    SESSION_DATA["decisions"].append(record.get("Title"))
+
+    if module not in SESSION_DATA["module_count"]:
+        SESSION_DATA["module_count"][module] = 0
+
+    SESSION_DATA["module_count"][module] += 1
 # ================================
 # 6. BUSINESS LOGIC
 # ================================
@@ -117,6 +131,7 @@ def log_decision(payload):
     }
 
     update_current_state(record)
+    update_session_data(record)
 
     try:
         response = requests.post(
@@ -188,7 +203,12 @@ def get_state():
         "status": "success",
         "current_state": CURRENT_STATE
     })
-
+@app.route("/atlas/session", methods=["GET"])
+def get_session():
+    return jsonify({
+        "status": "success",
+        "session_data": SESSION_DATA
+    })
 
 # ================================
 # 8. SERVER START
