@@ -129,6 +129,37 @@ def load_session_from_sheet():
 
     except Exception as e:
         print("Load session failed:", e)
+
+def calculate_progress():
+
+    total = len(SESSION_DATA["decisions"])
+    modules = SESSION_DATA["module_count"]
+
+    if total == 0:
+        return {}
+
+    # Productivity
+    productivity = min(1, total / 10)
+
+    # Focus
+    max_module = max(modules, key=modules.get)
+    focus_score = modules[max_module] / total
+
+    # Momentum
+    if total >= 5:
+        momentum = "High"
+    elif total >= 3:
+        momentum = "Medium"
+    else:
+        momentum = "Low"
+
+    return {
+        "total_decisions": total,
+        "productivity_score": round(productivity, 2),
+        "focus_area": max_module,
+        "focus_score": round(focus_score, 2),
+        "momentum": momentum
+    }
         
 # ================================
 # 6. BUSINESS LOGIC
@@ -248,6 +279,19 @@ def get_session():
         "session_data": SESSION_DATA
     })
 load_session_from_sheet()
+
+@app.route("/atlas/progress", methods=["GET"])
+def get_progress():
+
+    if not SESSION_DATA["decisions"]:
+        load_session_from_sheet()
+
+    progress = calculate_progress()
+
+    return jsonify({
+        "status": "success",
+        "progress": progress
+    })
 # ================================
 # 8. SERVER START
 # ================================
