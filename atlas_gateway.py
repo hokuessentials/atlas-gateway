@@ -12,7 +12,6 @@ import datetime
 # ================================
 app = Flask(__name__)
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
-load_session_from_sheet()
 
 # ================================
 # 3. GLOBAL STATE
@@ -198,10 +197,11 @@ def log_decision_from_text(text):
         "decision_type": "general"
     })
 
-
+load_session_from_sheet()
 # ================================
 # 7. API ROUTES
 # ================================
+
 @app.route("/")
 def home():
     return "Atlas is running"
