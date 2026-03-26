@@ -63,7 +63,7 @@ def generate_intelligent_action(session_data):
         return {
             "action": f"Switch due to failure: {best_title}",
             "priority": "high",
-            "reason": generate_reason(last_decision, best_title, last_outcome)
+            "reason": generate_reason(last_decision, best_title, last_outcome),
             "execution_plan": execution_steps
         }
 
@@ -72,13 +72,13 @@ def generate_intelligent_action(session_data):
         return {
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
-            "reason": generate_reason(last_decision, best_title, last_outcome)
+            "reason": generate_reason(last_decision, best_title, last_outcome),
             "execution_plan": execution_steps
         }
 
     return {
         "action": f"Continue: {last_decision}",
         "priority": "high",
-        "reason": "Maintain execution flow"
+        "reason": "Maintain execution flow",
         "execution_plan": execution_steps
     }
