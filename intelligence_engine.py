@@ -7,6 +7,7 @@ from plan_adjustment_engine import adjust_execution_plan
 from step_replacement_engine import replace_failed_step
 
 print("🔥 NEW CODE DEPLOYED")
+
 def generate_intelligent_action(session_data):
 
     # 👉 GET ACTIVE STATE
@@ -106,27 +107,27 @@ def generate_intelligent_action(session_data):
         step_updates
     )
 
-    # 👉 ADJUST PLAN
+    # 👉 ADJUST PLAN (structure level)
     adjusted_plan = adjust_execution_plan(
         execution_steps,
         execution_state,
         step_decision
     )
 
-    # 👉 REBUILD STATE BEFORE REPLACEMENT (IMPORTANT FIX)
-    temp_state = build_execution_state(
+    # 👉 🔥 REBUILD STATE AFTER ADJUSTMENT (IMPORTANT)
+    execution_state = build_execution_state(
         adjusted_plan,
         completed_steps
     )
 
-    # 👉 REPLACE STEP USING UPDATED STATE
+    # 👉 🔥 APPLY AI STEP REPLACEMENT (NOW STATE IS CORRECT)
     adjusted_plan = replace_failed_step(
         adjusted_plan,
-        temp_state,
+        execution_state,
         step_decision
     )
 
-    # 👉 FINAL STATE (BASED ON FINAL PLAN)
+    # 👉 🔥 FINAL STATE (AFTER AI MODIFICATION)
     execution_state = build_execution_state(
         adjusted_plan,
         completed_steps
