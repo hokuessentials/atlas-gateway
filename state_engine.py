@@ -62,28 +62,18 @@ def compute_decision_scores(session_data):
 
         title = str(decisions[i])
 
-        try:
-            roi = float(roi_list[i]) if i < len(roi_list) else 0
-        except:
-            roi = 0
+        roi = float(roi_list[i]) if i < len(roi_list) else 0
+        risk = float(risk_list[i]) if i < len(risk_list) else 0
+        conf = float(conf_list[i]) if i < len(conf_list) else 0
 
-        try:
-            risk = float(risk_list[i]) if i < len(risk_list) else 0
-        except:
-            risk = 0
-
-        try:
-            conf = float(conf_list[i]) if i < len(conf_list) else 0
-        except:
-            conf = 0
-        
-        outcomes = session_data.get("outcome_list", [])
         outcome = str(outcomes[i]).strip().lower() if i < len(outcomes) else ""
 
+        success_weight = 1
+
         if outcome == "success":
-        success_weight = 1.5
+            success_weight = 1.5
         elif outcome == "failed":
-        success_weight = 0.2
+            success_weight = 0.2
 
         score = ((roi * conf) - risk) * success_weight
 
@@ -91,10 +81,8 @@ def compute_decision_scores(session_data):
             "title": title,
             "score": score
         })
-        print("---- DECISION SCORES ----")
-        for s in scored:
-            print(s)
-        return scored
+
+    return scored
 
 def select_best_decision(scored):
     if not scored:
@@ -107,6 +95,7 @@ def select_best_decision(scored):
 def generate_intelligent_action(session_data):
 
     decisions = session_data.get("decisions", [])
+    outcomes = session_data.get("outcome_list", [])
 
     if not decisions:
         return {
@@ -116,76 +105,48 @@ def generate_intelligent_action(session_data):
         }
 
     last_decision = decisions[-1]
+    last_outcome = str(outcomes[-1]).strip().lower() if outcomes else ""
 
     scored = compute_decision_scores(session_data)
-    best = select_best_decision(scored)
-    
-    # FORCE SWITCH IF FAILED
-    if str(last_outcome).strip().lower() == "failed":
-    return {
-        "action": f"Switch due to failure: {best_title}",
-        "priority": "high",
-        "reason": "Last decision failed → forcing change"
-    }
-    if not best:
+
+    if not scored:
         return {
             "action": f"Continue: {last_decision}",
             "priority": "medium",
             "reason": "No scoring data"
         }
 
-    best_title = best["title"]
-    best_score = best["score"]
-    outcomes = session_data.get("outcome_list", [])
-    last_outcome = outcomes[-1] if outcomes else ""
-    print("LAST OUTCOME:", last_outcome)
+    current_score = scored[-1]["score"]
 
-    # ================================
-    # FLOW PRIORITY FIX
-    # ================================
-    current_score = scored[-1]["score"] if scored else 0
-    
-    print("LAST:", last_decision)
-    print("BEST:", best_title)
-    print("CURRENT SCORE:", current_score)
-    print("BEST SCORE:", best_score)
-
-    outcomes = session_data.get("outcome_list", [])
-    last_outcome = outcomes[-1] if outcomes else ""
-
-    # REMOVE FAILED DECISION FROM CANDIDATES
+    # REMOVE failed decision from candidates
     filtered = []
 
     for i, d in enumerate(scored):
-    if i == len(scored) - 1 and str(last_outcome).strip().lower() == "failed":
-        continue  # skip last failed decision
-    filtered.append(d)
+        if i == len(scored) - 1 and last_outcome == "failed":
+            continue
+        filtered.append(d)
 
     best = select_best_decision(filtered if filtered else scored)
-    
-    # ONLY switch if significantly better
-    # FORCE SWITCH IF LAST DECISION FAILED
-    if "failed" in str(last_decision).lower():
+
+    best_title = best["title"]
+    best_score = best["score"]
+
+    # FORCE SWITCH IF FAILED
+    if last_outcome == "failed":
         return {
-        "action": f"Switch due to failure: {best_title}",
-        "priority": "high",
-        "reason": "Last decision failed → forcing change"
+            "action": f"Switch due to failure: {best_title}",
+            "priority": "high",
+            "reason": "Last decision failed → forcing change"
         }
 
     # NORMAL LOGIC
     if best_title != last_decision and best_score > current_score + 0.5:
-        return {
-        "action": f"Switch to higher value: {best_title}",
-        "priority": "high",
-        "reason": f"Better decision (current={round(current_score,2)}, best={round(best_score,2)})"
-        }
         return {
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
             "reason": f"Better decision (current={round(current_score,2)}, best={round(best_score,2)})"
         }
 
-    # DEFAULT → CONTINUE
     return {
         "action": f"Continue: {last_decision}",
         "priority": "high",
