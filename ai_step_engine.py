@@ -1,5 +1,8 @@
+import os
+print("🔥 ENV CHECK:", os.getenv("OPENAI_API_KEY"))
 def generate_better_step(current_step):
-
+    
+    
     print("🔥 FUNCTION ENTERED")   # ADD THIS
 
     if not current_step:
@@ -20,7 +23,7 @@ def generate_better_step(current_step):
             ],
             temperature=0.7
         )
-
+        
         print("🔥 AFTER API CALL")   # ADD THIS
 
         improved = response.choices[0].message.content.strip()
