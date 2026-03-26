@@ -1,12 +1,5 @@
-import requests
 import datetime
-import json
 
-APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
-
-# ================================
-# ACTIVE STATE (MAIN MEMORY)
-# ================================
 ACTIVE_STATE = {
     "phase": "BUILD",
     "current_goal": {},
@@ -18,93 +11,132 @@ ACTIVE_STATE = {
     "last_updated": None
 }
 
-# ================================
-# STATE LOAD / SAVE
-# ================================
-def load_state():
-    try:
-        response = requests.get(APPS_SCRIPT_URL + "?action=get_state", timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            if data:
-                ACTIVE_STATE.update(data)
-    except Exception as e:
-        print("State load failed:", e)
-
-def save_state():
-    try:
-        payload = {
-            "action": "update_state",
-            "data": ACTIVE_STATE
-        }
-        requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
-    except Exception as e:
-        print("State save failed:", e)
+def reset_state():
+    ACTIVE_STATE.clear()
+    ACTIVE_STATE.update({
+        "phase": "BUILD",
+        "current_goal": {},
+        "current_task": {},
+        "next_best_action": {},
+        "blockers": [],
+        "focus_module": None,
+        "execution_mode": "idle",
+        "last_updated": None
+    })
 
 # ================================
-# INTELLIGENT ACTION ENGINE
+# MODULE DETECTION (NEW FIX)
+# ================================
+def detect_module_from_title(title):
+
+    t = title.lower()
+
+    if "supplier" in t:
+        return "supplier"
+    elif "product" in t:
+        return "product"
+    elif "finance" in t:
+        return "finance"
+    elif "marketing" in t:
+        return "marketing"
+
+    return "general"
+
+# ================================
+# SCORING ENGINE
+# ================================
+def compute_decision_scores(session_data):
+
+    decisions = session_data.get("decisions", [])
+    roi_list = session_data.get("roi_list", [])
+    risk_list = session_data.get("risk_list", [])
+    conf_list = session_data.get("confidence_list", [])
+
+    scored = []
+
+    for i in range(len(decisions)):
+
+        title = str(decisions[i])
+
+        try:
+            roi = float(roi_list[i]) if i < len(roi_list) else 0
+        except:
+            roi = 0
+
+        try:
+            risk = float(risk_list[i]) if i < len(risk_list) else 0
+        except:
+            risk = 0
+
+        try:
+            conf = float(conf_list[i]) if i < len(conf_list) else 0
+        except:
+            conf = 0
+
+        score = (roi * conf) - risk
+
+        scored.append({
+            "title": title,
+            "score": score
+        })
+
+    return scored
+
+def select_best_decision(scored):
+    if not scored:
+        return None
+    return sorted(scored, key=lambda x: x["score"], reverse=True)[0]
+
+# ================================
+# INTELLIGENCE
 # ================================
 def generate_intelligent_action(session_data):
 
-    module_count = session_data.get("module_count", {})
     decisions = session_data.get("decisions", [])
-
     if not decisions:
         return {
             "action": "Start by logging a decision",
             "priority": "high",
-            "reason": "No decisions found"
+            "reason": "No data"
         }
 
     last_decision = decisions[-1]
 
-    if not module_count:
+    scored = compute_decision_scores(session_data)
+    best = select_best_decision(scored)
+
+    if not best:
         return {
             "action": f"Continue: {last_decision}",
             "priority": "medium",
-            "reason": "No module context"
+            "reason": "No scoring data"
         }
 
-    focus_module = max(module_count, key=module_count.get)
+    best_title = best["title"]
+    best_score = best["score"]
 
-    # 🔥 MODULE INTELLIGENCE
-
-    if focus_module == "Supplier":
+    if best_title == last_decision:
         return {
-            "action": "Contact supplier → confirm price → negotiate terms",
+            "action": f"Execute immediately: {last_decision}",
             "priority": "high",
-            "reason": "Supplier workflow continuation"
+            "reason": "Best current decision"
         }
 
-    elif focus_module == "Product":
+    if best_score > 8:
         return {
-            "action": "Finalize product specs → validate quality → prepare listing",
+            "action": f"Execute immediately: {best_title}",
             "priority": "high",
-            "reason": "Product development stage"
-        }
-
-    elif focus_module == "Finance":
-        return {
-            "action": "Update cost sheet → calculate margins → validate pricing",
-            "priority": "high",
-            "reason": "Financial validation"
-        }
-
-    elif focus_module == "Marketing":
-        return {
-            "action": "Plan creatives → launch ads → monitor performance",
-            "priority": "high",
-            "reason": "Marketing execution"
+            "reason": "Higher value decision available"
         }
 
     return {
-        "action": f"Continue execution after: {last_decision}",
+        "action": f"Continue execution: {last_decision}",
         "priority": "medium",
-        "reason": "General workflow"
+        "reason": "Maintain workflow"
     }
 
 # ================================
-# EXECUTION MODE ENGINE
+# EXECUTION MODE
 # ================================
 def compute_execution_mode():
 
@@ -123,41 +155,26 @@ def compute_execution_mode():
     return "review"
 
 # ================================
-# MAIN STATE UPDATE
+# MAIN ENGINE
 # ================================
 def update_state(session_data, triggers):
 
-    global ACTIVE_STATE
-
-    # ================================
-    # 🔹 1. RESET STATE
-    # ================================
-    ACTIVE_STATE["current_task"] = {}
-    ACTIVE_STATE["focus_module"] = None
-    ACTIVE_STATE["next_best_action"] = {}
+    reset_state()
 
     decisions = session_data.get("decisions", [])
     module_count = session_data.get("module_count", {})
 
-    # ================================
-    # 🔹 2. NO DATA → IDLE
-    # ================================
     if not decisions:
         ACTIVE_STATE["execution_mode"] = "idle"
         ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return
 
-    # ================================
-    # 🔹 3. SET FOCUS MODULE (SAFE)
-    # ================================
+    # 🔥 FIXED MODULE LOGIC
     if module_count:
-        ACTIVE_STATE["focus_module"] = max(module_count, key=module_count.get)
+        ACTIVE_STATE["focus_module"] = max(module_count, key=module_count.get).lower()
     else:
-        ACTIVE_STATE["focus_module"] = None  # fallback safety
+        ACTIVE_STATE["focus_module"] = detect_module_from_title(decisions[-1])
 
-    # ================================
-    # 🔹 4. CREATE CURRENT TASK
-    # ================================
     last_decision = decisions[-1]
 
     ACTIVE_STATE["current_task"] = {
@@ -168,42 +185,13 @@ def update_state(session_data, triggers):
         "priority": "high"
     }
 
-    # ================================
-    # 🔥 5. INTELLIGENT ACTION (SAFE)
-    # ================================
-    try:
-        action = generate_intelligent_action(session_data)
+    ACTIVE_STATE["next_best_action"] = generate_intelligent_action(session_data)
 
-        if not action:
-            action = {
-                "action": f"Continue: {last_decision}",
-                "priority": "medium",
-                "reason": "Fallback (empty intelligence)"
-            }
-
-        ACTIVE_STATE["next_best_action"] = action
-
-    except Exception as e:
-        print("⚠️ Intelligence error:", e)
-
-        ACTIVE_STATE["next_best_action"] = {
-            "action": f"Continue: {last_decision}",
-            "priority": "medium",
-            "reason": "Fallback (error)"
-        }
-
-    # ================================
-    # 🔹 6. EXECUTION MODE
-    # ================================
     ACTIVE_STATE["execution_mode"] = compute_execution_mode()
-
-    # ================================
-    # 🔹 7. TIMESTAMP
-    # ================================
     ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # ================================
-# BLOCKER MANAGEMENT
+# BLOCKERS
 # ================================
 def add_blocker(description, impact="high"):
     ACTIVE_STATE["blockers"].append({
@@ -211,11 +199,9 @@ def add_blocker(description, impact="high"):
         "description": description,
         "impact": impact
     })
-    save_state()
 
 def clear_blockers():
     ACTIVE_STATE["blockers"] = []
-    save_state()
 
 def complete_current_task():
 
@@ -243,5 +229,3 @@ def complete_current_task():
 
     ACTIVE_STATE["execution_mode"] = "active"
     ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    save_state()
