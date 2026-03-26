@@ -91,7 +91,9 @@ def compute_decision_scores(session_data):
             "title": title,
             "score": score
         })
-
+        print("---- DECISION SCORES ----")
+        for s in scored:
+    print(s)
     return scored
 
 def select_best_decision(scored):
@@ -132,7 +134,11 @@ def generate_intelligent_action(session_data):
     # FLOW PRIORITY FIX
     # ================================
     current_score = scored[-1]["score"] if scored else 0
-
+    
+    print("LAST:", last_decision)
+    print("BEST:", best_title)
+    print("CURRENT SCORE:", current_score)
+    print("BEST SCORE:", best_score)
     # ONLY switch if significantly better
     if best_title != last_decision and best_score > current_score + 0.5:
         return {
