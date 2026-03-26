@@ -124,20 +124,16 @@ def generate_intelligent_action(session_data):
         }
 
     # ================================
-    # FLOW PRIORITY FIX (IMPORTANT)
-    # ================================
+# FLOW PRIORITY FIX (SAFE)
+# ================================
 
-    # get current score
 current_score = 0
 
 try:
-    # SAFE current score detection
-current_score = 0
-
-for d in scored:
-    if d["title"] == last_decision:
-        current_score = d["score"]
-        break
+    for d in scored:
+        if d["title"] == last_decision:
+            current_score = d["score"]
+            break
 except:
     current_score = 0
 
@@ -149,7 +145,7 @@ if best_title != last_decision and best_score > current_score + 2:
         "reason": f"Better decision (current={round(current_score,2)}, best={round(best_score,2)})"
     }
 
-# otherwise continue current task
+# otherwise continue
 return {
     "action": f"Continue: {last_decision}",
     "priority": "high",
