@@ -138,6 +138,7 @@ def generate_intelligent_action(session_data):
     best_score = best["score"]
     outcomes = session_data.get("outcome_list", [])
     last_outcome = outcomes[-1] if outcomes else ""
+    print("LAST OUTCOME:", last_outcome)
     
     # ================================
     # FLOW PRIORITY FIX
