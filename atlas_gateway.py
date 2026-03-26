@@ -48,12 +48,6 @@ def load_session_from_sheet():
 
             if not title or not module:
                 continue
-            
-            session_data["decisions"].reverse()
-            session_data["roi_list"].reverse()
-            session_data["risk_list"].reverse()
-            session_data["confidence_list"].reverse()
-            session_data["outcome_list"].reverse()
 
             session_data["session_id"] = r.get("Session_ID")
             session_data["decisions"].append(title)
@@ -67,7 +61,12 @@ def load_session_from_sheet():
             val = r.get("Outcome_Status") or ""
             session_data["outcome_list"].append(str(val).strip().lower())
             print("OUTCOME:", val)
-
+            session_data["decisions"].reverse()
+            session_data["roi_list"].reverse()
+            session_data["risk_list"].reverse()
+            session_data["confidence_list"].reverse()
+            session_data["outcome_list"].reverse()
+            
     except Exception as e:
         print("SESSION ERROR:", e)
 
