@@ -23,7 +23,8 @@ def load_session_from_sheet():
         "module_count": {},
         "roi_list": [],
         "risk_list": [],
-        "confidence_list": []
+        "confidence_list": [],
+        "outcome_list": []
     }
 
     try:
@@ -57,6 +58,7 @@ def load_session_from_sheet():
             session_data["roi_list"].append(float(r.get("Expected_ROI") or 0))
             session_data["risk_list"].append(float(r.get("Risk_Score") or 0))
             session_data["confidence_list"].append(float(r.get("Confidence_Level") or 0))
+            session_data["outcome_list"].append(r.get("Outcome_Status"))
 
     except Exception as e:
         print("SESSION ERROR:", e)
