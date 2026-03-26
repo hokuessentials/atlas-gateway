@@ -1,5 +1,7 @@
 import datetime
 
+print("🔥 LEVEL 2 ENGINE ACTIVE")
+
 ACTIVE_STATE = {
     "phase": "BUILD",
     "current_goal": {},
@@ -23,13 +25,13 @@ def reset_state():
         "execution_mode": "idle",
         "last_updated": None
     })
+
 print("🔥 REQUEST HIT:", datetime.datetime.now())
 
 # ================================
-# MODULE DETECTION (NEW FIX)
+# MODULE DETECTION
 # ================================
 def detect_module_from_title(title):
-
     t = title.lower()
 
     if "supplier" in t:
@@ -89,11 +91,12 @@ def select_best_decision(scored):
     return sorted(scored, key=lambda x: x["score"], reverse=True)[0]
 
 # ================================
-# INTELLIGENCE
+# INTELLIGENCE (FIXED PROPERLY)
 # ================================
 def generate_intelligent_action(session_data):
 
     decisions = session_data.get("decisions", [])
+
     if not decisions:
         return {
             "action": "Start by logging a decision",
@@ -116,41 +119,33 @@ def generate_intelligent_action(session_data):
     best_title = best["title"]
     best_score = best["score"]
 
-    if best_title == last_decision:
-        return {
-            "action": f"Execute immediately: {last_decision}",
-            "priority": "high",
-            "reason": "Best current decision"
-        }
-
-# ================================
-# FLOW PRIORITY FIX (SAFE)
-# ================================
-
-current_score = 0
-
-try:
-    for d in scored:
-        if d["title"] == last_decision:
-            current_score = d["score"]
-            break
-except:
+    # ================================
+    # FLOW PRIORITY FIX
+    # ================================
     current_score = 0
 
-# ONLY switch if significantly better
-if best_title != last_decision and best_score > current_score + 2:
-    return {
-        "action": f"Switch to higher value: {best_title}",
-        "priority": "high",
-        "reason": f"Better decision (current={round(current_score,2)}, best={round(best_score,2)})"
-    }
+    try:
+        for d in scored:
+            if d["title"] == last_decision:
+                current_score = d["score"]
+                break
+    except:
+        current_score = 0
 
-# otherwise continue
-return {
-    "action": f"Continue: {last_decision}",
-    "priority": "high",
-    "reason": "Maintain execution flow"
-}
+    # ONLY switch if significantly better
+    if best_title != last_decision and best_score > current_score + 2:
+        return {
+            "action": f"Switch to higher value: {best_title}",
+            "priority": "high",
+            "reason": f"Better decision (current={round(current_score,2)}, best={round(best_score,2)})"
+        }
+
+    # DEFAULT → CONTINUE
+    return {
+        "action": f"Continue: {last_decision}",
+        "priority": "high",
+        "reason": "Maintain execution flow"
+    }
 
 # ================================
 # EXECUTION MODE
@@ -186,7 +181,6 @@ def update_state(session_data, triggers):
         ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return
 
-    # 🔥 FIXED MODULE LOGIC
     if module_count:
         ACTIVE_STATE["focus_module"] = max(module_count, key=module_count.get).lower()
     else:
