@@ -71,22 +71,29 @@ def home():
 
 @app.route("/atlas/state/full")
 def full_state():
+    try:
+        session = load_session_from_sheet()
 
-    session = load_session_from_sheet()
+        if not session["decisions"]:
+            return jsonify({
+                "active_state": ACTIVE_STATE,
+                "status": "no_data"
+            })
 
-    if not session["decisions"]:
+        update_state(session, {})
+
         return jsonify({
             "active_state": ACTIVE_STATE,
-            "status": "no_data"
+            "decision_count": len(session["decisions"]),
+            "status": "success"
         })
 
-    update_state(session, {})
-
-    return jsonify({
-        "active_state": ACTIVE_STATE,
-        "decision_count": len(session["decisions"]),
-        "status": "success"
-    })
+    except Exception as e:
+        print("🔥 ERROR IN /atlas/state/full:", str(e))
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
 
 @app.route("/atlas/command", methods=["POST"])
 def atlas_command():
