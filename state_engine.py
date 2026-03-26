@@ -120,37 +120,40 @@ def generate_intelligent_action(session_data):
 
     # REMOVE failed decision from candidates
     filtered = []
-
     for i, d in enumerate(scored):
         if i == len(scored) - 1 and last_outcome == "failed":
             continue
         filtered.append(d)
 
     # pick NEXT BEST (not same as last)
-    sorted_decisions = sorted(filtered if filtered else scored, key=lambda x: x["score"], reverse=True)
+    sorted_decisions = sorted(
+        filtered if filtered else scored,
+        key=lambda x: x["score"],
+        reverse=True
+    )
 
     best = None
-        for d in sorted_decisions:
-           if d["title"] != last_decision:
-              best = d
-                break
+    for d in sorted_decisions:
+        if d["title"] != last_decision:
+            best = d
+            break
 
-        if not best:
-           best = sorted_decisions[0]
+    if not best:
+        best = sorted_decisions[0]
 
     best_title = best["title"]
     best_score = best["score"]
 
     # FORCE SWITCH IF FAILED
-        if last_outcome == "failed":
-           return {
+    if last_outcome == "failed":
+        return {
             "action": f"Switch due to failure: {best_title}",
             "priority": "high",
             "reason": "Last decision failed → forcing change"
         }
 
     # NORMAL LOGIC
-        if best_title != last_decision and best_score > current_score + 0.5:
+    if best_title != last_decision and best_score > current_score + 0.5:
         return {
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
