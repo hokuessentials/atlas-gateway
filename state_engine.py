@@ -123,18 +123,33 @@ def generate_intelligent_action(session_data):
             "reason": "Best current decision"
         }
 
-    if best_score > 8:
-        return {
-            "action": f"Execute immediately: {best_title}",
-            "priority": "high",
-            "reason": "Higher value decision available"
-        }
+    # ================================
+    # FLOW PRIORITY FIX (IMPORTANT)
+    # ================================
 
+    # get current score
+current_score = 0
+
+try:
+    idx = decisions.index(last_decision)
+    current_score = scored[idx]["score"]
+except:
+    current_score = 0
+
+# ONLY switch if significantly better
+if best_title != last_decision and best_score > current_score + 2:
     return {
-        "action": f"Continue execution: {last_decision}",
-        "priority": "medium",
-        "reason": "Maintain workflow"
+        "action": f"Switch to higher value: {best_title}",
+        "priority": "high",
+        "reason": f"Better decision (current={round(current_score,2)}, best={round(best_score,2)})"
     }
+
+# otherwise continue current task
+return {
+    "action": f"Continue: {last_decision}",
+    "priority": "high",
+    "reason": "Maintain execution flow"
+}
 
 # ================================
 # EXECUTION MODE
