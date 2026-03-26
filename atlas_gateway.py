@@ -1,0 +1,114 @@
+from flask import Flask, request, jsonify
+import requests
+import datetime
+import json
+
+import state_engine
+
+update_state = state_engine.update_state
+add_blocker = state_engine.add_blocker
+clear_blockers = state_engine.clear_blockers
+complete_current_task = state_engine.complete_current_task
+ACTIVE_STATE = state_engine.ACTIVE_STATE
+
+app = Flask(__name__)
+
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
+
+def load_session_from_sheet():
+
+    session_data = {
+        "session_id": None,
+        "decisions": [],
+        "module_count": {},
+        "roi_list": [],
+        "risk_list": [],
+        "confidence_list": []
+    }
+
+    try:
+        url = APPS_SCRIPT_URL + "?action=get_last_session"
+        resp = requests.get(url, timeout=20)
+
+        if not resp or resp.status_code != 200:
+            return session_data
+
+        text = resp.text
+
+        if text.startswith(")]}'"):
+            text = text[4:]
+
+        data = json.loads(text)
+        records = data.get("records", [])
+
+        for r in records:
+            title = r.get("Title")
+            module = r.get("Module")
+
+            if not title or not module:
+                continue
+
+            session_data["session_id"] = r.get("Session_ID")
+            session_data["decisions"].append(title)
+
+            session_data["module_count"][module] = \
+                session_data["module_count"].get(module, 0) + 1
+
+            session_data["roi_list"].append(float(r.get("Expected_ROI") or 0))
+            session_data["risk_list"].append(float(r.get("Risk_Score") or 0))
+            session_data["confidence_list"].append(float(r.get("Confidence_Level") or 0))
+
+    except Exception as e:
+        print("SESSION ERROR:", e)
+
+    return session_data
+
+@app.route("/")
+def home():
+    return "Atlas is running"
+
+@app.route("/atlas/state/full")
+def full_state():
+
+    session = load_session_from_sheet()
+
+    if not session["decisions"]:
+        return jsonify({
+            "active_state": ACTIVE_STATE,
+            "status": "no_data"
+        })
+
+    update_state(session, {})
+
+    return jsonify({
+        "active_state": ACTIVE_STATE,
+        "decision_count": len(session["decisions"]),
+        "status": "success"
+    })
+
+@app.route("/atlas/command", methods=["POST"])
+def atlas_command():
+    data = request.get_json(force=True)
+
+    if data.get("command") == "log_decision":
+        return jsonify({"status": "logged"})
+
+    return jsonify({"status": "invalid"})
+
+@app.route("/atlas/state/block", methods=["POST"])
+def block():
+    add_blocker(request.get_json().get("description"))
+    return jsonify({"status": "blocked"})
+
+@app.route("/atlas/state/unblock", methods=["POST"])
+def unblock():
+    clear_blockers()
+    return jsonify({"status": "unblocked"})
+
+@app.route("/atlas/task/complete", methods=["POST"])
+def complete_task():
+    complete_current_task()
+    return jsonify({"status": "task_completed"})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
