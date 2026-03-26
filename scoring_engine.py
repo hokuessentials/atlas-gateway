@@ -1,6 +1,7 @@
 from memory_engine import build_failure_memory
 from time_engine import apply_time_weight
 from priority_engine import apply_priority_boost
+from prediction_engine import estimate_success_probability
 
 def compute_decision_scores(session_data):
 
@@ -22,6 +23,7 @@ def compute_decision_scores(session_data):
         conf = float(conf_list[i]) if i < len(conf_list) else 0
 
         outcome = str(outcomes[i]).strip().lower() if i < len(outcomes) else ""
+        prob = estimate_success_probability(title, decisions, outcomes)
 
         success_weight = 1
 
@@ -41,7 +43,7 @@ def compute_decision_scores(session_data):
 
         priority_boost = apply_priority_boost(title)
 
-        score = (base_score * success_weight * time_weight) + priority_boost
+        score = (base_score * success_weight * time_weight * prob) + priority_boost
 
         scored.append({
             "title": title,
