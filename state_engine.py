@@ -1,5 +1,5 @@
 import datetime
-🔥 NEW ENGINE LIVE
+print("🔥 NEW ENGINE LIVE")
 ACTIVE_STATE = {
     "phase": "BUILD",
     "current_goal": {},
