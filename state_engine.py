@@ -149,6 +149,20 @@ def generate_intelligent_action(session_data):
     print("BEST:", best_title)
     print("CURRENT SCORE:", current_score)
     print("BEST SCORE:", best_score)
+
+    outcomes = session_data.get("outcome_list", [])
+    last_outcome = outcomes[-1] if outcomes else ""
+
+    # REMOVE FAILED DECISION FROM CANDIDATES
+    filtered = []
+
+    for i, d in enumerate(scored):
+    if i == len(scored) - 1 and str(last_outcome).strip().lower() == "failed":
+        continue  # skip last failed decision
+    filtered.append(d)
+
+    best = select_best_decision(filtered if filtered else scored)
+    
     # ONLY switch if significantly better
     # FORCE SWITCH IF LAST DECISION FAILED
     if "failed" in str(last_decision).lower():
@@ -177,19 +191,7 @@ def generate_intelligent_action(session_data):
         "priority": "high",
         "reason": "Maintain execution flow"
     }
-    outcomes = session_data.get("outcome_list", [])
-    last_outcome = outcomes[-1] if outcomes else ""
 
-    # REMOVE FAILED DECISION FROM CANDIDATES
-    filtered = []
-
-    for i, d in enumerate(scored):
-    if i == len(scored) - 1 and str(last_outcome).strip().lower() == "failed":
-        continue  # skip last failed decision
-    filtered.append(d)
-
-    best = select_best_decision(filtered if filtered else scored)
-    
 # ================================
 # EXECUTION MODE
 # ================================
