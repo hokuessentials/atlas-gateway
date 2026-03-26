@@ -81,9 +81,9 @@ def compute_decision_scores(session_data):
         success_weight = 1
 
         if outcome == "success":
-        success_weight = 1.2
+        success_weight = 1.5
         elif outcome == "failed":
-        success_weight = 0.5
+        success_weight = 0.2
 
         score = ((roi * conf) - risk) * success_weight
 
@@ -142,7 +142,7 @@ def generate_intelligent_action(session_data):
         current_score = 0
 
     # ONLY switch if significantly better
-    if best_title != last_decision and best_score > current_score + 2:
+    if best_title != last_decision and best_score > current_score + 0.5:
         return {
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
