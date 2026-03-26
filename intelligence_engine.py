@@ -4,7 +4,8 @@ from sequence_engine import generate_execution_sequence
 from execution_engine import build_execution_state
 
 def generate_intelligent_action(session_data):
-
+    
+    active_state = session_data.get("active_state", {})
     decisions = session_data.get("decisions", [])
     outcomes = session_data.get("outcome_list", [])
 
@@ -13,7 +14,7 @@ def generate_intelligent_action(session_data):
             "action": "Start by logging a decision",
             "priority": "high",
             "reason": "No data",
-            "execution_state": execution_state
+            "execution_state": build_execution_state([])
         }
 
     last_decision = decisions[-1]
@@ -26,7 +27,7 @@ def generate_intelligent_action(session_data):
             "action": f"Continue: {last_decision}",
             "priority": "medium",
             "reason": "No scoring data",
-            "execution_state": execution_state
+            "execution_state": build_execution_state([])
         }
 
     current_score = 0
