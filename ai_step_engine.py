@@ -5,8 +5,6 @@ def generate_better_step(current_step):
 
     step = current_step.lower()
 
-    # simple AI-like logic (expandable later)
-
     if "negotiate" in step:
         return "Collect multiple supplier quotes and renegotiate using best price comparison"
 
