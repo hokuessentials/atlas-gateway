@@ -9,7 +9,7 @@ from step_replacement_engine import replace_failed_step
 
 def generate_intelligent_action(session_data):
 
-    # 👉 GET ACTIVE STATE (KEEP THIS AT TOP)
+    # 👉 GET ACTIVE STATE
     active_state = session_data.get("active_state", {})
 
     decisions = session_data.get("decisions", [])
@@ -90,28 +90,52 @@ def generate_intelligent_action(session_data):
     # 👉 GENERATE EXECUTION PLAN
     execution_steps = generate_execution_sequence(best_title)
 
-    # 👉 BUILD EXECUTION STATE
+    # 👉 INPUT DATA
+    step_updates = active_state.get("step_updates", [])
+    completed_steps = active_state.get("completed_steps", [])
+
+    # 👉 BUILD INITIAL STATE
     execution_state = build_execution_state(
         execution_steps,
-        active_state.get("completed_steps", [])
+        completed_steps
     )
 
-    # 👉 ADD STEP DECISION (THIS IS NEW)
-    step_updates = active_state.get("step_updates", [])
-
+    # 👉 INITIAL STEP DECISION
     step_decision = decide_step_action(
         execution_state.get("current_step"),
         step_updates
     )
+
+    # 👉 ADJUST PLAN
     adjusted_plan = adjust_execution_plan(
         execution_steps,
         execution_state,
         step_decision
     )
+
+    # 👉 REBUILD STATE BEFORE REPLACEMENT (IMPORTANT FIX)
+    temp_state = build_execution_state(
+        adjusted_plan,
+        completed_steps
+    )
+
+    # 👉 REPLACE STEP USING UPDATED STATE
     adjusted_plan = replace_failed_step(
         adjusted_plan,
-        execution_state,
+        temp_state,
         step_decision
+    )
+
+    # 👉 FINAL STATE (BASED ON FINAL PLAN)
+    execution_state = build_execution_state(
+        adjusted_plan,
+        completed_steps
+    )
+
+    # 👉 FINAL STEP DECISION
+    step_decision = decide_step_action(
+        execution_state.get("current_step"),
+        step_updates
     )
 
     # 👉 FORCE SWITCH
@@ -136,7 +160,7 @@ def generate_intelligent_action(session_data):
             "step_decision": step_decision
         }
 
-    # 👉 CONTINUE SAME TASK
+    # 👉 CONTINUE
     return {
         "action": f"Continue: {last_decision}",
         "priority": "high",
