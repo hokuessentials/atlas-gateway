@@ -53,8 +53,9 @@ def compute_decision_scores(session_data):
     conf_list = session_data.get("confidence_list", [])
 
     scored = []
+    total = len(decisions)
 
-    for i in range(len(decisions)):
+    for i in range(total):
 
         title = str(decisions[i])
 
@@ -73,7 +74,11 @@ def compute_decision_scores(session_data):
         except:
             conf = 0
 
-        score = (roi * conf) - risk
+        # 🔥 RECENCY WEIGHT (IMPORTANT)
+        recency_weight = (i + 1) / total   # newer = closer to 1
+
+        # 🔥 FINAL SCORE
+        score = (roi * conf) - risk + (recency_weight * 5)
 
         scored.append({
             "title": title,
@@ -81,11 +86,6 @@ def compute_decision_scores(session_data):
         })
 
     return scored
-
-def select_best_decision(scored):
-    if not scored:
-        return None
-    return sorted(scored, key=lambda x: x["score"], reverse=True)[0]
 
 # ================================
 # INTELLIGENCE
