@@ -1,1 +1,1 @@
-web: gunicorn atlas_gateway:app
+web: gunicorn atlas_gateway:app --workers 1
