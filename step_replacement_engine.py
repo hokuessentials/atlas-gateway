@@ -13,7 +13,7 @@ def replace_failed_step(execution_plan, execution_state, step_decision):
 
     for step in execution_plan:
 
-        if step == current_step:
+        if current_step and current_step.lower() in step.lower():
             new_plan.append(generate_better_step(step))
         else:
             new_plan.append(step)
