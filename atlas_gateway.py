@@ -129,7 +129,7 @@ def complete_task():
 @app.route("/atlas/action", methods=["GET", "POST"])
 def atlas_action():
     if request.method == "GET":
-    return jsonify({"message": "Use POST with JSON body"})
+        return jsonify({"message": "Use POST with JSON body"})
     try:
         input_data = request.get_json(force=True)
 
@@ -151,5 +151,5 @@ def atlas_action():
             "message": str(e)
         })
 
-        if __name__ == "__main__":
-        mapp.run(host="0.0.0.0", port=8080)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)        
