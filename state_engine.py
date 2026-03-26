@@ -55,45 +55,51 @@ def compute_decision_scores(session_data):
     scored = []
     total = len(decisions)
 
+    if total == 0:
+        return []
+
     for i in range(total):
 
         title = str(decisions[i])
 
-        try:
-            roi = float(roi_list[i]) if i < len(roi_list) else 0
-        except:
-            roi = 0
+        # SAFE EXTRACTION
+        roi = float(roi_list[i]) if i < len(roi_list) else 0
+        risk = float(risk_list[i]) if i < len(risk_list) else 0
+        conf = float(conf_list[i]) if i < len(conf_list) else 0
 
-        try:
-            risk = float(risk_list[i]) if i < len(risk_list) else 0
-        except:
-            risk = 0
+        # 🔥 NORMALIZATION (IMPORTANT)
+        roi_norm = roi / 20          # assuming max ROI ~20
+        risk_norm = risk             # already 0–1
+        conf_norm = conf             # already 0–1
 
-        try:
-            conf = float(conf_list[i]) if i < len(conf_list) else 0
-        except:
-            conf = 0
+        # 🔥 RECENCY WEIGHT
+        recency_weight = (i + 1) / total
 
-        # 🔥 RECENCY WEIGHT (IMPORTANT)
-        recency_weight = (i + 1) / total   # newer = closer to 1
-
-        # 🔥 FINAL SCORE
-        score = (roi * conf) - risk + (recency_weight * 5)
+        # 🔥 FINAL SCORE (BALANCED)
+        score = (roi_norm * 5 * conf_norm) - (risk_norm * 3) + (recency_weight * 2)
 
         scored.append({
             "title": title,
-            "score": score
+            "score": round(score, 3),
+            "roi": roi,
+            "risk": risk,
+            "confidence": conf,
+            "recency": round(recency_weight, 3)
         })
 
     return scored
-
-def select_best_decision(scored):
+    def select_best_decision(scored):
 
     if not scored:
         return None
 
-    # sort by score (highest first)
-    best = sorted(scored, key=lambda x: x.get("score", 0), reverse=True)[0]
+    # remove invalid scores
+    valid = [d for d in scored if isinstance(d.get("score"), (int, float))]
+
+    if not valid:
+        return None
+
+    best = sorted(valid, key=lambda x: x["score"], reverse=True)[0]
 
     return best
 # ================================
@@ -102,48 +108,60 @@ def select_best_decision(scored):
 def generate_intelligent_action(session_data):
 
     decisions = session_data.get("decisions", [])
+
     if not decisions:
         return {
             "action": "Start by logging a decision",
             "priority": "high",
-            "reason": "No data"
+            "reason": "No decision data available"
         }
 
     last_decision = decisions[-1]
 
-    scored = compute_decision_scores(session_data)
-    best = select_best_decision(scored)
+    try:
+        scored = compute_decision_scores(session_data)
+        best = select_best_decision(scored)
+
+    except Exception as e:
+        print("🔥 INTELLIGENCE ERROR:", e)
+        return {
+            "action": f"Continue: {last_decision}",
+            "priority": "medium",
+            "reason": "Error fallback"
+        }
 
     if not best:
         return {
             "action": f"Continue: {last_decision}",
             "priority": "medium",
-            "reason": "No scoring data"
+            "reason": "No valid scoring data"
         }
 
     best_title = best["title"]
     best_score = best["score"]
 
+    # 🔥 CASE 1: BEST = CURRENT
     if best_title == last_decision:
         return {
             "action": f"Execute immediately: {last_decision}",
             "priority": "high",
-            "reason": f"Score: {best.get('score')} (ROI high, risk controlled)"
+            "reason": f"Best decision (score={best_score}) with strong ROI & confidence"
         }
 
-    if best_score > 8:
+    # 🔥 CASE 2: MUCH BETTER OPTION EXISTS
+    if best_score > 6:
         return {
             "action": f"Execute immediately: {best_title}",
             "priority": "high",
-            "reason": "Higher value decision available"
+            "reason": f"Higher value decision detected (score={best_score})"
         }
 
+    # 🔥 CASE 3: CONTINUE FLOW
     return {
         "action": f"Continue execution: {last_decision}",
         "priority": "medium",
-        "reason": "Maintain workflow"
+        "reason": f"Maintain workflow (score={best_score})"
     }
-
 # ================================
 # EXECUTION MODE
 # ================================
