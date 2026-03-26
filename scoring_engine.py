@@ -1,4 +1,5 @@
 from memory_engine import build_failure_memory
+from time_engine import apply_time_weight
 
 def compute_decision_scores(session_data):
 
@@ -34,8 +35,10 @@ def compute_decision_scores(session_data):
 
         if fail_penalty > 0:
            base_score *= (1 / (1 + fail_penalty))
+        
+        time_weight = apply_time_weight(i, len(decisions))
 
-        score = base_score * success_weight
+        score = base_score * success_weight * time_weight
 
         scored.append({
             "title": title,
