@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import datetime
 import json
-
+from intelligence_engine import generate_intelligent_action
 import state_engine
 
 update_state = state_engine.update_state
@@ -66,7 +66,7 @@ def load_session_from_sheet():
             session_data["risk_list"].reverse()
             session_data["confidence_list"].reverse()
             session_data["outcome_list"].reverse()
-            
+
     except Exception as e:
         print("SESSION ERROR:", e)
 
@@ -128,3 +128,26 @@ def complete_task():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+
+@app.route("/atlas/action", methods=["POST"])
+def atlas_action():
+    try:
+        input_data = request.get_json(force=True)
+
+        session = load_session_from_sheet()
+
+        # attach active_state from input
+        session["active_state"] = input_data.get("active_state", {})
+
+        result = generate_intelligent_action(session)
+
+        return jsonify({
+            "status": "success",
+            "result": result
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
