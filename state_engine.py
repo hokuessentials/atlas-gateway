@@ -77,8 +77,7 @@ def compute_decision_scores(session_data):
             conf = 0
         
         outcomes = session_data.get("outcome_list", [])
-        outcome = outcomes[i] if i < len(outcomes) else None
-        success_weight = 1
+        outcome = str(outcomes[i]).strip().lower() if i < len(outcomes) else ""
 
         if outcome == "success":
         success_weight = 1.5
