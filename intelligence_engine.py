@@ -1,4 +1,5 @@
 from scoring_engine import compute_decision_scores, select_best_decision
+from reasoning_engine import generate_reason
 
 def generate_intelligent_action(session_data):
 
@@ -60,7 +61,7 @@ def generate_intelligent_action(session_data):
         return {
             "action": f"Switch due to failure: {best_title}",
             "priority": "high",
-            "reason": "Last decision failed → forcing change"
+            "reason": generate_reason(last_decision, best_title, last_outcome)
         }
 
     # NORMAL SWITCH
@@ -68,7 +69,7 @@ def generate_intelligent_action(session_data):
         return {
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
-            "reason": f"Better decision (current={round(current_score,2)}, best={round(best_score,2)})"
+            "reason": generate_reason(last_decision, best_title, last_outcome)
         }
 
     return {
