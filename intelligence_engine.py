@@ -6,7 +6,7 @@ from step_decision_engine import decide_step_action
 from plan_adjustment_engine import adjust_execution_plan
 from step_replacement_engine import replace_failed_step
 
-
+print("🔥 NEW CODE DEPLOYED")
 def generate_intelligent_action(session_data):
 
     # 👉 GET ACTIVE STATE
