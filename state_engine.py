@@ -1,5 +1,10 @@
 import datetime
-print("🔥 NEW ENGINE LIVE")
+
+print("🔥 LEVEL 2 ENGINE ACTIVE")
+
+# ================================
+# ACTIVE STATE
+# ================================
 ACTIVE_STATE = {
     "phase": "BUILD",
     "current_goal": {},
@@ -11,6 +16,9 @@ ACTIVE_STATE = {
     "last_updated": None
 }
 
+# ================================
+# RESET STATE
+# ================================
 def reset_state():
     ACTIVE_STATE.clear()
     ACTIVE_STATE.update({
@@ -25,7 +33,7 @@ def reset_state():
     })
 
 # ================================
-# MODULE DETECTION (NEW FIX)
+# MODULE DETECTION
 # ================================
 def detect_module_from_title(title):
 
@@ -62,20 +70,19 @@ def compute_decision_scores(session_data):
 
         title = str(decisions[i])
 
-        # SAFE EXTRACTION
         roi = float(roi_list[i]) if i < len(roi_list) else 0
         risk = float(risk_list[i]) if i < len(risk_list) else 0
         conf = float(conf_list[i]) if i < len(conf_list) else 0
 
-        # 🔥 NORMALIZATION (IMPORTANT)
-        roi_norm = roi / 20          # assuming max ROI ~20
-        risk_norm = risk             # already 0–1
-        conf_norm = conf             # already 0–1
+        # NORMALIZATION
+        roi_norm = roi / 20
+        risk_norm = risk
+        conf_norm = conf
 
-        # 🔥 RECENCY WEIGHT
+        # RECENCY
         recency_weight = (i + 1) / total
 
-        # 🔥 FINAL SCORE (BALANCED)
+        # FINAL SCORE
         score = (roi_norm * 5 * conf_norm) - (risk_norm * 3) + (recency_weight * 2)
 
         scored.append({
@@ -89,16 +96,14 @@ def compute_decision_scores(session_data):
 
     return scored
 
-
-    # ================================
-    # DECISION SELECTOR
-    # ================================
-    def select_best_decision(scored):
+# ================================
+# DECISION SELECTOR
+# ================================
+def select_best_decision(scored):
 
     if not scored:
         return None
 
-    # remove invalid scores
     valid = [d for d in scored if isinstance(d.get("score"), (int, float))]
 
     if not valid:
@@ -108,9 +113,8 @@ def compute_decision_scores(session_data):
 
     return best
 
-    
 # ================================
-# INTELLIGENCE
+# INTELLIGENCE ENGINE
 # ================================
 def generate_intelligent_action(session_data):
 
@@ -147,7 +151,7 @@ def generate_intelligent_action(session_data):
     best_title = best["title"]
     best_score = best["score"]
 
-    # 🔥 CASE 1: BEST = CURRENT
+    # BEST = CURRENT
     if best_title == last_decision:
         return {
             "action": f"Execute immediately: {last_decision}",
@@ -155,7 +159,7 @@ def generate_intelligent_action(session_data):
             "reason": f"Best decision (score={best_score}) with strong ROI & confidence"
         }
 
-    # 🔥 CASE 2: MUCH BETTER OPTION EXISTS
+    # BETTER OPTION EXISTS
     if best_score > 6:
         return {
             "action": f"Execute immediately: {best_title}",
@@ -163,20 +167,20 @@ def generate_intelligent_action(session_data):
             "reason": f"Higher value decision detected (score={best_score})"
         }
 
-    # 🔥 CASE 3: CONTINUE FLOW
+    # CONTINUE FLOW
     return {
         "action": f"Continue execution: {last_decision}",
         "priority": "medium",
         "reason": f"Maintain workflow (score={best_score})"
     }
+
 # ================================
 # EXECUTION MODE
 # ================================
 def compute_execution_mode():
 
-    if ACTIVE_STATE.get("blockers"):
-        if len(ACTIVE_STATE["blockers"]) > 0:
-            return "stuck"
+    if ACTIVE_STATE.get("blockers") and len(ACTIVE_STATE["blockers"]) > 0:
+        return "stuck"
 
     task = ACTIVE_STATE.get("current_task")
 
@@ -203,7 +207,7 @@ def update_state(session_data, triggers):
         ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return
 
-    # 🔥 FIXED MODULE LOGIC
+    # MODULE DETECTION
     if module_count:
         ACTIVE_STATE["focus_module"] = max(module_count, key=module_count.get).lower()
     else:
@@ -211,6 +215,7 @@ def update_state(session_data, triggers):
 
     last_decision = decisions[-1]
 
+    # CURRENT TASK
     ACTIVE_STATE["current_task"] = {
         "task_id": f"T-{int(datetime.datetime.now().timestamp())}",
         "title": last_decision,
@@ -219,8 +224,10 @@ def update_state(session_data, triggers):
         "priority": "high"
     }
 
+    # INTELLIGENCE
     ACTIVE_STATE["next_best_action"] = generate_intelligent_action(session_data)
 
+    # EXECUTION MODE
     ACTIVE_STATE["execution_mode"] = compute_execution_mode()
     ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
