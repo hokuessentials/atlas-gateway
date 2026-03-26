@@ -60,7 +60,10 @@ def generate_intelligent_action(session_data):
     best_title = best["title"]
     best_score = best["score"]
     execution_steps = generate_execution_sequence(best_title)
-    execution_state = build_execution_state(execution_steps)
+    execution_state = build_execution_state(
+    execution_steps,
+    active_state.get("completed_steps": ["Check supplier pricing"])
+    )
 
     # FORCE SWITCH
     if last_outcome == "failed":
