@@ -58,7 +58,9 @@ def load_session_from_sheet():
             session_data["roi_list"].append(float(r.get("Expected_ROI") or 0))
             session_data["risk_list"].append(float(r.get("Risk_Score") or 0))
             session_data["confidence_list"].append(float(r.get("Confidence_Level") or 0))
-            session_data["outcome_list"].append(r.get("Outcome_Status"))
+            val = r.get("Outcome_Status") or ""
+            session_data["outcome_list"].append(str(val).strip().lower())
+            print("OUTCOME:", val)
 
     except Exception as e:
         print("SESSION ERROR:", e)
