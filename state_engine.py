@@ -86,7 +86,7 @@ def compute_decision_scores(session_data):
         })
 
     return scored
-    
+
 def select_best_decision(scored):
 
     if not scored:
@@ -128,7 +128,7 @@ def generate_intelligent_action(session_data):
         return {
             "action": f"Execute immediately: {last_decision}",
             "priority": "high",
-            "reason": "Best current decision"
+            "reason": f"Score: {best.get('score')} (ROI high, risk controlled)"
         }
 
     if best_score > 8:
