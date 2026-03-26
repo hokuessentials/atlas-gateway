@@ -1,4 +1,5 @@
 import datetime
+
 ACTIVE_STATE = {
     "phase": "BUILD",
     "current_goal": {},
