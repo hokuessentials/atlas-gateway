@@ -26,5 +26,5 @@ def generate_better_step(current_step):
         return improved if improved else current_step
 
     except Exception as e:
-        print("AI ERROR:", e)
+        print("AI ERROR:", str(e))
         return f"Improve execution of: {current_step}"
