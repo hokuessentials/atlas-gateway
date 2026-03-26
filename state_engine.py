@@ -140,7 +140,21 @@ def generate_intelligent_action(session_data):
     print("CURRENT SCORE:", current_score)
     print("BEST SCORE:", best_score)
     # ONLY switch if significantly better
+    # FORCE SWITCH IF LAST DECISION FAILED
+    if "failed" in str(last_decision).lower():
+        return {
+        "action": f"Switch due to failure: {best_title}",
+        "priority": "high",
+        "reason": "Last decision failed → forcing change"
+        }
+
+    # NORMAL LOGIC
     if best_title != last_decision and best_score > current_score + 0.5:
+        return {
+        "action": f"Switch to higher value: {best_title}",
+        "priority": "high",
+        "reason": f"Better decision (current={round(current_score,2)}, best={round(best_score,2)})"
+        }
         return {
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
