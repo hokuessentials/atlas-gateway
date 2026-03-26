@@ -131,8 +131,13 @@ def generate_intelligent_action(session_data):
 current_score = 0
 
 try:
-    idx = decisions.index(last_decision)
-    current_score = scored[idx]["score"]
+    # SAFE current score detection
+current_score = 0
+
+for d in scored:
+    if d["title"] == last_decision:
+        current_score = d["score"]
+        break
 except:
     current_score = 0
 
