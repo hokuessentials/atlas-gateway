@@ -12,8 +12,10 @@ def replace_failed_step(execution_plan, execution_state, step_decision):
 
     for step in execution_plan:
 
-        # 🔥 SMART MATCH (handles modified text)
-        if current_step and current_step in step.lower():
+        step_lower = step.lower()
+
+        # 🔥 REVERSE MATCH (THIS IS THE FIX)
+        if step_lower and step_lower in current_step:
             new_plan.append(generate_better_step(step))
         else:
             new_plan.append(step)
