@@ -55,8 +55,8 @@ def generate_intelligent_action(session_data):
         best = sorted_decisions[0]
 
     best_title = best["title"]
-    execution_steps = generate_execution_sequence(best_title)
     best_score = best["score"]
+    execution_steps = generate_execution_sequence(best_title)
 
     # FORCE SWITCH
     if last_outcome == "failed":
