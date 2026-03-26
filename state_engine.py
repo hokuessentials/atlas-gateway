@@ -93,8 +93,8 @@ def compute_decision_scores(session_data):
         })
         print("---- DECISION SCORES ----")
         for s in scored:
-    print(s)
-    return scored
+            print(s)
+        return scored
 
 def select_best_decision(scored):
     if not scored:
