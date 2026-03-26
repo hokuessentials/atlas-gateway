@@ -131,15 +131,7 @@ def generate_intelligent_action(session_data):
     # ================================
     # FLOW PRIORITY FIX
     # ================================
-    current_score = 0
-
-    try:
-        for d in scored:
-            if d["title"] == last_decision:
-                current_score = d["score"]
-                break
-    except:
-        current_score = 0
+    current_score = scored[-1]["score"] if scored else 0
 
     # ONLY switch if significantly better
     if best_title != last_decision and best_score > current_score + 0.5:
