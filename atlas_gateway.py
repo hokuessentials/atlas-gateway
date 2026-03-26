@@ -102,7 +102,7 @@ def full_state():
             "message": str(e)
         })
 
-@app.route("/atlas/command", methods=["POST"])
+@app.route("/atlas/command", methods=["GET", "POST"])
 def atlas_command():
     data = request.get_json(force=True)
 
@@ -111,26 +111,25 @@ def atlas_command():
 
     return jsonify({"status": "invalid"})
 
-@app.route("/atlas/state/block", methods=["POST"])
+@app.route("/atlas/state/block", methods=["GET", "POST"])
 def block():
     add_blocker(request.get_json().get("description"))
     return jsonify({"status": "blocked"})
 
-@app.route("/atlas/state/unblock", methods=["POST"])
+@app.route("/atlas/state/unblock", methods=["GET", "POST"])
 def unblock():
     clear_blockers()
     return jsonify({"status": "unblocked"})
 
-@app.route("/atlas/task/complete", methods=["POST"])
+@app.route("/atlas/task/complete", methods=["GET", "POST"])
 def complete_task():
     complete_current_task()
     return jsonify({"status": "task_completed"})
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
-
-@app.route("/atlas/action", methods=["POST"])
+@app.route("/atlas/action", methods=["GET", "POST"])
 def atlas_action():
+    if request.method == "GET":
+    return jsonify({"message": "Use POST with JSON body"})
     try:
         input_data = request.get_json(force=True)
 
@@ -151,3 +150,6 @@ def atlas_action():
             "status": "error",
             "message": str(e)
         })
+
+        if __name__ == "__main__":
+        mapp.run(host="0.0.0.0", port=8080)
