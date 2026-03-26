@@ -86,7 +86,16 @@ def compute_decision_scores(session_data):
         })
 
     return scored
+    
+def select_best_decision(scored):
 
+    if not scored:
+        return None
+
+    # sort by score (highest first)
+    best = sorted(scored, key=lambda x: x.get("score", 0), reverse=True)[0]
+
+    return best
 # ================================
 # INTELLIGENCE
 # ================================
