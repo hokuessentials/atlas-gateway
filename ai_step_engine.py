@@ -1,17 +1,30 @@
+import os
+import openai
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
 def generate_better_step(current_step):
 
     if not current_step:
         return current_step
 
-    step = current_step.lower()
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Improve this execution step to make it more specific and effective:\n{current_step}"
+                }
+            ],
+            temperature=0.7
+        )
 
-    if "negotiate" in step:
-        return "Collect multiple supplier quotes and renegotiate using best price comparison"
+        improved = response["choices"][0]["message"]["content"].strip()
 
-    if "check" in step:
-        return "Validate supplier information with cross-checking and verification"
+        return improved if improved else current_step
 
-    if "confirm" in step:
-        return "Verify product quality through samples and testing before confirmation"
-
-    return f"Improve execution of: {current_step}"
+    except Exception as e:
+        print("AI ERROR:", e)
+        return f"Improve execution of: {current_step}"
