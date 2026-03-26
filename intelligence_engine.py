@@ -1,6 +1,7 @@
 from scoring_engine import compute_decision_scores, select_best_decision
 from reasoning_engine import generate_reason
 from sequence_engine import generate_execution_sequence
+from execution_engine import build_execution_state
 
 def generate_intelligent_action(session_data):
 
@@ -11,7 +12,8 @@ def generate_intelligent_action(session_data):
         return {
             "action": "Start by logging a decision",
             "priority": "high",
-            "reason": "No data"
+            "reason": "No data",
+            "execution_state": execution_state
         }
 
     last_decision = decisions[-1]
@@ -23,7 +25,8 @@ def generate_intelligent_action(session_data):
         return {
             "action": f"Continue: {last_decision}",
             "priority": "medium",
-            "reason": "No scoring data"
+            "reason": "No scoring data",
+            "execution_state": execution_state
         }
 
     current_score = 0
@@ -57,6 +60,7 @@ def generate_intelligent_action(session_data):
     best_title = best["title"]
     best_score = best["score"]
     execution_steps = generate_execution_sequence(best_title)
+    execution_state = build_execution_state(execution_steps)
 
     # FORCE SWITCH
     if last_outcome == "failed":
@@ -64,7 +68,8 @@ def generate_intelligent_action(session_data):
             "action": f"Switch due to failure: {best_title}",
             "priority": "high",
             "reason": generate_reason(last_decision, best_title, last_outcome),
-            "execution_plan": execution_steps
+            "execution_plan": execution_steps,
+            "execution_state": execution_state
         }
 
     # NORMAL SWITCH
@@ -73,12 +78,14 @@ def generate_intelligent_action(session_data):
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
             "reason": generate_reason(last_decision, best_title, last_outcome),
-            "execution_plan": execution_steps
+            "execution_plan": execution_steps,
+            "execution_state": execution_state
         }
 
     return {
         "action": f"Continue: {last_decision}",
         "priority": "high",
         "reason": "Maintain execution flow",
-        "execution_plan": execution_steps
+        "execution_plan": execution_steps,
+        "execution_state": execution_state
     }
