@@ -48,6 +48,12 @@ def load_session_from_sheet():
 
             if not title or not module:
                 continue
+            
+            session_data["decisions"].reverse()
+            session_data["roi_list"].reverse()
+            session_data["risk_list"].reverse()
+            session_data["confidence_list"].reverse()
+            session_data["outcome_list"].reverse()
 
             session_data["session_id"] = r.get("Session_ID")
             session_data["decisions"].append(title)
