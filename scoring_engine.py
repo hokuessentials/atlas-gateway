@@ -1,6 +1,5 @@
-# ================================
-# SCORING ENGINE
-# ================================
+from memory_engine import build_failure_memory
+
 def compute_decision_scores(session_data):
 
     decisions = session_data.get("decisions", [])[-5:]
@@ -10,6 +9,7 @@ def compute_decision_scores(session_data):
     outcomes = session_data.get("outcome_list", [])[-5:]
 
     scored = []
+    failure_count = build_failure_memory(decisions, outcomes)
 
     for i in range(len(decisions)):
 
@@ -28,7 +28,14 @@ def compute_decision_scores(session_data):
         elif outcome == "failed":
             success_weight = 0.2
 
-        score = ((roi * conf) - risk) * success_weight
+        base_score = (roi * conf) - risk
+
+        fail_penalty = failure_count.get(title, 0)
+
+        if fail_penalty > 0:
+           base_score *= (1 / (1 + fail_penalty))
+
+        score = base_score * success_weight
 
         scored.append({
             "title": title,
