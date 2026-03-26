@@ -3,6 +3,7 @@ from reasoning_engine import generate_reason
 from sequence_engine import generate_execution_sequence
 from execution_engine import build_execution_state
 from step_decision_engine import decide_step_action
+from plan_adjustment_engine import adjust_execution_plan
 
 
 def generate_intelligent_action(session_data):
@@ -101,6 +102,11 @@ def generate_intelligent_action(session_data):
         execution_state.get("current_step"),
         step_updates
     )
+    adjusted_plan = adjust_execution_plan(
+        execution_steps,
+        execution_state,
+        step_decision
+    )
 
     # 👉 FORCE SWITCH
     if last_outcome == "failed":
@@ -108,7 +114,7 @@ def generate_intelligent_action(session_data):
             "action": f"Switch due to failure: {best_title}",
             "priority": "high",
             "reason": generate_reason(last_decision, best_title, last_outcome),
-            "execution_plan": execution_steps,
+            "execution_plan": adjusted_plan,
             "execution_state": execution_state,
             "step_decision": step_decision
         }
@@ -119,7 +125,7 @@ def generate_intelligent_action(session_data):
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
             "reason": generate_reason(last_decision, best_title, last_outcome),
-            "execution_plan": execution_steps,
+            "execution_plan": adjusted_plan,
             "execution_state": execution_state,
             "step_decision": step_decision
         }
@@ -129,7 +135,7 @@ def generate_intelligent_action(session_data):
         "action": f"Continue: {last_decision}",
         "priority": "high",
         "reason": "Maintain execution flow",
-        "execution_plan": execution_steps,
+        "execution_plan": adjusted_plan,
         "execution_state": execution_state,
         "step_decision": step_decision
     }
