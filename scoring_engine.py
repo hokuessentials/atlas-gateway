@@ -1,5 +1,6 @@
 from memory_engine import build_failure_memory
 from time_engine import apply_time_weight
+from priority_engine import apply_priority_boost
 
 def compute_decision_scores(session_data):
 
@@ -38,7 +39,9 @@ def compute_decision_scores(session_data):
         
         time_weight = apply_time_weight(i, len(decisions))
 
-        score = base_score * success_weight * time_weight
+        priority_boost = apply_priority_boost(title)
+
+        score = (base_score * success_weight * time_weight) + priority_boost
 
         scored.append({
             "title": title,
