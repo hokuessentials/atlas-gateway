@@ -50,10 +50,11 @@ def detect_module_from_title(title):
 # ================================
 def compute_decision_scores(session_data):
 
-    decisions = session_data.get("decisions", [])
-    roi_list = session_data.get("roi_list", [])
-    risk_list = session_data.get("risk_list", [])
-    conf_list = session_data.get("confidence_list", [])
+    decisions = session_data.get("decisions", [])[-5:]
+    roi_list = session_data.get("roi_list", [])[-5:]
+    risk_list = session_data.get("risk_list", [])[-5:]
+    conf_list = session_data.get("confidence_list", [])[-5:]
+    outcomes = session_data.get("outcome_list", [])[-5:]
 
     scored = []
 
