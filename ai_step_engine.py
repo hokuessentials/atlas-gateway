@@ -1,9 +1,11 @@
+from openai import OpenAI
 import os
-print("🔥 ENV CHECK:", os.getenv("OPENAI_API_KEY"))
+
+client = OpenAI()
+
 def generate_better_step(current_step):
-    
-    
-    print("🔥 FUNCTION ENTERED")   # ADD THIS
+
+    print("🔥 FUNCTION ENTERED")
 
     if not current_step:
         return current_step
@@ -11,22 +13,16 @@ def generate_better_step(current_step):
     print("🔥 AI CALLED FOR STEP:", current_step)
 
     try:
-        print("🔥 BEFORE API CALL")   # ADD THIS
+        print("🔥 BEFORE API CALL")
 
-        response = client.chat.completions.create(
+        response = client.responses.create(
             model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Improve this execution step:\n{current_step}"
-                }
-            ],
-            temperature=0.7
+            input=f"Improve this execution step:\n{current_step}"
         )
-        
-        print("🔥 AFTER API CALL")   # ADD THIS
 
-        improved = response.choices[0].message.content.strip()
+        print("🔥 AFTER API CALL")
+
+        improved = response.output[0].content[0].text.strip()
 
         print("🔥 AI RESPONSE:", improved)
 
