@@ -119,7 +119,14 @@ def generate_intelligent_action(session_data):
 
     scored = compute_decision_scores(session_data)
     best = select_best_decision(scored)
-
+    
+    # FORCE SWITCH IF FAILED
+    if str(last_outcome).strip().lower() == "failed":
+    return {
+        "action": f"Switch due to failure: {best_title}",
+        "priority": "high",
+        "reason": "Last decision failed → forcing change"
+    }
     if not best:
         return {
             "action": f"Continue: {last_decision}",
@@ -129,7 +136,9 @@ def generate_intelligent_action(session_data):
 
     best_title = best["title"]
     best_score = best["score"]
-
+    outcomes = session_data.get("outcome_list", [])
+    last_outcome = outcomes[-1] if outcomes else ""
+    
     # ================================
     # FLOW PRIORITY FIX
     # ================================
