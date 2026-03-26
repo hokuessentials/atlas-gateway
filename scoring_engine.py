@@ -2,6 +2,7 @@ from memory_engine import build_failure_memory
 from time_engine import apply_time_weight
 from priority_engine import apply_priority_boost
 from prediction_engine import estimate_success_probability
+from risk_engine import apply_risk_penalty
 
 def compute_decision_scores(session_data):
 
@@ -21,7 +22,8 @@ def compute_decision_scores(session_data):
         roi = float(roi_list[i]) if i < len(roi_list) else 0
         risk = float(risk_list[i]) if i < len(risk_list) else 0
         conf = float(conf_list[i]) if i < len(conf_list) else 0
-
+        risk = apply_risk_penalty(title, risk)
+        
         outcome = str(outcomes[i]).strip().lower() if i < len(outcomes) else ""
         prob = estimate_success_probability(title, decisions, outcomes)
 
