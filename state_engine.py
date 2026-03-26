@@ -75,8 +75,17 @@ def compute_decision_scores(session_data):
             conf = float(conf_list[i]) if i < len(conf_list) else 0
         except:
             conf = 0
+        
+        outcomes = session_data.get("outcome_list", [])
+        outcome = outcomes[i] if i < len(outcomes) else None
+        success_weight = 1
 
-        score = (roi * conf) - risk
+        if outcome == "success":
+        success_weight = 1.2
+        elif outcome == "failed":
+        success_weight = 0.5
+
+        score = ((roi * conf) - risk) * success_weight
 
         scored.append({
             "title": title,
