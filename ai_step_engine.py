@@ -1,7 +1,7 @@
 import os
-import openai
+from openai import OpenAI
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def generate_better_step(current_step):
@@ -10,7 +10,7 @@ def generate_better_step(current_step):
         return current_step
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
@@ -21,7 +21,7 @@ def generate_better_step(current_step):
             temperature=0.7
         )
 
-        improved = response["choices"][0]["message"]["content"].strip()
+        improved = response.choices[0].message.content.strip()
 
         return improved if improved else current_step
 
