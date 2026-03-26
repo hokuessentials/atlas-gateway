@@ -128,14 +128,15 @@ def complete_task():
 
 @app.route("/atlas/action", methods=["GET", "POST"])
 def atlas_action():
+
     if request.method == "GET":
         return jsonify({"message": "Use POST with JSON body"})
+
     try:
         input_data = request.get_json(force=True)
 
         session = load_session_from_sheet()
 
-        # attach active_state from input
         session["active_state"] = input_data.get("active_state", {})
 
         result = generate_intelligent_action(session)
