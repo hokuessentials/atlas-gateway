@@ -62,7 +62,7 @@ def generate_intelligent_action(session_data):
     execution_steps = generate_execution_sequence(best_title)
     execution_state = build_execution_state(
     execution_steps,
-    active_state.get("completed_steps": ["Check supplier pricing"])
+    active_state.get("completed_steps", [])
     )
 
     # FORCE SWITCH
