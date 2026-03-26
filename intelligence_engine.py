@@ -1,5 +1,6 @@
 from scoring_engine import compute_decision_scores, select_best_decision
 from reasoning_engine import generate_reason
+from sequence_engine import generate_execution_sequence
 
 def generate_intelligent_action(session_data):
 
@@ -54,6 +55,7 @@ def generate_intelligent_action(session_data):
         best = sorted_decisions[0]
 
     best_title = best["title"]
+    execution_steps = generate_execution_sequence(best_title)
     best_score = best["score"]
 
     # FORCE SWITCH
@@ -62,6 +64,7 @@ def generate_intelligent_action(session_data):
             "action": f"Switch due to failure: {best_title}",
             "priority": "high",
             "reason": generate_reason(last_decision, best_title, last_outcome)
+            "execution_plan": execution_steps
         }
 
     # NORMAL SWITCH
