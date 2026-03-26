@@ -130,13 +130,13 @@ def generate_intelligent_action(session_data):
     sorted_decisions = sorted(filtered if filtered else scored, key=lambda x: x["score"], reverse=True)
 
     best = None
-    for d in sorted_decisions:
-        if d["title"] != last_decision:
-           best = d
-           break
+        for d in sorted_decisions:
+           if d["title"] != last_decision:
+              best = d
+                break
 
         if not best:
-    best = sorted_decisions[0]
+           best = sorted_decisions[0]
 
     best_title = best["title"]
     best_score = best["score"]
