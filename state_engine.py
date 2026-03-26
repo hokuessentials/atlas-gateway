@@ -1,3 +1,4 @@
+import requests
 import datetime
 
 print("🔥 LEVEL 2 ENGINE ACTIVE")
@@ -17,161 +18,119 @@ ACTIVE_STATE = {
 }
 
 # ================================
-# RESET STATE
+# SAFE SCORING ENGINE
 # ================================
-def reset_state():
-    ACTIVE_STATE.clear()
-    ACTIVE_STATE.update({
-        "phase": "BUILD",
-        "current_goal": {},
-        "current_task": {},
-        "next_best_action": {},
-        "blockers": [],
-        "focus_module": None,
-        "execution_mode": "idle",
-        "last_updated": None
-    })
+def compute_score(roi, risk, confidence):
+    try:
+        roi = float(roi or 0)
+        risk = float(risk or 0)
+        confidence = float(confidence or 0)
+
+        score = (roi * 2 * confidence) - (risk * 3)
+        return round(score, 3)
+
+    except:
+        return 0
 
 # ================================
-# MODULE DETECTION
+# SAFE BEST DECISION SELECTOR
 # ================================
-def detect_module_from_title(title):
-
-    t = title.lower()
-
-    if "supplier" in t:
-        return "supplier"
-    elif "product" in t:
-        return "product"
-    elif "finance" in t:
-        return "finance"
-    elif "marketing" in t:
-        return "marketing"
-
-    return "general"
-
-# ================================
-# SCORING ENGINE
-# ================================
-def compute_decision_scores(session_data):
+def select_best_decision(session_data):
 
     decisions = session_data.get("decisions", [])
     roi_list = session_data.get("roi_list", [])
     risk_list = session_data.get("risk_list", [])
     conf_list = session_data.get("confidence_list", [])
 
-    scored = []
-    total = len(decisions)
+    best = None
+    best_score = -999
 
-    if total == 0:
-        return []
+    for i in range(len(decisions)):
 
-    for i in range(total):
+        roi = roi_list[i] if i < len(roi_list) else 0
+        risk = risk_list[i] if i < len(risk_list) else 0
+        conf = conf_list[i] if i < len(conf_list) else 0
 
-        title = str(decisions[i])
+        score = compute_score(roi, risk, conf)
 
-        roi = float(roi_list[i]) if i < len(roi_list) else 0
-        risk = float(risk_list[i]) if i < len(risk_list) else 0
-        conf = float(conf_list[i]) if i < len(conf_list) else 0
+        if score > best_score:
+            best_score = score
+            best = decisions[i]
 
-        # NORMALIZATION
-        roi_norm = roi / 20
-        risk_norm = risk
-        conf_norm = conf
-
-        # RECENCY
-        recency_weight = (i + 1) / total
-
-        # FINAL SCORE
-        score = (roi_norm * 5 * conf_norm) - (risk_norm * 3) + (recency_weight * 2)
-
-        scored.append({
-            "title": title,
-            "score": round(score, 3),
-            "roi": roi,
-            "risk": risk,
-            "confidence": conf,
-            "recency": round(recency_weight, 3)
-        })
-
-    return scored
+    return best, best_score
 
 # ================================
-# DECISION SELECTOR
-# ================================
-def select_best_decision(scored):
-
-    if not scored:
-        return None
-
-    valid = [d for d in scored if isinstance(d.get("score"), (int, float))]
-
-    if not valid:
-        return None
-
-    best = sorted(valid, key=lambda x: x["score"], reverse=True)[0]
-
-    return best
-
-# ================================
-# INTELLIGENCE ENGINE
+# INTELLIGENT ACTION ENGINE
 # ================================
 def generate_intelligent_action(session_data):
 
+    module_count = session_data.get("module_count", {})
     decisions = session_data.get("decisions", [])
 
     if not decisions:
         return {
             "action": "Start by logging a decision",
             "priority": "high",
-            "reason": "No decision data available"
+            "reason": "No decisions found"
         }
 
     last_decision = decisions[-1]
 
+    # 🔥 NEW: scoring integration (SAFE)
     try:
-        scored = compute_decision_scores(session_data)
-        best = select_best_decision(scored)
-
+        best_decision, best_score = select_best_decision(session_data)
     except Exception as e:
-        print("🔥 INTELLIGENCE ERROR:", e)
-        return {
-            "action": f"Continue: {last_decision}",
-            "priority": "medium",
-            "reason": "Error fallback"
-        }
+        print("⚠️ scoring failed:", e)
+        best_decision = last_decision
+        best_score = 0
 
-    if not best:
-        return {
-            "action": f"Continue: {last_decision}",
-            "priority": "medium",
-            "reason": "No valid scoring data"
-        }
+    # ================================
+    # MODULE LOGIC (OLD SYSTEM SAFE)
+    # ================================
+    if module_count:
 
-    best_title = best["title"]
-    best_score = best["score"]
+        focus_module = max(module_count, key=module_count.get)
 
-    # BEST = CURRENT
-    if best_title == last_decision:
-        return {
-            "action": f"Execute immediately: {last_decision}",
-            "priority": "high",
-            "reason": f"Best decision (score={best_score}) with strong ROI & confidence"
-        }
+        if focus_module == "Supplier":
+            return {
+                "action": "Contact supplier → confirm price → negotiate terms",
+                "priority": "high",
+                "reason": "Supplier workflow continuation"
+            }
 
-    # BETTER OPTION EXISTS
-    if best_score > 6:
+        elif focus_module == "Product":
+            return {
+                "action": "Finalize product specs → validate quality → prepare listing",
+                "priority": "high",
+                "reason": "Product development stage"
+            }
+
+        elif focus_module == "Finance":
+            return {
+                "action": "Update cost sheet → calculate margins → validate pricing",
+                "priority": "high",
+                "reason": "Financial validation"
+            }
+
+        elif focus_module == "Marketing":
+            return {
+                "action": "Plan creatives → launch ads → monitor performance",
+                "priority": "high",
+                "reason": "Marketing execution"
+            }
+
+    # 🔥 FALLBACK WITH INTELLIGENCE
+    if best_decision and best_decision != last_decision:
         return {
-            "action": f"Execute immediately: {best_title}",
+            "action": f"Execute immediately: {best_decision}",
             "priority": "high",
             "reason": f"Higher value decision detected (score={best_score})"
         }
 
-    # CONTINUE FLOW
     return {
-        "action": f"Continue execution: {last_decision}",
+        "action": f"Continue execution after: {last_decision}",
         "priority": "medium",
-        "reason": f"Maintain workflow (score={best_score})"
+        "reason": f"Current workflow stable (score={best_score})"
     }
 
 # ================================
@@ -179,8 +138,9 @@ def generate_intelligent_action(session_data):
 # ================================
 def compute_execution_mode():
 
-    if ACTIVE_STATE.get("blockers") and len(ACTIVE_STATE["blockers"]) > 0:
-        return "stuck"
+    if ACTIVE_STATE.get("blockers"):
+        if len(ACTIVE_STATE["blockers"]) > 0:
+            return "stuck"
 
     task = ACTIVE_STATE.get("current_task")
 
@@ -193,11 +153,15 @@ def compute_execution_mode():
     return "review"
 
 # ================================
-# MAIN ENGINE
+# MAIN STATE UPDATE
 # ================================
 def update_state(session_data, triggers):
 
-    reset_state()
+    global ACTIVE_STATE
+
+    ACTIVE_STATE["current_task"] = {}
+    ACTIVE_STATE["focus_module"] = None
+    ACTIVE_STATE["next_best_action"] = {}
 
     decisions = session_data.get("decisions", [])
     module_count = session_data.get("module_count", {})
@@ -207,15 +171,11 @@ def update_state(session_data, triggers):
         ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return
 
-    # MODULE DETECTION
     if module_count:
-        ACTIVE_STATE["focus_module"] = max(module_count, key=module_count.get).lower()
-    else:
-        ACTIVE_STATE["focus_module"] = detect_module_from_title(decisions[-1])
+        ACTIVE_STATE["focus_module"] = max(module_count, key=module_count.get)
 
     last_decision = decisions[-1]
 
-    # CURRENT TASK
     ACTIVE_STATE["current_task"] = {
         "task_id": f"T-{int(datetime.datetime.now().timestamp())}",
         "title": last_decision,
@@ -224,49 +184,8 @@ def update_state(session_data, triggers):
         "priority": "high"
     }
 
-    # INTELLIGENCE
+    # 🔥 SAFE CALL
     ACTIVE_STATE["next_best_action"] = generate_intelligent_action(session_data)
 
-    # EXECUTION MODE
     ACTIVE_STATE["execution_mode"] = compute_execution_mode()
-    ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-# ================================
-# BLOCKERS
-# ================================
-def add_blocker(description, impact="high"):
-    ACTIVE_STATE["blockers"].append({
-        "type": "manual",
-        "description": description,
-        "impact": impact
-    })
-
-def clear_blockers():
-    ACTIVE_STATE["blockers"] = []
-
-def complete_current_task():
-
-    if not ACTIVE_STATE["current_task"]:
-        return
-
-    last_task = ACTIVE_STATE["current_task"]["title"]
-    last_module = ACTIVE_STATE["current_task"]["module"]
-
-    ACTIVE_STATE["current_task"] = {
-        "task_id": f"T-{int(datetime.datetime.now().timestamp())}",
-        "title": f"Next step after: {last_task}",
-        "module": last_module,
-        "status": "in_progress",
-        "priority": "high"
-    }
-
-    ACTIVE_STATE["focus_module"] = last_module
-
-    ACTIVE_STATE["next_best_action"] = {
-        "action": f"Continue: {last_task}",
-        "reason": "Auto continuation",
-        "priority": "high"
-    }
-
-    ACTIVE_STATE["execution_mode"] = "active"
     ACTIVE_STATE["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
