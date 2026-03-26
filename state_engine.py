@@ -1,12 +1,4 @@
 import datetime
-import state_engine
-
-update_state = state_engine.update_state
-add_blocker = state_engine.add_blocker
-clear_blockers = state_engine.clear_blockers
-complete_current_task = state_engine.complete_current_task
-ACTIVE_STATE = state_engine.ACTIVE_STATE
-
 ACTIVE_STATE = {
     "phase": "BUILD",
     "current_goal": {},
