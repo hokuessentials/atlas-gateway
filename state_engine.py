@@ -23,6 +23,7 @@ def reset_state():
         "execution_mode": "idle",
         "last_updated": None
     })
+print("🔥 REQUEST HIT:", datetime.datetime.now())
 
 # ================================
 # MODULE DETECTION (NEW FIX)
