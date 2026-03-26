@@ -116,7 +116,12 @@ def generate_intelligent_action(session_data):
             "reason": "No scoring data"
         }
 
-    current_score = scored[-1]["score"]
+    current_score = 0
+
+    for d in scored:
+        if d["title"] == last_decision:
+        current_score = d["score"]
+          break
 
     # REMOVE failed decision from candidates
     filtered = []
