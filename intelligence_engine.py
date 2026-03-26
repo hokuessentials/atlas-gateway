@@ -4,6 +4,7 @@ from sequence_engine import generate_execution_sequence
 from execution_engine import build_execution_state
 from step_decision_engine import decide_step_action
 from plan_adjustment_engine import adjust_execution_plan
+from step_replacement_engine import replace_failed_step
 
 
 def generate_intelligent_action(session_data):
@@ -104,6 +105,11 @@ def generate_intelligent_action(session_data):
     )
     adjusted_plan = adjust_execution_plan(
         execution_steps,
+        execution_state,
+        step_decision
+    )
+    adjusted_plan = replace_failed_step(
+        adjusted_plan,
         execution_state,
         step_decision
     )
