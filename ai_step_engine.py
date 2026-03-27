@@ -50,7 +50,7 @@ Step:
                 return current_step
 
         # ✅ CLEAN OUTPUT (VERY IMPORTANT)
-        output = output.split("\n")[0]  # take only first line
+        output = output.split(".")[0] + "."
 
         return output
 
