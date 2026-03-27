@@ -176,7 +176,7 @@ def complete_task():
 
 @app.route("/atlas/action", methods=["GET", "POST"])
 def atlas_action():
-
+    
     if request.method == "GET":
         return jsonify({"message": "Use POST with JSON body"})
 
@@ -196,7 +196,8 @@ def atlas_action():
         else:
             active_state = input_data.get("active_state", {})
         
-        print("🔥 LOADED ACTIVE STATE:", active_state)
+        print("🔥 RAW SAVED STATE:", saved_state)
+        print("🔥 FINAL ACTIVE STATE:", active_state)
 
         # Load session
         session = load_session_from_sheet()
