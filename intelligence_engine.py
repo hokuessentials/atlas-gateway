@@ -95,7 +95,7 @@ def generate_intelligent_action(session_data):
     # EXECUTION PLAN
     # =========================
 
-    if existing_state and existing_state.get("current_step"):
+    if existing_state and existing_state.get("current_step") and existing_state.get("execution_plan"):
         execution_steps = existing_state.get("execution_plan", [])
     else:
         execution_steps = generate_execution_sequence(best_title)
@@ -107,7 +107,7 @@ def generate_intelligent_action(session_data):
     # 🔥 MEMORY-FIRST STATE
     # =========================
 
-    if existing_state and existing_state.get("current_step"):
+    if existing_state and existing_state.get("current_step") and existing_state.get("execution_plan"):
         execution_state = existing_state
     else:
         execution_state = build_execution_state(
@@ -135,7 +135,7 @@ def generate_intelligent_action(session_data):
     )
 
     # 👉 ONLY rebuild if NO memory
-    if not (existing_state and existing_state.get("current_step")):
+    if not (existing_state and existing_state.get("current_step") and "execution_plan" in existing_state):
         execution_state = build_execution_state(
             adjusted_plan,
             completed_steps
