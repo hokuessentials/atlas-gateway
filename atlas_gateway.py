@@ -27,13 +27,28 @@ def save_state_to_sheet(active_state):
 
         print("🔥 SAVING STATE:", active_state)
 
-        resp = requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+        resp = None
 
-        print("🔥 SAVE RESPONSE:", resp.text)
+        # 🔁 Retry mechanism (2 attempts)
+        for attempt in range(2):
+            try:
+                resp = requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+
+                # ✅ Validate response
+                if resp and resp.status_code == 200:
+                    print("🔥 SAVE RESPONSE:", resp.text)
+                    return
+                else:
+                    print("⚠️ SAVE FAILED STATUS:", resp.status_code if resp else "No response")
+
+            except Exception as retry_error:
+                print(f"⚠️ RETRY {attempt + 1} FAILED:", retry_error)
+
+        # ❌ If all retries fail
+        print("❌ STATE SAVE FAILED AFTER RETRIES")
 
     except Exception as e:
         print("STATE SAVE ERROR:", e)
-
 
 def load_state_from_sheet():
     try:
