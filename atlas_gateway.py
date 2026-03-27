@@ -27,7 +27,7 @@ def save_state_to_sheet(active_state):
 
         print("🔥 SAVING STATE:", active_state)
 
-        resp = requests.post(APPS_SCRIPT_URL, json=payload, timeout=5)
+        resp = requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
 
         print("🔥 SAVE RESPONSE:", resp.text)
 
