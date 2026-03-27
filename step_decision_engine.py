@@ -4,7 +4,8 @@ def decide_step_action(current_step, step_updates):
         return {
             "decision": "no_action",
             "reason": "No current step",
-            "decision_quality": "low"
+            "decision_quality": "low",
+            "decision_score": 0.0
         }
 
     # SAFETY
@@ -23,43 +24,57 @@ def decide_step_action(current_step, step_updates):
     )
 
     # =========================
-    # LEVEL 3 — PHASE 5 LOGIC
+    # LEVEL 3 — PHASE 6 LOGIC
     # =========================
 
-    # STRONG FAILURE → IMPROVE (HIGH QUALITY)
+    decision = None
+    reason = ""
+    quality = "low"
+    score = 0.2  # default for continue
+
+    # STRONG FAILURE → IMPROVE (HIGH)
     if failure_count >= 2:
-        return {
-            "decision": "improve",
-            "reason": "Multiple failures, improve step",
-            "decision_quality": "high"
-        }
+        decision = "improve"
+        reason = "Multiple failures, improve step"
+        quality = "high"
+        score = 0.9
 
     # SINGLE FAILURE
-    if failure_count == 1:
+    elif failure_count == 1:
         if attempt_count >= 3:
-            return {
-                "decision": "improve",
-                "reason": "Failure with repeated attempts, improving step",
-                "decision_quality": "medium"
-            }
+            decision = "improve"
+            reason = "Failure with repeated attempts, improving step"
+            quality = "medium"
+            score = 0.75
         else:
-            return {
-                "decision": "retry",
-                "reason": "Single failure, retry step",
-                "decision_quality": "low"
-            }
+            decision = "retry"
+            reason = "Single failure, retry step"
+            quality = "low"
+            score = 0.4
 
     # NO FAILURE
-    if failure_count == 0:
+    else:
         if attempt_count >= 4:
-            return {
-                "decision": "improve",
-                "reason": "Too many attempts without success, improving step",
-                "decision_quality": "low"
-            }
+            decision = "improve"
+            reason = "Too many attempts without success, improving step"
+            quality = "low"
+            score = 0.6
         else:
-            return {
-                "decision": "continue",
-                "reason": "Execution stable, continue",
-                "decision_quality": "low"
-            }
+            decision = "continue"
+            reason = "Execution stable, continue"
+            quality = "low"
+            score = 0.2
+
+    # 🔴 PRESSURE ADJUSTMENT
+    if attempt_count >= 4:
+        score += 0.05
+
+    # CAP SCORE
+    score = min(score, 1.0)
+
+    return {
+        "decision": decision,
+        "reason": reason,
+        "decision_quality": quality,
+        "decision_score": round(score, 2)
+    }
