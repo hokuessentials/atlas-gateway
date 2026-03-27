@@ -3,7 +3,8 @@ def decide_step_action(current_step, step_updates):
     if not current_step:
         return {
             "decision": "no_action",
-            "reason": "No current step"
+            "reason": "No current step",
+            "decision_quality": "low"
         }
 
     # SAFETY
@@ -22,14 +23,15 @@ def decide_step_action(current_step, step_updates):
     )
 
     # =========================
-    # LEVEL 3 — PHASE 4 LOGIC
+    # LEVEL 3 — PHASE 5 LOGIC
     # =========================
 
-    # STRONG FAILURE → IMPROVE
+    # STRONG FAILURE → IMPROVE (HIGH QUALITY)
     if failure_count >= 2:
         return {
             "decision": "improve",
-            "reason": "Multiple failures, improve step"
+            "reason": "Multiple failures, improve step",
+            "decision_quality": "high"
         }
 
     # SINGLE FAILURE
@@ -37,12 +39,14 @@ def decide_step_action(current_step, step_updates):
         if attempt_count >= 3:
             return {
                 "decision": "improve",
-                "reason": "Failure with repeated attempts, improving step"
+                "reason": "Failure with repeated attempts, improving step",
+                "decision_quality": "medium"
             }
         else:
             return {
                 "decision": "retry",
-                "reason": "Single failure, retry step"
+                "reason": "Single failure, retry step",
+                "decision_quality": "low"
             }
 
     # NO FAILURE
@@ -50,10 +54,12 @@ def decide_step_action(current_step, step_updates):
         if attempt_count >= 4:
             return {
                 "decision": "improve",
-                "reason": "Too many attempts without success, improving step"
+                "reason": "Too many attempts without success, improving step",
+                "decision_quality": "low"
             }
         else:
             return {
                 "decision": "continue",
-                "reason": "Execution stable, continue"
+                "reason": "Execution stable, continue",
+                "decision_quality": "low"
             }
