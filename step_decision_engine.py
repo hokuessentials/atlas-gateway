@@ -8,7 +8,8 @@ def decide_step_action(current_step, step_updates):
             "decision_score": 0.0,
             "decision_flag": "weak",
             "decision_filter": "review",
-            "execution_action": "hold"
+            "execution_action": "hold",
+            "context_signal": "fresh"
         }
 
     # SAFETY
@@ -27,7 +28,7 @@ def decide_step_action(current_step, step_updates):
     )
 
     # =========================
-    # BASE DECISION LOGIC
+    # BASE DECISION LOGIC (LEVEL 3)
     # =========================
 
     decision = None
@@ -65,16 +66,12 @@ def decide_step_action(current_step, step_updates):
             quality = "low"
             score = 0.2
 
-    # PRESSURE ADJUSTMENT
     if attempt_count >= 4:
         score += 0.05
 
     score = min(score, 1.0)
 
-    # =========================
-    # FLAG CALCULATION
-    # =========================
-
+    # FLAG
     if score >= 0.85:
         flag = "strong"
     elif score >= 0.6:
@@ -82,44 +79,46 @@ def decide_step_action(current_step, step_updates):
     else:
         flag = "weak"
 
-    # =========================
-    # PHASE 8 — CONTROLLED INFLUENCE
-    # =========================
-
+    # INFLUENCE
     if flag == "weak":
-
         if decision == "retry":
             decision = "improve"
             reason = "Weak retry detected, upgrading to improve"
-
         elif decision == "continue" and attempt_count >= 3:
             decision = "improve"
             reason = "Weak continue with repeated attempts, improving step"
 
-    # =========================
-    # PHASE 9 — DECISION FILTER
-    # =========================
-
+    # FILTER
     if flag == "weak" and decision in ["improve", "continue"]:
         decision_filter = "review"
     else:
         decision_filter = "pass"
 
-    # =========================
-    # PHASE 10 — EXECUTION CONTROL
-    # =========================
-
+    # EXECUTION CONTROL
     if flag == "strong":
         execution_action = "proceed"
-
     elif flag == "normal":
         execution_action = "proceed"
-
     elif flag == "weak" and decision_filter == "review":
         execution_action = "hold"
-
     else:
         execution_action = "proceed"
+
+    # =========================
+    # LEVEL 4 — CONTEXT SIGNAL
+    # =========================
+
+    if failure_count == 0 and attempt_count <= 1:
+        context = "fresh"
+
+    elif failure_count == 0 and attempt_count >= 2:
+        context = "progressing"
+
+    elif failure_count >= 1 and attempt_count <= 2:
+        context = "recovering"
+
+    else:
+        context = "stuck"
 
     return {
         "decision": decision,
@@ -128,5 +127,6 @@ def decide_step_action(current_step, step_updates):
         "decision_score": round(score, 2),
         "decision_flag": flag,
         "decision_filter": decision_filter,
-        "execution_action": execution_action
+        "execution_action": execution_action,
+        "context_signal": context
     }
