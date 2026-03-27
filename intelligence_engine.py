@@ -95,7 +95,10 @@ def generate_intelligent_action(session_data):
     # EXECUTION PLAN
     # =========================
 
-    execution_steps = generate_execution_sequence(best_title)
+    if existing_state and existing_state.get("current_step"):
+        execution_steps = existing_state.get("execution_plan", [])
+    else:
+        execution_steps = generate_execution_sequence(best_title)
 
     step_updates = active_state.get("step_updates", [])
     completed_steps = active_state.get("completed_steps", [])
@@ -175,6 +178,7 @@ def generate_intelligent_action(session_data):
             "reason": generate_reason(last_decision, best_title, last_outcome),
             "execution_plan": adjusted_plan,
             "execution_state": execution_state,
+            "execution_state": execution_state,
             "step_decision": step_decision
         }
 
@@ -185,6 +189,7 @@ def generate_intelligent_action(session_data):
             "reason": generate_reason(last_decision, best_title, last_outcome),
             "execution_plan": adjusted_plan,
             "execution_state": execution_state,
+            "execution_state": execution_state,
             "step_decision": step_decision
         }
 
@@ -193,6 +198,7 @@ def generate_intelligent_action(session_data):
         "priority": "high",
         "reason": "Maintain execution flow",
         "execution_plan": adjusted_plan,
+        "execution_state": execution_state,
         "execution_state": execution_state,
         "step_decision": step_decision
     }
