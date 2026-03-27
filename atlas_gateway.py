@@ -53,7 +53,7 @@ def load_state_from_sheet():
 # =========================
 # SESSION LOAD (EXISTING)
 # =========================
-print("🔥 LOADED ACTIVE STATE:", active_state)
+
 def load_session_from_sheet():
 
     session_data = {
@@ -191,7 +191,9 @@ def atlas_action():
             active_state = saved_state
         else:
             active_state = input_data.get("active_state", {})
-
+        
+        print("🔥 LOADED ACTIVE STATE:", active_state)
+        
         # Load session
         session = load_session_from_sheet()
 
