@@ -7,7 +7,8 @@ def decide_step_action(current_step, step_updates):
             "decision_quality": "low",
             "decision_score": 0.0,
             "decision_flag": "weak",
-            "decision_filter": "review"
+            "decision_filter": "review",
+            "execution_action": "hold"
         }
 
     # SAFETY
@@ -104,11 +105,28 @@ def decide_step_action(current_step, step_updates):
     else:
         decision_filter = "pass"
 
+    # =========================
+    # PHASE 10 — EXECUTION CONTROL
+    # =========================
+
+    if flag == "strong":
+        execution_action = "proceed"
+
+    elif flag == "normal":
+        execution_action = "proceed"
+
+    elif flag == "weak" and decision_filter == "review":
+        execution_action = "hold"
+
+    else:
+        execution_action = "proceed"
+
     return {
         "decision": decision,
         "reason": reason,
         "decision_quality": quality,
         "decision_score": round(score, 2),
         "decision_flag": flag,
-        "decision_filter": decision_filter
+        "decision_filter": decision_filter,
+        "execution_action": execution_action
     }
