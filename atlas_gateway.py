@@ -25,7 +25,7 @@ def save_state_to_sheet(active_state):
             "action": "save_state",
             "data": active_state
         }
-        requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+        requests.post(APPS_SCRIPT_URL, json=payload, timeout=3)
     except Exception as e:
         print("STATE SAVE ERROR:", e)
 
@@ -184,7 +184,11 @@ def atlas_action():
         input_data = request.get_json(force=True)
 
         # 🔵 LOAD MEMORY STATE FIRST
-        saved_state = load_state_from_sheet()
+        try:
+            saved_state = load_state_from_sheet()
+        except Exception as e:
+            print("STATE LOAD FAIL:", e)
+            saved_state = {}
 
         # 🔥 FORCE MEMORY PRIORITY
         if saved_state and isinstance(saved_state, dict):
@@ -193,7 +197,7 @@ def atlas_action():
             active_state = input_data.get("active_state", {})
         
         print("🔥 LOADED ACTIVE STATE:", active_state)
-        
+
         # Load session
         session = load_session_from_sheet()
 
@@ -204,12 +208,15 @@ def atlas_action():
 
         # 🔵 SAVE UPDATED STATE
         if result.get("execution_state"):
-            save_state_to_sheet({
-                "current_step": result.get("execution_state", {}).get("current_step"),
-                "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
-                "step_updates": result.get("execution_state", {}).get("step_updates", []),
-                "execution_plan": result.get("execution_plan", [])
-            })
+            try:
+                save_state_to_sheet({
+                    "current_step": result.get("execution_state", {}).get("current_step"),
+                    "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
+                    "step_updates": result.get("execution_state", {}).get("step_updates", []),
+                    "execution_plan": result.get("execution_plan", [])
+                })
+            except Exception as e:
+                print("STATE SAVE FAIL:", e)
 
         return jsonify({
             "status": "success",
