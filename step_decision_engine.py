@@ -23,26 +23,41 @@ def decide_step_action(current_step, step_updates):
 
     # LEVEL 3 — PHASE 2 LOGIC
 
-    if failure_count == 0 and attempt_count >= 4:
-        return {
-            "decision": "improve",
-            "reason": "Too many attempts without success, improving step"
-        }
+    # =========================
+# LEVEL 3 — PHASE 3 LOGIC
+# =========================
 
-    if failure_count == 0:
-        return {
-            "decision": "continue",
-            "reason": "No failures, continue execution"
-        }
+# 🔴 STRONG FAILURE → IMPROVE
+if failure_count >= 2:
+    return {
+        "decision": "improve",
+        "reason": "Multiple failures, improve step"
+    }
 
-    elif failure_count == 1:
-        return {
-            "decision": "retry",
-            "reason": "One failure, retry step"
-        }
+# 🟡 UNSTABLE PATTERN → IMPROVE (NEW)
 
-    else:
-        return {
-            "decision": "improve",
-            "reason": "Multiple failures, improve step"
-        }
+if failure_count == 1 and attempt_count >= 3:
+    return {
+        "decision": "improve",
+        "reason": "Unstable execution pattern detected, improving step"
+    }
+
+# 🟢 SINGLE FAILURE → RETRY
+if failure_count == 1:
+    return {
+        "decision": "retry",
+        "reason": "One failure, retry step"
+    }
+
+# 🔴 LOOP WITHOUT FAILURE → IMPROVE
+if failure_count == 0 and attempt_count >= 4:
+    return {
+        "decision": "improve",
+        "reason": "Too many attempts without success, improving step"
+    }
+
+# ✅ DEFAULT
+return {
+    "decision": "continue",
+    "reason": "Execution stable, continue"
+}
