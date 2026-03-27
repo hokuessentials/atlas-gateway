@@ -1,13 +1,13 @@
 from openai import OpenAI
 import os
 
-client = OpenAI()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_better_step(current_step):
 
-    print("🔥 FUNCTION ENTERED")
-
-    if not current_step:
+    # ✅ STEP 1: SIMPLE GUARD (ADD HERE)
+    if not current_step or len(current_step) > 300:
+        print("⚠️ SKIPPING AI CALL (invalid or too long)")
         return current_step
 
     try:
@@ -20,20 +20,17 @@ def generate_better_step(current_step):
 
         print("🔥 AFTER API CALL")
 
-        if response.output and len(response.output) > 0:
-            content = response.output[0].content
+        # ✅ SAFE RESPONSE EXTRACTION
+        if hasattr(response, "output_text") and response.output_text:
+            return response.output_text.strip()
 
-            if content and len(content) > 0 and hasattr(content[0], "text"):
-                improved = content[0].text.strip()
-            else:
-                improved = current_step
-        else:
-            improved = current_step
-
-        print("🔥 AI RESPONSE:", improved)
-
-        return improved
+        try:
+            return response.output[0].content[0].text.strip()
+        except:
+            return current_step
 
     except Exception as e:
         print("🚨 AI ERROR:", str(e))
-        return f"Improve execution of: {current_step}"
+
+        # ✅ FAIL SAFE
+        return current_step
