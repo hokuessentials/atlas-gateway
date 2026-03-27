@@ -9,21 +9,21 @@ def replace_failed_step(execution_plan, execution_state, step_decision):
     new_plan = []
 
     current_step = execution_state.get("current_step", "")
+    decision = step_decision.get("decision", "")
 
     for step in execution_plan:
 
-        # ✅ ONLY IMPROVE CURRENT STEP
-        if step == current_step:
+        # ✅ ONLY IMPROVE IF STEP FAILED OR RETRY
+        if step == current_step and decision in ["retry", "failed"]:
 
-            # ✅ GUARD: skip already optimized steps
-            if len(step.split()) < 6 or "improve execution" in step.lower():
+            # 🚨 prevent loop
+            if "improve execution" in step.lower():
                 new_plan.append(step)
             else:
                 improved_step = generate_better_step(step)
                 new_plan.append(improved_step)
 
         else:
-            # ✅ keep other steps unchanged
             new_plan.append(step)
 
     return new_plan
