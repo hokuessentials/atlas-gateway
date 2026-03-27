@@ -23,18 +23,16 @@ def generate_better_step(current_step):
         response = client.responses.create(
             model="gpt-4o-mini",
             input=f"""
-You are an execution optimizer.
+Improve this execution step:
 
-Rewrite the following step into ONE clear, short, actionable step.
+{current_step}
 
 Rules:
+- Keep it short (max 8–10 words)
+- Make it actionable
+- Be specific
 - Output ONLY one sentence
 - No explanation
-- No multiple options
-- No bullet points
-
-Step:
-{current_step}
 """
         )
 
@@ -50,7 +48,7 @@ Step:
                 return current_step
 
         # ✅ CLEAN OUTPUT (VERY IMPORTANT)
-        output = output.split(".")[0] + "."
+        output = output.split(".")[0].strip() + "."
 
         return output
 
