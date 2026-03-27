@@ -6,7 +6,8 @@ def decide_step_action(current_step, step_updates):
             "reason": "No current step",
             "decision_quality": "low",
             "decision_score": 0.0,
-            "decision_flag": "weak"
+            "decision_flag": "weak",
+            "decision_filter": "review"
         }
 
     # SAFETY
@@ -25,7 +26,7 @@ def decide_step_action(current_step, step_updates):
     )
 
     # =========================
-    # BASE DECISION LOGIC (PHASE 6)
+    # BASE DECISION LOGIC
     # =========================
 
     decision = None
@@ -70,7 +71,7 @@ def decide_step_action(current_step, step_updates):
     score = min(score, 1.0)
 
     # =========================
-    # FLAG CALCULATION (PHASE 7)
+    # FLAG CALCULATION
     # =========================
 
     if score >= 0.85:
@@ -86,20 +87,28 @@ def decide_step_action(current_step, step_updates):
 
     if flag == "weak":
 
-        # weak retry → improve
         if decision == "retry":
             decision = "improve"
             reason = "Weak retry detected, upgrading to improve"
 
-        # weak continue + stuck → improve
         elif decision == "continue" and attempt_count >= 3:
             decision = "improve"
             reason = "Weak continue with repeated attempts, improving step"
+
+    # =========================
+    # PHASE 9 — DECISION FILTER
+    # =========================
+
+    if flag == "weak" and decision in ["improve", "continue"]:
+        decision_filter = "review"
+    else:
+        decision_filter = "pass"
 
     return {
         "decision": decision,
         "reason": reason,
         "decision_quality": quality,
         "decision_score": round(score, 2),
-        "decision_flag": flag
+        "decision_flag": flag,
+        "decision_filter": decision_filter
     }
