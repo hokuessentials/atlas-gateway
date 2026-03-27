@@ -9,14 +9,19 @@ def replace_failed_step(execution_plan, execution_state, step_decision):
     new_plan = []
 
     current_step = execution_state.get("current_step", "")
-    decision = step_decision.get("decision", "")
+    decision = (step_decision or {}).get("decision", "").lower()
 
     for step in execution_plan:
 
-        # ✅ ONLY IMPROVE IF STEP FAILED OR RETRY
+        # ✅ STRICT CONDITION
         if step == current_step and decision in ["retry", "failed"]:
 
-            # 🚨 prevent loop
+            print("🔥 AI TRIGGERED FOR STEP:", step)
+            print("STEP:", step)
+            print("CURRENT:", current_step)
+            print("DECISION:", decision)
+
+            # loop protection
             if "improve execution" in step.lower():
                 new_plan.append(step)
             else:
