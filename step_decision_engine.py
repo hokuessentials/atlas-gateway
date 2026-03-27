@@ -19,20 +19,37 @@ def decide_step_action(current_step, step_updates):
     # 🧠 LEVEL 3 — PHASE 1 LOGIC
     # =========================
 
+    # ✅ ATTEMPT COUNT (NEW — CONTROLLED)
+attempt_count = sum(
+    1 for update in step_updates
+    if update.get("step") == current_step
+)
+
+# =========================
+# 🧠 LEVEL 3 — PHASE 2 LOGIC
+# =========================
+
+# 🔴 LOOP BREAKER (NO FAILURE BUT STUCK)
+    if failure_count == 0 and attempt_count >= 4:
+        return {
+        "decision": "improve",
+        "reason": "Too many attempts without success, improving step"
+        }
+
     if failure_count == 0:
         return {
-            "decision": "continue",
-            "reason": "No failures, continue execution"
+        "decision": "continue",
+        "reason": "No failures, continue execution"
         }
 
     elif failure_count == 1:
         return {
-            "decision": "retry",
-            "reason": "One failure, retry step"
+        "decision": "retry",
+        "reason": "One failure, retry step"
         }
 
     else:
         return {
-            "decision": "improve",
-            "reason": "Multiple failures, improve step"
+        "decision": "improve",
+        "reason": "Multiple failures, improve step"
         }
