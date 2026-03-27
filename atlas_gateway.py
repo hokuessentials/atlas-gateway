@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import requests
 import json
+import time
 from intelligence_engine import generate_intelligent_action
 import state_engine
 
@@ -15,7 +16,7 @@ app = Flask(__name__)
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
 
 # =========================
-# 🔵 MEMORY LAYER (PHASE 1)
+# 🔵 MEMORY LAYER
 # =========================
 
 def save_state_to_sheet(active_state):
@@ -27,14 +28,10 @@ def save_state_to_sheet(active_state):
 
         print("🔥 SAVING STATE:", active_state)
 
-        resp = None
-
-        # 🔁 Retry mechanism (2 attempts)
         for attempt in range(2):
             try:
                 resp = requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
 
-                # ✅ Validate response
                 if resp and resp.status_code == 200:
                     print("🔥 SAVE RESPONSE:", resp.text)
                     return
@@ -44,11 +41,11 @@ def save_state_to_sheet(active_state):
             except Exception as retry_error:
                 print(f"⚠️ RETRY {attempt + 1} FAILED:", retry_error)
 
-        # ❌ If all retries fail
         print("❌ STATE SAVE FAILED AFTER RETRIES")
 
     except Exception as e:
         print("STATE SAVE ERROR:", e)
+
 
 def load_state_from_sheet():
     try:
@@ -69,7 +66,6 @@ def load_state_from_sheet():
 
         state = data.get("active_state", {})
 
-        # Handle stringified JSON
         if isinstance(state, str):
             try:
                 state = json.loads(state)
@@ -83,7 +79,7 @@ def load_state_from_sheet():
         return {}
 
 # =========================
-# SESSION LOAD (EXISTING)
+# SESSION LOAD
 # =========================
 
 def load_session_from_sheet():
@@ -132,12 +128,7 @@ def load_session_from_sheet():
             val = r.get("Outcome_Status") or ""
             session_data["outcome_list"].append(str(val).strip().lower())
 
-        # Reverse once
         session_data["decisions"].reverse()
-        session_data["roi_list"].reverse()
-        session_data["risk_list"].reverse()
-        session_data["confidence_list"].reverse()
-        session_data["outcome_list"].reverse()
 
     except Exception as e:
         print("SESSION ERROR:", e)
@@ -145,7 +136,7 @@ def load_session_from_sheet():
     return session_data
 
 # =========================
-# ROUTES
+# ROUTES (UNCHANGED)
 # =========================
 
 @app.route("/")
@@ -203,26 +194,18 @@ def complete_task():
     return jsonify({"status": "task_completed"})
 
 # =========================
-# MAIN INTELLIGENCE ROUTE
+# 🔥 MAIN ENGINE (UPDATED)
 # =========================
 
-@app.route("/atlas/action", methods=["GET", "POST"])
+@app.route("/atlas/action", methods=["POST"])
 def atlas_action():
-
-    if request.method == "GET":
-        return jsonify({"message": "Use POST with JSON body"})
 
     try:
         input_data = request.get_json(force=True)
 
         # 🔵 LOAD MEMORY
-        try:
-            saved_state = load_state_from_sheet()
-        except Exception as e:
-            print("STATE LOAD FAIL:", e)
-            saved_state = {}
+        saved_state = load_state_from_sheet()
 
-        # 🔥 MEMORY PRIORITY
         if saved_state and isinstance(saved_state, dict):
             active_state = saved_state
         else:
@@ -231,30 +214,45 @@ def atlas_action():
         print("🔥 RAW SAVED STATE:", saved_state)
         print("🔥 FINAL ACTIVE STATE:", active_state)
 
-        # Load session
+        # 🔥 SESSION ENGINE (PHASE 1)
+
         session = load_session_from_sheet()
+
+        memory_session_id = active_state.get("session_id")
+        sheet_session_id = session.get("session_id")
+
+        if memory_session_id:
+            final_session_id = memory_session_id
+        elif sheet_session_id:
+            final_session_id = sheet_session_id
+        else:
+            final_session_id = f"S-{int(time.time())}"
+
+        # 🔥 FORCE SYNC
+        session["session_id"] = final_session_id
+        active_state["session_id"] = final_session_id
+
+        # Attach state
         session["active_state"] = active_state
 
-        # Run intelligence
+        # 🧠 Run intelligence
         result = generate_intelligent_action(session)
 
         # 🔵 SAVE MEMORY
         if result.get("execution_state"):
-            try:
-                state = {
-                    "current_step": result.get("execution_state", {}).get("current_step"),
-                    "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
-                    "step_updates": result.get("execution_state", {}).get("step_updates", []),
-                    "execution_plan": result.get("execution_plan", [])
-                }
+            state = {
+                "session_id": final_session_id,
+                "current_step": result.get("execution_state", {}).get("current_step"),
+                "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
+                "step_updates": result.get("execution_state", {}).get("step_updates", []),
+                "execution_plan": result.get("execution_plan", [])
+            }
 
-                save_state_to_sheet(state)
-
-            except Exception as e:
-                print("STATE SAVE FAIL:", e)
+            save_state_to_sheet(state)
 
         return jsonify({
             "status": "success",
+            "session_id": final_session_id,
             "result": result
         })
 
@@ -265,8 +263,6 @@ def atlas_action():
             "message": str(e)
         })
 
-# =========================
-# RUN SERVER
 # =========================
 
 if __name__ == "__main__":
