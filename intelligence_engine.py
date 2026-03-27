@@ -34,23 +34,23 @@ def generate_intelligent_action(session_data):
     )
     if has_memory:
 
-    execution_state = existing_state
-    execution_steps = existing_state.get("execution_plan", [])
-    step_updates = existing_state.get("step_updates", [])
+        execution_state = existing_state
+        execution_steps = existing_state.get("execution_plan", [])
+        step_updates = existing_state.get("step_updates", [])
 
-    step_decision = decide_step_action(
-        execution_state.get("current_step"),
-        step_updates
-    )
+        step_decision = decide_step_action(
+            execution_state.get("current_step"),
+            step_updates
+        )
 
-    return {
-        "action": "Continue from memory",
-        "priority": "high",
-        "reason": "Resuming saved execution state",
-        "execution_plan": execution_steps,
-        "execution_state": execution_state,
-        "step_decision": step_decision
-    }
+        return {
+            "action": "Continue from memory",
+            "priority": "high",
+            "reason": "Resuming saved execution state",
+            "execution_plan": execution_steps,
+            "execution_state": execution_state,
+            "step_decision": step_decision
+        }
     if not decisions:
         execution_state = existing_state if existing_state.get("current_step") else build_execution_state([])
 
