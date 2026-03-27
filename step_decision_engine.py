@@ -5,7 +5,8 @@ def decide_step_action(current_step, step_updates):
             "decision": "no_action",
             "reason": "No current step",
             "decision_quality": "low",
-            "decision_score": 0.0
+            "decision_score": 0.0,
+            "decision_flag": "weak"
         }
 
     # SAFETY
@@ -24,13 +25,13 @@ def decide_step_action(current_step, step_updates):
     )
 
     # =========================
-    # LEVEL 3 — PHASE 6 LOGIC
+    # LEVEL 3 — PHASE 7 LOGIC
     # =========================
 
     decision = None
     reason = ""
     quality = "low"
-    score = 0.2  # default for continue
+    score = 0.2  # default
 
     # STRONG FAILURE → IMPROVE (HIGH)
     if failure_count >= 2:
@@ -65,16 +66,27 @@ def decide_step_action(current_step, step_updates):
             quality = "low"
             score = 0.2
 
-    # 🔴 PRESSURE ADJUSTMENT
+    # PRESSURE ADJUSTMENT
     if attempt_count >= 4:
         score += 0.05
 
-    # CAP SCORE
     score = min(score, 1.0)
+
+    # =========================
+    # DECISION FLAG (NEW)
+    # =========================
+
+    if score >= 0.85:
+        flag = "strong"
+    elif score >= 0.6:
+        flag = "normal"
+    else:
+        flag = "weak"
 
     return {
         "decision": decision,
         "reason": reason,
         "decision_quality": quality,
-        "decision_score": round(score, 2)
+        "decision_score": round(score, 2),
+        "decision_flag": flag
     }
