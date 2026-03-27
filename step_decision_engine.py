@@ -9,23 +9,27 @@ def decide_step_action(current_step, step_updates):
             "decision_flag": "weak",
             "decision_filter": "review",
             "execution_action": "hold",
-            "context_signal": "fresh"
+            "context_signal": "fresh",
+            "flow_signal": "stable"
         }
 
     # SAFETY
     step_updates = step_updates or []
 
+    # FILTER CURRENT STEP UPDATES
+    relevant_updates = [
+        u for u in step_updates
+        if u.get("step") == current_step
+    ]
+
     # FAILURE COUNT
     failure_count = sum(
-        1 for update in step_updates
-        if update.get("step") == current_step and update.get("status") == "failed"
+        1 for u in relevant_updates
+        if u.get("status") == "failed"
     )
 
     # ATTEMPT COUNT
-    attempt_count = sum(
-        1 for update in step_updates
-        if update.get("step") == current_step
-    )
+    attempt_count = len(relevant_updates)
 
     # =========================
     # BASE DECISION LOGIC
@@ -80,7 +84,7 @@ def decide_step_action(current_step, step_updates):
         flag = "weak"
 
     # =========================
-    # CONTEXT SIGNAL (Phase 1)
+    # CONTEXT SIGNAL
     # =========================
 
     if failure_count == 0 and attempt_count <= 1:
@@ -93,38 +97,51 @@ def decide_step_action(current_step, step_updates):
         context = "stuck"
 
     # =========================
-    # LEVEL 4 — CONTEXT INFLUENCE
+    # FLOW SIGNAL (NEW)
     # =========================
 
-    # recovering → soften improve
+    if attempt_count >= 3:
+        # check last 3 same-step updates
+        last_three = relevant_updates[-3:]
+        if len(last_three) == 3 and all(u.get("step") == current_step for u in last_three):
+            flow = "looping"
+        else:
+            flow = "stable"
+    else:
+        flow = "stable"
+
+    if failure_count == 0 and attempt_count >= 4:
+        flow = "stagnant"
+
+    if failure_count >= 2 and attempt_count >= 3:
+        flow = "volatile"
+
+    # =========================
+    # CONTEXT INFLUENCE
+    # =========================
+
     if context == "recovering" and decision == "improve" and flag == "weak":
         decision = "retry"
         reason = "Recovering state, reducing aggressive improvement"
 
-    # stuck → force action
     elif context == "stuck" and decision == "continue":
         decision = "improve"
         reason = "Stuck state detected, forcing improvement"
 
-    # progressing → avoid unnecessary change
     elif context == "progressing" and decision == "improve" and flag == "weak":
         decision = "continue"
         reason = "Progressing state, avoiding unnecessary improvement"
 
     # =========================
-    # PHASE 8 — CONTROLLED INFLUENCE
+    # PHASE 8 INFLUENCE (FIXED)
     # =========================
 
     if flag == "weak":
 
-        # 🔒 DO NOT OVERRIDE CONTEXT DOWNGRADE
         if decision == "retry" and context != "recovering":
-          decision = "improve"
-          reason = "Weak retry detected, upgrading to improve"
+            decision = "improve"
+            reason = "Weak retry detected, upgrading to improve"
 
-        elif decision == "continue" and attempt_count >= 3:
-             decision = "improve"
-             reason = "Weak continue with repeated attempts, improving step"
         elif decision == "continue" and attempt_count >= 3:
             decision = "improve"
             reason = "Weak continue with repeated attempts, improving step"
@@ -153,5 +170,6 @@ def decide_step_action(current_step, step_updates):
         "decision_flag": flag,
         "decision_filter": decision_filter,
         "execution_action": execution_action,
-        "context_signal": context
+        "context_signal": context,
+        "flow_signal": flow
     }
