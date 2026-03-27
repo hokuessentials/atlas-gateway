@@ -53,7 +53,7 @@ def load_state_from_sheet():
 # =========================
 # SESSION LOAD (EXISTING)
 # =========================
-
+print("🔥 LOADED ACTIVE STATE:", active_state)
 def load_session_from_sheet():
 
     session_data = {
@@ -186,13 +186,16 @@ def atlas_action():
         # 🔵 LOAD MEMORY STATE FIRST
         saved_state = load_state_from_sheet()
 
-        if saved_state:
-            input_data["active_state"] = saved_state
+        # 🔥 FORCE MEMORY PRIORITY
+        if saved_state and isinstance(saved_state, dict):
+            active_state = saved_state
+        else:
+            active_state = input_data.get("active_state", {})
 
         # Load session
         session = load_session_from_sheet()
 
-        session["active_state"] = input_data.get("active_state", {})
+        session["active_state"] = active_state
 
         # Run intelligence
         result = generate_intelligent_action(session)
