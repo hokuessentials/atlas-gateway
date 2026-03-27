@@ -211,10 +211,15 @@ def atlas_action():
         # 🔵 LOAD MEMORY
         saved_state = load_state_from_sheet()
 
-        if saved_state and isinstance(saved_state, dict):
+        # 🔥 TEST OVERRIDE SUPPORT
+        force_input = input_data.get("force_input", False)
+
+        if force_input:
+            active_state = input_data.get("active_state", {})
+        elif saved_state and isinstance(saved_state, dict):
             active_state = saved_state
         else:
-            active_state = input_data.get("active_state", {})
+            ctive_state = input_data.get("active_state", {})
 
         print("🔥 RAW SAVED STATE:", saved_state)
         print("🔥 FINAL ACTIVE STATE:", active_state)
