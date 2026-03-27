@@ -25,22 +25,20 @@ def decide_step_action(current_step, step_updates):
     )
 
     # =========================
-    # LEVEL 3 — PHASE 7 LOGIC
+    # BASE DECISION LOGIC (PHASE 6)
     # =========================
 
     decision = None
     reason = ""
     quality = "low"
-    score = 0.2  # default
+    score = 0.2
 
-    # STRONG FAILURE → IMPROVE (HIGH)
     if failure_count >= 2:
         decision = "improve"
         reason = "Multiple failures, improve step"
         quality = "high"
         score = 0.9
 
-    # SINGLE FAILURE
     elif failure_count == 1:
         if attempt_count >= 3:
             decision = "improve"
@@ -53,7 +51,6 @@ def decide_step_action(current_step, step_updates):
             quality = "low"
             score = 0.4
 
-    # NO FAILURE
     else:
         if attempt_count >= 4:
             decision = "improve"
@@ -73,7 +70,7 @@ def decide_step_action(current_step, step_updates):
     score = min(score, 1.0)
 
     # =========================
-    # DECISION FLAG (NEW)
+    # FLAG CALCULATION (PHASE 7)
     # =========================
 
     if score >= 0.85:
@@ -82,6 +79,22 @@ def decide_step_action(current_step, step_updates):
         flag = "normal"
     else:
         flag = "weak"
+
+    # =========================
+    # PHASE 8 — CONTROLLED INFLUENCE
+    # =========================
+
+    if flag == "weak":
+
+        # weak retry → improve
+        if decision == "retry":
+            decision = "improve"
+            reason = "Weak retry detected, upgrading to improve"
+
+        # weak continue + stuck → improve
+        elif decision == "continue" and attempt_count >= 3:
+            decision = "improve"
+            reason = "Weak continue with repeated attempts, improving step"
 
     return {
         "decision": decision,
