@@ -13,22 +13,18 @@ def decide_step_action(current_step, step_updates):
             "flow_signal": "stable"
         }
 
-    # SAFETY
     step_updates = step_updates or []
 
-    # FILTER CURRENT STEP UPDATES
     relevant_updates = [
         u for u in step_updates
         if u.get("step") == current_step
     ]
 
-    # FAILURE COUNT
     failure_count = sum(
         1 for u in relevant_updates
         if u.get("status") == "failed"
     )
 
-    # ATTEMPT COUNT
     attempt_count = len(relevant_updates)
 
     # =========================
@@ -75,7 +71,6 @@ def decide_step_action(current_step, step_updates):
 
     score = min(score, 1.0)
 
-    # FLAG
     if score >= 0.85:
         flag = "strong"
     elif score >= 0.6:
@@ -97,11 +92,10 @@ def decide_step_action(current_step, step_updates):
         context = "stuck"
 
     # =========================
-    # FLOW SIGNAL (NEW)
+    # FLOW SIGNAL
     # =========================
 
     if attempt_count >= 3:
-        # check last 3 same-step updates
         last_three = relevant_updates[-3:]
         if len(last_three) == 3 and all(u.get("step") == current_step for u in last_three):
             flow = "looping"
@@ -133,7 +127,23 @@ def decide_step_action(current_step, step_updates):
         reason = "Progressing state, avoiding unnecessary improvement"
 
     # =========================
-    # PHASE 8 INFLUENCE (FIXED)
+    # FLOW INFLUENCE (NEW)
+    # =========================
+
+    if flow == "looping" and decision == "retry":
+        decision = "improve"
+        reason = "Looping detected, forcing improvement"
+
+    elif flow == "stagnant" and decision == "continue":
+        decision = "improve"
+        reason = "Stagnant flow detected, forcing improvement"
+
+    elif flow == "volatile" and decision == "improve" and flag == "weak":
+        decision = "retry"
+        reason = "Volatile flow, reducing aggressive improvement"
+
+    # =========================
+    # PHASE 8 (FIXED)
     # =========================
 
     if flag == "weak":
