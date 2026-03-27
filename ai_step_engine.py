@@ -28,7 +28,8 @@ Improve this execution step:
 {current_step}
 
 Rules:
-- Keep it short (max 8–10 words)
+- Max 6-8 words
+- Remove filler words
 - Make it actionable
 - Be specific
 - Output ONLY one sentence
