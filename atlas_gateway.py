@@ -4,6 +4,7 @@ import json
 import time
 from intelligence_engine import generate_intelligent_action
 import state_engine
+from session_engine import evaluate_session_health
 
 update_state = state_engine.update_state
 add_blocker = state_engine.add_blocker
@@ -129,6 +130,10 @@ def load_session_from_sheet():
             session_data["outcome_list"].append(str(val).strip().lower())
 
         session_data["decisions"].reverse()
+        session_data["roi_list"].reverse()
+        session_data["risk_list"].reverse()
+        session_data["confidence_list"].reverse()
+        session_data["outcome_list"].reverse()
 
     except Exception as e:
         print("SESSION ERROR:", e)
@@ -235,13 +240,34 @@ def atlas_action():
         # Attach state
         session["active_state"] = active_state
 
-        # 🧠 Run intelligence
+        # =========================
+        # 🔥 SESSION INTELLIGENCE
+        # =========================
+
+        session_check = evaluate_session_health(session, active_state)
+
+        # 🔁 RESET SESSION IF NEEDED
+        if session_check["session_decision"] == "reset_session":
+
+            new_session_id = f"S-{int(time.time())}"
+
+            session["session_id"] = new_session_id
+
+            active_state = {}  # 🔥 HARD RESET
+
+            print("⚠️ SESSION RESET:", session_check["reason"])
+
+        # =========================
+        # 🧠 RUN INTELLIGENCE
+        # =========================
+
+        session["active_state"] = active_state
         result = generate_intelligent_action(session)
 
         # 🔵 SAVE MEMORY
         if result.get("execution_state"):
             state = {
-                "session_id": final_session_id,
+                "session_id": session.get("session_id"),
                 "current_step": result.get("execution_state", {}).get("current_step"),
                 "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
                 "step_updates": result.get("execution_state", {}).get("step_updates", []),
@@ -252,7 +278,7 @@ def atlas_action():
 
         return jsonify({
             "status": "success",
-            "session_id": final_session_id,
+            "session_id": session.get("session_id"),
             "result": result
         })
 
