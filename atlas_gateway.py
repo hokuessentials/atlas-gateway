@@ -199,7 +199,11 @@ def atlas_action():
 
         # 🔵 SAVE UPDATED STATE
         if result.get("execution_state"):
-            save_state_to_sheet(result.get("execution_state"))
+            save_state_to_sheet({
+                "current_step": result.get("execution_state", {}).get("current_step"),
+                "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
+                "step_updates": result.get("execution_state", {}).get("step_updates", [])
+            })
 
         return jsonify({
             "status": "success",
