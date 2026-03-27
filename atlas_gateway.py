@@ -34,7 +34,7 @@ def save_state_to_sheet(active_state):
 def load_state_from_sheet():
     try:
         url = APPS_SCRIPT_URL + "?action=get_state"
-        resp = requests.get(url, timeout=3)
+        resp = requests.get(url, timeout=5)
 
         print("🔥 LOAD RESPONSE RAW:", resp.text)
 
