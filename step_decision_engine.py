@@ -116,9 +116,15 @@ def decide_step_action(current_step, step_updates):
     # =========================
 
     if flag == "weak":
-        if decision == "retry":
-            decision = "improve"
-            reason = "Weak retry detected, upgrading to improve"
+
+        # 🔒 DO NOT OVERRIDE CONTEXT DOWNGRADE
+        if decision == "retry" and context != "recovering":
+          decision = "improve"
+          reason = "Weak retry detected, upgrading to improve"
+
+        elif decision == "continue" and attempt_count >= 3:
+             decision = "improve"
+             reason = "Weak continue with repeated attempts, improving step"
         elif decision == "continue" and attempt_count >= 3:
             decision = "improve"
             reason = "Weak continue with repeated attempts, improving step"
