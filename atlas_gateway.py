@@ -202,7 +202,8 @@ def atlas_action():
             save_state_to_sheet({
                 "current_step": result.get("execution_state", {}).get("current_step"),
                 "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
-                "step_updates": result.get("execution_state", {}).get("step_updates", [])
+                "step_updates": result.get("execution_state", {}).get("step_updates", []),
+                "execution_plan": result.get("execution_plan", [])
             })
 
         return jsonify({
