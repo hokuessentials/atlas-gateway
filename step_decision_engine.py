@@ -6,38 +6,6 @@ def decide_step_action(current_step, step_updates):
             "reason": "No current step"
         }
 
-    # ✅ SAFETY
-    step_updates = step_updates or []
-
-    # ✅ FAILURE COUNT (ONLY LOGIC ALLOWED)
-    failure_count = sum(
-        1 for update in step_updates
-        if update.get("step") == current_step and update.get("status") == "failed"
-    )
-
-    # =========================
-    # 🧠 LEVEL 3 — PHASE 1 LOGIC
-    # =========================
-
-    # ✅ ATTEMPT COUNT (NEW — CONTROLLED)
-attempt_count = sum(
-    1 for update in step_updates
-    if update.get("step") == current_step
-)
-
-# =========================
-# 🧠 LEVEL 3 — PHASE 2 LOGIC
-# =========================
-
-# 🔴 LOOP BREAKER (NO FAILURE BUT STUCK)
-    def decide_step_action(current_step, step_updates):
-
-    if not current_step:
-        return {
-            "decision": "no_action",
-            "reason": "No current step"
-        }
-
     # SAFETY
     step_updates = step_updates or []
 
@@ -47,17 +15,14 @@ attempt_count = sum(
         if update.get("step") == current_step and update.get("status") == "failed"
     )
 
-    # ATTEMPT COUNT (FIXED INDENTATION)
+    # ATTEMPT COUNT
     attempt_count = sum(
         1 for update in step_updates
         if update.get("step") == current_step
     )
 
-    # =========================
     # LEVEL 3 — PHASE 2 LOGIC
-    # =========================
 
-    # LOOP BREAKER (NO FAILURE BUT STUCK)
     if failure_count == 0 and attempt_count >= 4:
         return {
             "decision": "improve",
