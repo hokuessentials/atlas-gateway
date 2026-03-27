@@ -25,7 +25,8 @@ def save_state_to_sheet(active_state):
             "action": "save_state",
             "data": active_state
         }
-        requests.post(APPS_SCRIPT_URL, json=payload, timeout=3)
+        resp = requests.post(APPS_SCRIPT_URL, json=payload, timeout=3)
+        print("🔥 SAVE RESPONSE:", resp.text)
     except Exception as e:
         print("STATE SAVE ERROR:", e)
 
@@ -33,7 +34,9 @@ def save_state_to_sheet(active_state):
 def load_state_from_sheet():
     try:
         url = APPS_SCRIPT_URL + "?action=get_state"
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(url, timeout=3)
+
+        print("🔥 LOAD RESPONSE RAW:", resp.text)
 
         if not resp or resp.status_code != 200:
             return {}
@@ -216,6 +219,7 @@ def atlas_action():
                     "step_updates": result.get("execution_state", {}).get("step_updates", []),
                     "execution_plan": result.get("execution_plan", [])
                 })
+                print("🔥 SAVING STATE:", state)
             except Exception as e:
                 print("STATE SAVE FAIL:", e)
 
