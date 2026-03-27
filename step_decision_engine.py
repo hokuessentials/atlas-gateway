@@ -6,38 +6,33 @@ def decide_step_action(current_step, step_updates):
             "reason": "No current step"
         }
 
-    step_status = None
+    # ✅ SAFETY
+    step_updates = step_updates or []
 
-    for update in step_updates:
-        if update.get("step") == current_step:
-            step_status = update.get("status")
-            break
+    # ✅ FAILURE COUNT (ONLY LOGIC ALLOWED)
+    failure_count = sum(
+        1 for update in step_updates
+        if update.get("step") == current_step and update.get("status") == "failed"
+    )
 
-    if not step_status:
+    # =========================
+    # 🧠 LEVEL 3 — PHASE 1 LOGIC
+    # =========================
+
+    if failure_count == 0:
         return {
             "decision": "continue",
-            "reason": "No update, continue execution"
+            "reason": "No failures, continue execution"
         }
 
-    if step_status == "completed":
-        return {
-            "decision": "move_next",
-            "reason": "Step completed successfully"
-        }
-
-    if step_status == "failed":
+    elif failure_count == 1:
         return {
             "decision": "retry",
-            "reason": "Step failed, retry required"
+            "reason": "One failure, retry step"
         }
 
-    if step_status == "blocked":
+    else:
         return {
-            "decision": "switch",
-            "reason": "Step blocked, need alternative path"
+            "decision": "improve",
+            "reason": "Multiple failures, improve step"
         }
-
-    return {
-        "decision": "continue",
-        "reason": "Unknown status"
-    }
