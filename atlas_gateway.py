@@ -219,7 +219,7 @@ def atlas_action():
                     "step_updates": result.get("execution_state", {}).get("step_updates", []),
                     "execution_plan": result.get("execution_plan", [])
                 })
-                print("🔥 SAVING STATE:", active_state)
+                print("🔥 SAVING STATE:", state)
             except Exception as e:
                 print("STATE SAVE FAIL:", e)
 
