@@ -10,8 +10,6 @@ def generate_better_step(current_step):
     if not current_step:
         return current_step
 
-    print("🔥 AI CALLED FOR STEP:", current_step)
-
     try:
         print("🔥 BEFORE API CALL")
 
@@ -22,11 +20,19 @@ def generate_better_step(current_step):
 
         print("🔥 AFTER API CALL")
 
-        improved = response.output[0].content[0].text.strip()
+        if response.output and len(response.output) > 0:
+            content = response.output[0].content
+
+            if content and len(content) > 0 and hasattr(content[0], "text"):
+                improved = content[0].text.strip()
+            else:
+                improved = current_step
+        else:
+            improved = current_step
 
         print("🔥 AI RESPONSE:", improved)
 
-        return improved if improved else current_step
+        return improved
 
     except Exception as e:
         print("🚨 AI ERROR:", str(e))
