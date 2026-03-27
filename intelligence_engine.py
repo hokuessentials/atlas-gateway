@@ -1,4 +1,4 @@
-from scoring_engine import compute_decision_scores, select_best_decision
+from scoring_engine import compute_decision_scores
 from reasoning_engine import generate_reason
 from sequence_engine import generate_execution_sequence
 from execution_engine import build_execution_state
@@ -8,21 +8,25 @@ from step_replacement_engine import replace_failed_step
 
 print("🔥 NEW CODE DEPLOYED")
 
+
 def generate_intelligent_action(session_data):
 
-    # 👉 GET ACTIVE STATE
+    # =========================
+    # GET STATE
+    # =========================
+
     active_state = session_data.get("active_state", {})
+    existing_state = active_state if active_state else {}
 
     decisions = session_data.get("decisions", [])
     outcomes = session_data.get("outcome_list", [])
 
-    # 👉 HANDLE EMPTY CASE
+    # =========================
+    # EMPTY CASE
+    # =========================
+
     if not decisions:
-        execution_state = build_execution_state([])
-        step_decision = {
-            "decision": "no_action",
-            "reason": "No execution available"
-        }
+        execution_state = existing_state if existing_state.get("current_step") else build_execution_state([])
 
         return {
             "action": "Start by logging a decision",
@@ -30,21 +34,23 @@ def generate_intelligent_action(session_data):
             "reason": "No data",
             "execution_plan": [],
             "execution_state": execution_state,
-            "step_decision": step_decision
+            "step_decision": {
+                "decision": "no_action",
+                "reason": "No execution available"
+            }
         }
 
     last_decision = decisions[-1]
     last_outcome = str(outcomes[-1]).strip().lower() if outcomes else ""
 
+    # =========================
+    # SCORING
+    # =========================
+
     scored = compute_decision_scores(session_data)
 
-    # 👉 HANDLE NO SCORE CASE
     if not scored:
-        execution_state = build_execution_state([])
-        step_decision = {
-            "decision": "no_action",
-            "reason": "No execution available"
-        }
+        execution_state = existing_state if existing_state.get("current_step") else build_execution_state([])
 
         return {
             "action": f"Continue: {last_decision}",
@@ -52,22 +58,23 @@ def generate_intelligent_action(session_data):
             "reason": "No scoring data",
             "execution_plan": [],
             "execution_state": execution_state,
-            "step_decision": step_decision
+            "step_decision": {
+                "decision": "no_action",
+                "reason": "No execution available"
+            }
         }
 
-    # 👉 FIND CURRENT SCORE
-    current_score = 0
-    for d in scored:
-        if d["title"] == last_decision:
-            current_score = d["score"]
-            break
+    # =========================
+    # FIND CURRENT SCORE
+    # =========================
 
-    # 👉 REMOVE FAILED DECISION
-    filtered = []
-    for i, d in enumerate(scored):
-        if i == len(scored) - 1 and last_outcome == "failed":
-            continue
-        filtered.append(d)
+    current_score = next((d["score"] for d in scored if d["title"] == last_decision), 0)
+
+    # REMOVE FAILED
+    filtered = [
+        d for i, d in enumerate(scored)
+        if not (i == len(scored) - 1 and last_outcome == "failed")
+    ]
 
     sorted_decisions = sorted(
         filtered if filtered else scored,
@@ -75,71 +82,92 @@ def generate_intelligent_action(session_data):
         reverse=True
     )
 
-    # 👉 PICK BEST DECISION
-    best = None
-    for d in sorted_decisions:
-        if d["title"] != last_decision:
-            best = d
-            break
+    # =========================
+    # PICK BEST
+    # =========================
 
-    if not best:
-        best = sorted_decisions[0]
+    best = next((d for d in sorted_decisions if d["title"] != last_decision), sorted_decisions[0])
 
     best_title = best["title"]
     best_score = best["score"]
 
-    # 👉 GENERATE EXECUTION PLAN
+    # =========================
+    # EXECUTION PLAN
+    # =========================
+
     execution_steps = generate_execution_sequence(best_title)
 
-    # 👉 INPUT DATA
     step_updates = active_state.get("step_updates", [])
     completed_steps = active_state.get("completed_steps", [])
 
-    # 👉 BUILD INITIAL STATE
-    execution_state = build_execution_state(
-        execution_steps,
-        completed_steps
-    )
+    # =========================
+    # 🔥 MEMORY-FIRST STATE
+    # =========================
 
-    # 👉 INITIAL STEP DECISION
+    if existing_state and existing_state.get("current_step"):
+        execution_state = existing_state
+    else:
+        execution_state = build_execution_state(
+            execution_steps,
+            completed_steps
+        )
+
+    # =========================
+    # STEP DECISION
+    # =========================
+
     step_decision = decide_step_action(
         execution_state.get("current_step"),
         step_updates
     )
 
-    # 👉 ADJUST PLAN (structure level)
+    # =========================
+    # PLAN ADJUSTMENT
+    # =========================
+
     adjusted_plan = adjust_execution_plan(
         execution_steps,
         execution_state,
         step_decision
     )
 
-    # 👉 🔥 REBUILD STATE AFTER ADJUSTMENT (IMPORTANT)
-    execution_state = build_execution_state(
-        adjusted_plan,
-        completed_steps
-    )
+    # 👉 ONLY rebuild if NO memory
+    if not (existing_state and existing_state.get("current_step")):
+        execution_state = build_execution_state(
+            adjusted_plan,
+            completed_steps
+        )
 
-    # 👉 🔥 APPLY AI STEP REPLACEMENT (NOW STATE IS CORRECT)
+    # =========================
+    # AI STEP REPLACEMENT
+    # =========================
+
     adjusted_plan = replace_failed_step(
         adjusted_plan,
         execution_state,
         step_decision
     )
 
-    # 👉 🔥 FINAL STATE (AFTER AI MODIFICATION)
-    execution_state = build_execution_state(
-        adjusted_plan,
-        completed_steps
-    )
+    # 👉 FINAL STATE (ONLY IF NO MEMORY)
+    if not (existing_state and existing_state.get("current_step")):
+        execution_state = build_execution_state(
+            adjusted_plan,
+            completed_steps
+        )
 
-    # 👉 FINAL STEP DECISION
+    # =========================
+    # FINAL STEP DECISION
+    # =========================
+
     step_decision = decide_step_action(
         execution_state.get("current_step"),
         step_updates
     )
 
-    # 👉 FORCE SWITCH
+    # =========================
+    # OUTPUT
+    # =========================
+
     if last_outcome == "failed":
         return {
             "action": f"Switch due to failure: {best_title}",
@@ -150,7 +178,6 @@ def generate_intelligent_action(session_data):
             "step_decision": step_decision
         }
 
-    # 👉 NORMAL SWITCH
     if best_title != last_decision and best_score > current_score + 0.5:
         return {
             "action": f"Switch to higher value: {best_title}",
@@ -161,7 +188,6 @@ def generate_intelligent_action(session_data):
             "step_decision": step_decision
         }
 
-    # 👉 CONTINUE
     return {
         "action": f"Continue: {last_decision}",
         "priority": "high",
