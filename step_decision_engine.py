@@ -28,7 +28,7 @@ def decide_step_action(current_step, step_updates):
     )
 
     # =========================
-    # BASE DECISION LOGIC (LEVEL 3)
+    # BASE DECISION LOGIC
     # =========================
 
     decision = None
@@ -79,7 +79,42 @@ def decide_step_action(current_step, step_updates):
     else:
         flag = "weak"
 
-    # INFLUENCE
+    # =========================
+    # CONTEXT SIGNAL (Phase 1)
+    # =========================
+
+    if failure_count == 0 and attempt_count <= 1:
+        context = "fresh"
+    elif failure_count == 0 and attempt_count >= 2:
+        context = "progressing"
+    elif failure_count >= 1 and attempt_count <= 2:
+        context = "recovering"
+    else:
+        context = "stuck"
+
+    # =========================
+    # LEVEL 4 — CONTEXT INFLUENCE
+    # =========================
+
+    # recovering → soften improve
+    if context == "recovering" and decision == "improve" and flag == "weak":
+        decision = "retry"
+        reason = "Recovering state, reducing aggressive improvement"
+
+    # stuck → force action
+    elif context == "stuck" and decision == "continue":
+        decision = "improve"
+        reason = "Stuck state detected, forcing improvement"
+
+    # progressing → avoid unnecessary change
+    elif context == "progressing" and decision == "improve" and flag == "weak":
+        decision = "continue"
+        reason = "Progressing state, avoiding unnecessary improvement"
+
+    # =========================
+    # PHASE 8 — CONTROLLED INFLUENCE
+    # =========================
+
     if flag == "weak":
         if decision == "retry":
             decision = "improve"
@@ -103,22 +138,6 @@ def decide_step_action(current_step, step_updates):
         execution_action = "hold"
     else:
         execution_action = "proceed"
-
-    # =========================
-    # LEVEL 4 — CONTEXT SIGNAL
-    # =========================
-
-    if failure_count == 0 and attempt_count <= 1:
-        context = "fresh"
-
-    elif failure_count == 0 and attempt_count >= 2:
-        context = "progressing"
-
-    elif failure_count >= 1 and attempt_count <= 2:
-        context = "recovering"
-
-    else:
-        context = "stuck"
 
     return {
         "decision": decision,
