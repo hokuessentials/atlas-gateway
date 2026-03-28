@@ -224,7 +224,13 @@ def generate_intelligent_action(session_data):
             "step_decision": step_decision
         }
 
-    if best_title != last_decision and best_score > current_score + 0.5:
+    threshold = 0.15
+
+    # If current decision is failing → switch faster
+    if last_outcome == "failed":
+        threshold = 0.05
+
+    if best_title != last_decision and best_score > current_score + threshold:
         return {
             "action": f"Switch to higher value: {best_title}",
             "priority": "high",
