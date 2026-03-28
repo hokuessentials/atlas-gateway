@@ -419,6 +419,16 @@ def atlas_action():
                     print("🛑 STEP BLOCKED → reverting to:", corrected_step)
 
         # =========================
+        # 🧠 DECISION REALIGNMENT
+        # =========================
+
+        final_step = result.get("execution_state", {}).get("current_step")
+
+        if final_step and result.get("action", "").startswith("Switch"):
+            result["action"] = f"Continue: {final_step}"
+            print("🔁 ACTION REALIGNED →", result["action"])            
+
+        # =========================
         # 🔥 SAVE DECISION
         # =========================
         if result.get("action") and result["action"] != "Start by logging a decision":
