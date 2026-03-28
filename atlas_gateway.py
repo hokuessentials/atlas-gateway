@@ -401,20 +401,25 @@ def atlas_action():
                 print("⚡ STEP OVERRIDE:", new_step)
 
         # =========================
-        # 🧠 STEP VALIDATION
+        # 🧠 STEP VALIDATION (SAFE MODE)
         # =========================
-        current_step = execution_state.get("current_step")
-        completed_steps = execution_state.get("completed_steps", [])
-        execution_plan = result.get("execution_plan", [])
 
-        if current_step in execution_plan:
-            idx = execution_plan.index(current_step)
-            missing = [s for s in execution_plan[:idx] if s not in completed_steps]
+        force_mode = execution_state.get("force_mode", False)
 
-            if missing:
-                corrected = missing[0]
-                execution_state["current_step"] = corrected
-                print("🛑 STEP BLOCKED →", corrected)
+        if not force_mode:
+
+            current_step = execution_state.get("current_step")
+            completed_steps = execution_state.get("completed_steps", [])
+            execution_plan = result.get("execution_plan", [])
+
+            if current_step in execution_plan:
+                idx = execution_plan.index(current_step)
+                missing = [s for s in execution_plan[:idx] if s not in completed_steps]
+
+                if missing:
+                    corrected = missing[0]
+                    execution_state["current_step"] = corrected
+                    print("🛑 STEP BLOCKED →", corrected)
 
         # =========================
         # 🔁 ACTION REALIGN
