@@ -436,6 +436,20 @@ def atlas_action():
         current_step = execution_state.get("current_step")
         completed_steps = execution_state.get("completed_steps", [])
         execution_plan = result.get("execution_plan", [])
+        
+        # =========================
+        # 📝 STEP UPDATE LOGGING
+        # =========================
+
+        step_updates = execution_state.get("step_updates", [])
+
+        step_updates.append({
+            "step": current_step,
+            "status": "success",   # later can be dynamic
+            "timestamp": time.time()
+        })
+
+        result["execution_state"]["step_updates"] = step_updates
 
         # mark current step as completed if execution is happening
         if result.get("step_decision", {}).get("execution_action") == "execute":
