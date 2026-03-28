@@ -34,7 +34,21 @@ def compute_decision_scores(session_data):
         elif outcome == "failed":
             success_weight = 0.2
 
-        base_score = (roi * conf) - risk
+        # NORMALIZED WEIGHTED SCORE
+
+        roi_weight = 0.4
+        conf_weight = 0.3
+        risk_weight = 0.3
+
+        normalized_roi = min(roi / 20, 1)
+        normalized_conf = conf
+        normalized_risk = risk
+
+        base_score = (
+            (normalized_roi * roi_weight) +
+            (normalized_conf * conf_weight) -
+            (normalized_risk * risk_weight)
+        )
 
         fail_penalty = failure_count.get(title, 0)
 
@@ -49,7 +63,7 @@ def compute_decision_scores(session_data):
 
         scored.append({
             "title": title,
-            "score": score
+            "score": round(score, 2)
         })
 
     return scored
