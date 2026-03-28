@@ -426,7 +426,38 @@ def atlas_action():
 
         if final_step and result.get("action", "").startswith("Switch"):
             result["action"] = f"Continue: {final_step}"
-            print("🔁 ACTION REALIGNED →", result["action"])            
+            print("🔁 ACTION REALIGNED →", result["action"]) 
+
+        # =========================
+        # 🚀 AUTO STEP PROGRESSION
+        # =========================
+
+        execution_state = result.get("execution_state", {})
+        current_step = execution_state.get("current_step")
+        completed_steps = execution_state.get("completed_steps", [])
+        execution_plan = result.get("execution_plan", [])
+
+        # mark current step as completed if execution is happening
+        if result.get("step_decision", {}).get("execution_action") == "execute":
+
+            if current_step and current_step not in completed_steps:
+                completed_steps.append(current_step)
+
+                print("✅ STEP COMPLETED:", current_step)
+
+                # move to next step
+                if current_step in execution_plan:
+                    idx = execution_plan.index(current_step)
+
+                    if idx + 1 < len(execution_plan):
+                        next_step = execution_plan[idx + 1]
+
+                        result["execution_state"]["current_step"] = next_step
+                        result["execution_state"]["completed_steps"] = completed_steps
+
+                        result["action"] = f"Continue: {next_step}"
+
+                        print("➡️ MOVING TO NEXT STEP:", next_step)              
 
         # =========================
         # 🔥 SAVE DECISION
