@@ -415,6 +415,31 @@ def atlas_action():
         if final_step and action.startswith("Switch"):
             result["action"] = f"Continue: {final_step}"
             print("🔁 ACTION REALIGNED:", result["action"])
+        
+        # =========================
+        # 🧠 DEPENDENCY CHECK (PHASE 1)
+        # =========================
+
+        execution_state = result.get("execution_state", {})
+        current_step = execution_state.get("current_step")
+        step_updates = execution_state.get("step_updates", [])
+
+        allowed, blocking_step = is_step_allowed(current_step, step_updates)
+
+        if not allowed:
+            print("🛑 BLOCKED BY DEPENDENCY:", blocking_step)
+
+            result["action"] = f"Complete prerequisite: {blocking_step}"
+
+            result.setdefault("step_decision", {})
+            result["step_decision"]["execution_action"] = "blocked"
+            result["step_decision"]["reason"] = f"{current_step} depends on {blocking_step}"
+
+            return jsonify({
+                "status": "success",
+                "session_id": session.get("session_id"),
+                "result": result
+            })
 
         # =========================
         # 📝 STEP LOGGING (FIXED)
