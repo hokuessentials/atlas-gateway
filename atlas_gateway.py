@@ -348,73 +348,63 @@ def atlas_action():
         session["active_state"] = active_state
         result = generate_intelligent_action(session)
 
-        # =========================
-        # 🔥 SAVE DECISION (FIXED INDENT)
-        # =========================
+    # =========================
+    # 🔥 SAVE DECISION
+    # =========================
 
-        if result.get("action") and result["action"] != "Start by logging a decision":
+decision_payload = None
 
-            decision_payload = {
-                "Decision_ID": f"D-{int(time.time())}",
-                "Session_ID": session.get("session_id"),
-                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "Title": result.get("action"),
-                "Description": result.get("reason"),
-                "Module": session.get("focus_module", "general"),
-                "Expected_ROI": result.get("expected_roi", 10),
-                "Risk_Score": result.get("risk_score", 0.3),
-                "Confidence_Level": result.get("confidence_level", 0.6),
-                "Reversible_Flag": True,
-                "Decision_Owner": "Atlas",
-                "Tags": "auto",
-                "Decision_Type": "execution",
-                "Outcome_Status": "pending",
-                "Lesson_Learned": ""
-            }
+if result.get("action") and result["action"] != "Start by logging a decision":
 
-            save_decision_to_sheet(decision_payload)
-            
-        # =========================
-        # 🔵 SAVE MEMORY
-        # =========================
+    decision_payload = {
+        "Decision_ID": f"D-{int(time.time())}",
+        "Session_ID": session.get("session_id"),
+        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "Title": result.get("action"),
+        "Description": result.get("reason"),
+        "Module": session.get("focus_module", "general"),
+        "Expected_ROI": result.get("expected_roi", 10),
+        "Risk_Score": result.get("risk_score", 0.3),
+        "Confidence_Level": result.get("confidence_level", 0.6),
+        "Reversible_Flag": True,
+        "Decision_Owner": "Atlas",
+        "Tags": "auto",
+        "Decision_Type": "execution",
+        "Outcome_Status": "pending",
+        "Lesson_Learned": ""
+    }
 
-        if result.get("execution_state"):
-            state = {
-                "session_id": session.get("session_id"),
-                "current_step": result.get("execution_state", {}).get("current_step"),
-                "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
-                "step_updates": result.get("execution_state", {}).get("step_updates", []),
-                "execution_plan": result.get("execution_plan", [])
-        }
+    save_decision_to_sheet(decision_payload)
 
-        save_state_to_sheet(state)
 
-        # =========================
-        # 🔥 SAVE SESSION
-        # =========================
+# =========================
+# 🔵 SAVE STATE
+# =========================
 
-        session_payload = {
-            "session_id": session_id,
-            "module": session.get("focus_module", "general"),
-            "status": "active",
-            "current_step": result.get("execution_state", {}).get("current_step"),
-            "timestamp": datetime.now().isoformat()
-        }
-  
-    save_session_to_sheet_async(session_payload)
+state = {
+    "session_id": session.get("session_id"),
+    "current_step": result.get("execution_state", {}).get("current_step"),
+    "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
+    "step_updates": result.get("execution_state", {}).get("step_updates", []),
+    "execution_plan": result.get("execution_plan", [])
+}
 
-        return jsonify({
-            "status": "success",
-            "session_id": session.get("session_id"),
-            "result": result
-        })
+save_state_to_sheet(state)
 
-    except Exception as e:
-        print("🔥 ACTION ERROR:", str(e))
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        })
+
+# =========================
+# 🔥 SAVE SESSION (ASYNC)
+# =========================
+
+session_payload = {
+    "session_id": session.get("session_id"),
+    "module": session.get("focus_module", "general"),
+    "status": "active",
+    "current_step": result.get("execution_state", {}).get("current_step"),
+    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+}
+
+save_session_to_sheet_async(session_payload)    
 
 # =========================
 
