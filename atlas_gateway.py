@@ -284,10 +284,13 @@ def complete_task():
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
     print("🚀 REQUEST STARTED")
+
     try:
         input_data = request.get_json(force=True)
 
-        # 🔵 LOAD MEMORY
+        # =========================
+        # 🔵 LOAD STATE (SOURCE OF TRUTH)
+        # =========================
         saved_state = load_state_from_sheet()
 
         force_input = input_data.get("force_input", False)
@@ -298,40 +301,48 @@ def atlas_action():
             active_state = saved_state
         else:
             active_state = input_data.get("active_state", {})
+
         print("✅ STATE LOADED")
-        session = load_session_from_sheet()
+
+        # =========================
+        # 🔵 LOAD SESSION (ONLY ONCE)
+        # =========================
+        session = load_session_from_sheet() or {}
         print("✅ SESSION LOADED:", session.get("session_id"))
 
-        # 🔥 SESSION
-        session = load_session_from_sheet()
-
+        # =========================
+        # 🔥 SESSION SOURCE = STATE ONLY
+        # =========================
         memory_session_id = active_state.get("session_id")
-        sheet_session_id = session.get("session_id")
 
         if memory_session_id:
             final_session_id = memory_session_id
-        elif sheet_session_id:
-            final_session_id = sheet_session_id
         else:
             final_session_id = f"S-{int(time.time())}"
 
+        # FORCE SYNC
         session["session_id"] = final_session_id
         active_state["session_id"] = final_session_id
         session["active_state"] = active_state
 
-        # 🔥 SESSION HEALTH
+        # =========================
+        # 🔥 SESSION HEALTH CHECK
+        # =========================
         try:
             session_check = evaluate_session_health(session, active_state)
         except Exception as e:
             print("❌ SESSION HEALTH ERROR:", e)
             session_check = {"session_decision": "continue"}
 
-        if session_check["session_decision"] == "reset_session":
+        if session_check.get("session_decision") == "reset_session":
             new_session_id = f"S-{int(time.time())}"
             session["session_id"] = new_session_id
-            active_state = {}
+            active_state = {"session_id": new_session_id}
+            session["active_state"] = active_state
 
-        # 🧠 INTELLIGENCE
+        # =========================
+        # 🧠 INTELLIGENCE ENGINE
+        # =========================
         try:
             result = generate_intelligent_action(session)
             print("✅ INTELLIGENCE RESULT:", result.get("action"))
@@ -343,9 +354,23 @@ def atlas_action():
             })
 
         # =========================
+        # 🔥 FORCE STEP ALIGNMENT (CRITICAL)
+        # =========================
+        action = result.get("action", "")
+
+        if action.startswith("Switch to higher value"):
+            execution_plan = result.get("execution_plan", [])
+
+            if execution_plan:
+                new_step = execution_plan[-1]  # highest value step
+                result.setdefault("execution_state", {})
+                result["execution_state"]["current_step"] = new_step
+
+                print("⚡ STEP OVERRIDE:", new_step)
+
+        # =========================
         # 🔥 SAVE DECISION
         # =========================
-
         if result.get("action") and result["action"] != "Start by logging a decision":
 
             decision_payload = {
@@ -368,34 +393,35 @@ def atlas_action():
 
             save_decision_to_sheet(decision_payload)
 
-        # =========================
-        # 🔵 SAVE STATE
-        # =========================
+            # ✅ OPTIONAL: immediate outcome update (your current system)
+            update_decision_outcome(
+                decision_id=decision_payload["Decision_ID"],
+                outcome="success",
+                lesson="Initial execution completed"
+            )
 
-        state = {
-            "session_id": session.get("session_id"),
-            "current_step": result.get("execution_state", {}).get("current_step"),
-            "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
-            "step_updates": result.get("execution_state", {}).get("step_updates", []),
-            "execution_plan": result.get("execution_plan", [])
-        }
+        # =========================
+        # 🔥 SAVE STATE (SYNC BACK)
+        # =========================
+        if result.get("execution_state"):
+            state = {
+                "session_id": session.get("session_id"),
+                "current_step": result.get("execution_state", {}).get("current_step"),
+                "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
+                "step_updates": result.get("execution_state", {}).get("step_updates", []),
+                "execution_plan": result.get("execution_plan", [])
+            }
 
-        save_state_to_sheet(state)
+            save_state_to_sheet(state)
 
         # =========================
         # 🔥 SAVE SESSION
         # =========================
+        save_session_to_sheet(session)
 
-        session_payload = {
-            "session_id": session.get("session_id"),
-            "module": session.get("focus_module", "general"),
-            "status": "active",
-            "current_step": result.get("execution_state", {}).get("current_step"),
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-        }
-
-        save_session_to_sheet_async(session_payload)
-
+        # =========================
+        # ✅ FINAL RESPONSE
+        # =========================
         return jsonify({
             "status": "success",
             "session_id": session.get("session_id"),
@@ -403,11 +429,11 @@ def atlas_action():
         })
 
     except Exception as e:
-        print("🔥 ACTION ERROR:", str(e))
+        print("❌ FATAL ERROR:", e)
         return jsonify({
             "status": "error",
             "message": str(e)
-        })   
+        })  
 
 # =========================
 
