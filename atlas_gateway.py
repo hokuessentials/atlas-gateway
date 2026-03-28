@@ -280,7 +280,30 @@ def complete_task():
 # =========================
 # 🔥 MAIN ENGINE (UPDATED)
 # =========================
+def save_session_to_sheet(session):
+    try:
+        payload = {
+            "action": "save_session",
+            "data": session
+        }
 
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        resp = requests.post(
+            APPS_SCRIPT_URL,
+            json=payload,
+            headers=headers,
+            timeout=10,
+            allow_redirects=True
+        )
+
+        print("🔥 SESSION SAVE:", resp.text)
+
+    except Exception as e:
+        print("❌ SESSION SAVE ERROR:", e)
+        
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
     print("🚀 REQUEST STARTED")
