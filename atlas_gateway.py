@@ -314,30 +314,36 @@ def atlas_action():
         session["active_state"] = active_state
         result = generate_intelligent_action(session)
 
-            # 🔥 SAVE DECISION (ONLY IF VALID)
-            if result.get("action") and result["action"] != "Start by logging a decision":
+        # =========================
+        # 🔥 SAVE DECISION (FIXED INDENT)
+        # =========================
 
-                decision_payload = {
-                    "Decision_ID": f"D-{int(time.time())}",
-                    "Session_ID": session.get("session_id"),
-                    "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "Title": result.get("action"),
-                    "Description": result.get("reason"),
-                    "Module": "system",
-                    "Expected_ROI": 0,
-                    "Risk_Score": 0,
-                    "Confidence_Level": 0,
-                    "Reversible_Flag": True,
-                    "Decision_Owner": "Atlas",
-                    "Tags": "auto",
-                    "Decision_Type": "execution",
-                    "Outcome_Status": "pending",
-                    "Lesson_Learned": ""
-                }
+        if result.get("action") and result["action"] != "Start by logging a decision":
 
-                save_decision_to_sheet(decision_payload)
+            decision_payload = {
+                "Decision_ID": f"D-{int(time.time())}",
+                "Session_ID": session.get("session_id"),
+                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "Title": result.get("action"),
+                "Description": result.get("reason"),
+                "Module": "system",
+                "Expected_ROI": 0,
+                "Risk_Score": 0,
+                "Confidence_Level": 0,
+                "Reversible_Flag": True,
+                "Decision_Owner": "Atlas",
+                "Tags": "auto",
+                "Decision_Type": "execution",
+                "Outcome_Status": "pending",
+                "Lesson_Learned": ""
+            }
 
+            save_decision_to_sheet(decision_payload)
+
+        # =========================
         # 🔵 SAVE MEMORY
+        # =========================
+
         if result.get("execution_state"):
             state = {
                 "session_id": session.get("session_id"),
@@ -345,9 +351,9 @@ def atlas_action():
                 "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
                 "step_updates": result.get("execution_state", {}).get("step_updates", []),
                 "execution_plan": result.get("execution_plan", [])
-            }
+        }
 
-            save_state_to_sheet(state)
+        save_state_to_sheet(state)
 
         return jsonify({
             "status": "success",
