@@ -442,6 +442,18 @@ def atlas_action():
         # =========================
 
         step_updates = execution_state.get("step_updates", [])
+        if result.get("step_decision", {}).get("execution_action") == "execute":
+            status = "success"
+        else:
+            status = "started"
+
+        step_updates.append({
+            "step": current_step,
+            "status": status,
+            "timestamp": time.time()
+        })
+
+result["execution_state"]["step_updates"] = step_updates
 
         step_updates.append({
             "step": current_step,
