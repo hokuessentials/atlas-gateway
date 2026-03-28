@@ -460,7 +460,11 @@ def atlas_action():
         ]
 
         # 2. Filter allowed (dependency-safe)
-        allowed_candidates = filter_allowed_candidates(candidates, step_updates)
+        allowed_candidates = filter_allowed_candidates(
+            candidates,
+            step_updates,
+            completed_steps
+        )
 
         # 3. Safety check
         if allowed_candidates:
@@ -468,7 +472,8 @@ def atlas_action():
             selected_step = select_better_step(
                 current_step,
                 allowed_candidates,
-                step_updates
+                step_updates,
+                completed_steps
             )
 
             # 4. Apply ONLY if changed
