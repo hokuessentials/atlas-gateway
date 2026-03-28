@@ -375,6 +375,13 @@ def atlas_action():
         # =========================
         try:
             result = generate_intelligent_action(session)
+            # =========================
+            # 🔥 GLOBAL SAFE VARIABLES (CRITICAL FIX)
+            # =========================
+
+            action = result.get("action", "")
+            execution_plan = result.get("execution_plan", [])
+            
             print("✅ INTELLIGENCE RESULT:", result.get("action"))
         except Exception as e:
             print("❌ INTELLIGENCE ERROR:", e)
