@@ -208,6 +208,7 @@ def generate_intelligent_action(session_data):
     step_decision["decision_score"] = round(best_score, 2)
     step_decision["decision_quality"] = decision_quality
     step_decision["execution_action"] = execution_action
+    step_decision["decision"] = execution_action
 
     # =========================
     # OUTPUT
