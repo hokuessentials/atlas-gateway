@@ -74,12 +74,19 @@ def generate_intelligent_action(session_data):
     
     existing_state = active_state if active_state else {}
 
+    # =========================
+    # 🔥 MEMORY CONTROL FIX
+    # =========================
+
+    force_mode = active_state.get("force_mode", False)
+
     has_memory = (
         existing_state
         and existing_state.get("current_step")
         and "execution_plan" in existing_state
     )
-    if has_memory:
+
+    if has_memory and not force_mode:
 
         execution_state = existing_state
         execution_steps = existing_state.get("execution_plan", [])
