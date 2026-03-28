@@ -209,15 +209,6 @@ def update_decision_outcome(decision_id, outcome, lesson):
     except Exception as e:
         print("❌ Update decision error:", e)
 
-        if decision_payload:
-
-    # simulate outcome for now
-    update_decision_outcome(
-        decision_id=decision_payload["Decision_ID"],
-        outcome="success",   # or failed
-        lesson="Initial execution completed"
-    )
-
 # =========================
 # ROUTES (UNCHANGED)
 # =========================
@@ -372,7 +363,7 @@ def atlas_action():
             }
 
             save_decision_to_sheet(decision_payload)
-
+            
         # =========================
         # 🔵 SAVE MEMORY
         # =========================
