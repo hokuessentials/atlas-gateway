@@ -185,13 +185,23 @@ def load_session_from_sheet():
 
     return session_data
 
-def save_session_to_sheet(session):
-    payload = {
-        "action": "save_session",
-        "data": session
-    }
+import threading
 
-    requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+def save_session_to_sheet_async(session_data):
+
+    def task():
+        try:
+            payload = {
+                "action": "save_session",
+                "data": session_data
+            }
+
+            requests.post(APPS_SCRIPT_URL, json=payload, timeout=5)
+
+        except Exception as e:
+            print("❌ SESSION SAVE ERROR:", e)
+
+    threading.Thread(target=task).start()
 
 def update_decision_outcome(decision_id, outcome, lesson):
 
@@ -378,7 +388,7 @@ def atlas_action():
         }
 
         save_state_to_sheet(state)
-        
+
         # =========================
         # 🔥 SAVE SESSION
         # =========================
@@ -390,8 +400,8 @@ def atlas_action():
             "current_step": result.get("execution_state", {}).get("current_step"),
             "timestamp": datetime.now().isoformat()
         }
-
-save_session_to_sheet(session_payload)
+  
+    save_session_to_sheet_async(session_payload)
 
         return jsonify({
             "status": "success",
