@@ -61,8 +61,8 @@ def compute_decision_scores(session_data):
 
         raw_score = (base_score * success_weight * time_weight * prob) + priority_boost
 
-        # 🔥 NORMALIZATION (CRITICAL)
-        score = max(0, min(raw_score, 1))
+        # soft normalization instead of hard clipping
+        score = raw_score / (1 + abs(raw_score))
 
         scored.append({
             "title": title,
