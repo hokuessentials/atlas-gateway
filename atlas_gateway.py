@@ -441,27 +441,41 @@ def atlas_action():
         # 📝 STEP UPDATE LOGGING
         # =========================
 
+        execution_state = result.get("execution_state", {})
         step_updates = execution_state.get("step_updates", [])
+
+        # decide status
         if result.get("step_decision", {}).get("execution_action") == "execute":
             status = "success"
         else:
             status = "started"
 
+        # append once (ONLY ONCE)
         step_updates.append({
             "step": current_step,
             "status": status,
             "timestamp": time.time()
         })
 
-result["execution_state"]["step_updates"] = step_updates
-
-        step_updates.append({
-            "step": current_step,
-            "status": "started",
-            "timestamp": time.time()
-        })
-
+        # save back
+        result.setdefault("execution_state", {})
         result["execution_state"]["step_updates"] = step_updates
+
+
+        # =========================
+        # 📊 PENDING STEPS FIX
+        # =========================
+
+        pending_steps = [
+            s for s in execution_plan
+            if s not in completed_steps and s != current_step
+        ]
+
+        result["execution_state"]["pending_steps"] = pending_steps
+
+        pending_steps = [s for s in execution_plan if s not in completed_steps and s != current_step]
+
+        result["execution_state"]["pending_steps"] = pending_steps
 
         # mark current step as completed if execution is happening
         if result.get("step_decision", {}).get("execution_action") == "execute":
@@ -517,6 +531,7 @@ result["execution_state"]["step_updates"] = step_updates
         # 🔁 LOOP LOGIC
         elif repeat_count >= 2:
             result["action"] = f"🔁 Loop detected at: {current_step}, forcing change"
+            result.setdefault("step_decision", {})
             result["step_decision"]["decision"] = "adjust"
             result["step_decision"]["execution_action"] = "hold"
 
