@@ -379,6 +379,7 @@ def atlas_action():
         # =========================
         # 🔥 FORCE STEP ALIGNMENT (CRITICAL)
         # =========================
+
         action = result.get("action", "")
 
         if action.startswith("Switch to higher value"):
@@ -390,6 +391,32 @@ def atlas_action():
                 result["execution_state"]["current_step"] = new_step
 
                 print("⚡ STEP OVERRIDE:", new_step)
+
+
+# =========================
+# 🧠 EXECUTION FEASIBILITY GUARD (ADD HERE)
+# =========================
+
+execution_state = result.get("execution_state", {})
+current_step = execution_state.get("current_step")
+completed_steps = execution_state.get("completed_steps", [])
+
+execution_plan = result.get("execution_plan", [])
+
+if current_step in execution_plan:
+    step_index = execution_plan.index(current_step)
+
+    if step_index > 0:
+        required_previous_steps = execution_plan[:step_index]
+
+        missing_steps = [s for s in required_previous_steps if s not in completed_steps]
+
+        if missing_steps:
+            corrected_step = missing_steps[0]
+
+            result["execution_state"]["current_step"] = corrected_step
+
+            print("🛑 STEP BLOCKED → reverting to:", corrected_step)
 
         # =========================
         # 🔥 SAVE DECISION
