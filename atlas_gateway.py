@@ -312,10 +312,9 @@ def atlas_action():
         input_data = request.get_json(force=True)
 
         # =========================
-        # 🔵 LOAD STATE (SOURCE OF TRUTH)
+        # 🔵 LOAD STATE
         # =========================
         saved_state = load_state_from_sheet()
-
         force_input = input_data.get("force_input", False)
 
         if force_input:
@@ -328,13 +327,13 @@ def atlas_action():
         print("✅ STATE LOADED")
 
         # =========================
-        # 🔵 LOAD SESSION (ONLY ONCE)
+        # 🔵 LOAD SESSION
         # =========================
         session = load_session_from_sheet() or {}
         print("✅ SESSION LOADED:", session.get("session_id"))
 
         # =========================
-        # 🔥 SESSION SOURCE = STATE ONLY
+        # 🔥 SESSION SYNC (ONLY STATE DRIVES)
         # =========================
         memory_session_id = active_state.get("session_id")
 
@@ -343,13 +342,12 @@ def atlas_action():
         else:
             final_session_id = f"S-{int(time.time())}"
 
-        # FORCE SYNC
         session["session_id"] = final_session_id
         active_state["session_id"] = final_session_id
         session["active_state"] = active_state
 
         # =========================
-        # 🔥 SESSION HEALTH CHECK
+        # 🔥 SESSION HEALTH
         # =========================
         try:
             session_check = evaluate_session_health(session, active_state)
@@ -364,181 +362,108 @@ def atlas_action():
             session["active_state"] = active_state
 
         # =========================
-        # 🧠 INTELLIGENCE ENGINE
+        # 🧠 INTELLIGENCE
         # =========================
         try:
             result = generate_intelligent_action(session)
             print("✅ INTELLIGENCE RESULT:", result.get("action"))
         except Exception as e:
             print("❌ INTELLIGENCE ERROR:", e)
-            return jsonify({
-                "status": "error",
-                "message": str(e)
-            })
+            return jsonify({"status": "error", "message": str(e)})
 
         # =========================
-        # 🔥 FORCE STEP ALIGNMENT (CRITICAL)
+        # 🔥 SAFETY DEFAULTS
         # =========================
+        result.setdefault("execution_state", {})
+        result.setdefault("step_decision", {})
 
+        execution_state = result["execution_state"]
+
+        # =========================
+        # ⚡ STEP OVERRIDE (HIGH VALUE)
+        # =========================
         action = result.get("action", "")
 
         if action.startswith("Switch to higher value"):
             execution_plan = result.get("execution_plan", [])
-
             if execution_plan:
-                new_step = execution_plan[-1]  # highest value step
-                result.setdefault("execution_state", {})
-                result["execution_state"]["current_step"] = new_step
-
+                new_step = execution_plan[-1]
+                execution_state["current_step"] = new_step
                 print("⚡ STEP OVERRIDE:", new_step)
 
-
         # =========================
-        # 🧠 EXECUTION FEASIBILITY GUARD (ADD HERE)
+        # 🧠 STEP VALIDATION
         # =========================
-
-        execution_state = result.get("execution_state", {})
         current_step = execution_state.get("current_step")
         completed_steps = execution_state.get("completed_steps", [])
-
         execution_plan = result.get("execution_plan", [])
 
         if current_step in execution_plan:
-            step_index = execution_plan.index(current_step)
+            idx = execution_plan.index(current_step)
+            missing = [s for s in execution_plan[:idx] if s not in completed_steps]
 
-            if step_index > 0:
-                required_previous_steps = execution_plan[:step_index]
-
-                missing_steps = [s for s in required_previous_steps if s not in completed_steps]
-
-                if missing_steps:
-                    corrected_step = missing_steps[0]
-
-                    result["execution_state"]["current_step"] = corrected_step
-
-                    print("🛑 STEP BLOCKED → reverting to:", corrected_step)
+            if missing:
+                corrected = missing[0]
+                execution_state["current_step"] = corrected
+                print("🛑 STEP BLOCKED →", corrected)
 
         # =========================
-        # 🧠 DECISION REALIGNMENT
+        # 🔁 ACTION REALIGN
         # =========================
+        final_step = execution_state.get("current_step")
 
-        final_step = result.get("execution_state", {}).get("current_step")
-
-        if final_step and result.get("action", "").startswith("Switch"):
+        if final_step and action.startswith("Switch"):
             result["action"] = f"Continue: {final_step}"
-            print("🔁 ACTION REALIGNED →", result["action"]) 
+            print("🔁 ACTION REALIGNED:", result["action"])
 
         # =========================
-        # 🚀 AUTO STEP PROGRESSION
+        # 📝 STEP LOGGING (FIXED)
         # =========================
-
-        execution_state = result.get("execution_state", {})
-        current_step = execution_state.get("current_step")
-        completed_steps = execution_state.get("completed_steps", [])
-        execution_plan = result.get("execution_plan", [])
-        
-        # =========================
-        # 📝 STEP UPDATE LOGGING
-        # =========================
-
-        execution_state = result.get("execution_state", {})
         step_updates = execution_state.get("step_updates", [])
 
-        # decide status
-        if result.get("step_decision", {}).get("execution_action") == "execute":
-            status = "success"
-        else:
-            status = "started"
+        status = "success" if result.get("step_decision", {}).get("execution_action") == "execute" else "started"
 
-        # append once (ONLY ONCE)
         step_updates.append({
-            "step": current_step,
+            "step": final_step,
             "status": status,
             "timestamp": time.time()
         })
 
-        # save back
-        result.setdefault("execution_state", {})
-        result["execution_state"]["step_updates"] = step_updates
-
+        execution_state["step_updates"] = step_updates
 
         # =========================
-        # 📊 PENDING STEPS FIX
+        # 📊 PENDING STEPS (FIXED)
         # =========================
-
         pending_steps = [
             s for s in execution_plan
-            if s not in completed_steps and s != current_step
+            if s not in completed_steps and s != final_step
         ]
 
-        result["execution_state"]["pending_steps"] = pending_steps
+        execution_state["pending_steps"] = pending_steps
 
-        pending_steps = [s for s in execution_plan if s not in completed_steps and s != current_step]
-
-        result["execution_state"]["pending_steps"] = pending_steps
-
-        # mark current step as completed if execution is happening
+        # =========================
+        # ✅ STEP PROGRESSION
+        # =========================
         if result.get("step_decision", {}).get("execution_action") == "execute":
 
-            if current_step and current_step not in completed_steps:
-                completed_steps.append(current_step)
+            if final_step and final_step not in completed_steps:
+                completed_steps.append(final_step)
+                print("✅ STEP COMPLETED:", final_step)
 
-                print("✅ STEP COMPLETED:", current_step)
-
-                # move to next step
-                if current_step in execution_plan:
-                    idx = execution_plan.index(current_step)
+                if final_step in execution_plan:
+                    idx = execution_plan.index(final_step)
 
                     if idx + 1 < len(execution_plan):
                         next_step = execution_plan[idx + 1]
 
-                        result["execution_state"]["current_step"] = next_step
-                        result["execution_state"]["completed_steps"] = completed_steps
+                        execution_state["current_step"] = next_step
+                        execution_state["completed_steps"] = completed_steps
 
                         result["action"] = f"Continue: {next_step}"
-
-                        print("➡️ MOVING TO NEXT STEP:", next_step) 
-
-        # =========================
-        # 🧠 FAILURE & LOOP CONTROL
-        # =========================
-
-        execution_state = result.get("execution_state", {})
-        current_step = execution_state.get("current_step")
-        step_updates = execution_state.get("step_updates", [])
-
-        # count failures for current step
-        failure_count = sum(
-            1 for update in step_updates
-            if update.get("step") == current_step and update.get("status") == "failed"
-        )
-
-        # count repeats
-        repeat_count = sum(
-            1 for step in execution_state.get("completed_steps", [])
-            if step == current_step
-        )
-
-        # 🚨 FAILURE LOGIC
-        if failure_count >= 2:
-            result["action"] = f"⚠️ Escalate: {current_step} is failing repeatedly"
-            result.setdefault("step_decision", {})
-            result["step_decision"]["decision"] = "escalate"
-            result["step_decision"]["execution_action"] = "hold"
-
-            print("🚨 FAILURE ESCALATION TRIGGERED")
-
-        # 🔁 LOOP LOGIC
-        elif repeat_count >= 2:
-            result["action"] = f"🔁 Loop detected at: {current_step}, forcing change"
-            result.setdefault("step_decision", {})
-            result["step_decision"]["decision"] = "adjust"
-            result["step_decision"]["execution_action"] = "hold"
-
-            print("🔁 LOOP DETECTED")                         
+                        print("➡️ NEXT STEP:", next_step)
 
         # =========================
-        # 🔥 SAVE DECISION
+        # 🔥 SAVE DECISION (FIXED MODULE)
         # =========================
         if result.get("action") and result["action"] != "Start by logging a decision":
 
@@ -548,7 +473,7 @@ def atlas_action():
                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "Title": result.get("action"),
                 "Description": result.get("reason"),
-                "Module": session.get("focus_module", "general"),
+                "Module": active_state.get("focus_module", "general"),  # ✅ FIXED
                 "Expected_ROI": result.get("expected_roi", 10),
                 "Risk_Score": result.get("risk_score", 0.3),
                 "Confidence_Level": result.get("confidence_level", 0.6),
@@ -562,7 +487,6 @@ def atlas_action():
 
             save_decision_to_sheet(decision_payload)
 
-            # ✅ OPTIONAL: immediate outcome update (your current system)
             update_decision_outcome(
                 decision_id=decision_payload["Decision_ID"],
                 outcome="success",
@@ -570,26 +494,25 @@ def atlas_action():
             )
 
         # =========================
-        # 🔥 SAVE STATE (SYNC BACK)
+        # 💾 SAVE STATE
         # =========================
-        if result.get("execution_state"):
-            state = {
-                "session_id": session.get("session_id"),
-                "current_step": result.get("execution_state", {}).get("current_step"),
-                "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
-                "step_updates": result.get("execution_state", {}).get("step_updates", []),
-                "execution_plan": result.get("execution_plan", [])
-            }
+        state = {
+            "session_id": session.get("session_id"),
+            "current_step": execution_state.get("current_step"),
+            "completed_steps": execution_state.get("completed_steps", []),
+            "step_updates": execution_state.get("step_updates", []),
+            "execution_plan": result.get("execution_plan", [])
+        }
 
-            save_state_to_sheet(state)
+        save_state_to_sheet(state)
 
         # =========================
-        # 🔥 SAVE SESSION
+        # 💾 SAVE SESSION
         # =========================
         save_session_to_sheet(session)
 
         # =========================
-        # ✅ FINAL RESPONSE
+        # ✅ RESPONSE
         # =========================
         return jsonify({
             "status": "success",
@@ -602,7 +525,7 @@ def atlas_action():
         return jsonify({
             "status": "error",
             "message": str(e)
-        })  
+        })
 
 # =========================
 
