@@ -321,6 +321,7 @@ def atlas_action():
         if force_input:
             print("⚠️ FORCE INPUT MODE ACTIVE")
             active_state = input_data.get("active_state", {}) or {}
+            active_state["force_mode"] = True
         else:
             if saved_state and isinstance(saved_state, dict):
                 active_state = saved_state
