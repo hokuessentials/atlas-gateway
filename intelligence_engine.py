@@ -6,54 +6,7 @@ from step_decision_engine import decide_step_action
 from plan_adjustment_engine import adjust_execution_plan
 from step_replacement_engine import replace_failed_step
 
-def calculate_decision_score(result, session):
-
-    score = 0.0
-
-    # 1. ROI IMPACT (0 → 0.4)
-    roi = result.get("expected_roi", 10)
-    if roi >= 20:
-        score += 0.4
-    elif roi >= 15:
-        score += 0.3
-    elif roi >= 10:
-        score += 0.2
-    else:
-        score += 0.1
-
-    # 2. RISK (0 → 0.2)
-    risk = result.get("risk_score", 0.3)
-    if risk <= 0.2:
-        score += 0.2
-    elif risk <= 0.5:
-        score += 0.1
-    else:
-        score += 0.05
-
-    # 3. CONFIDENCE (0 → 0.2)
-    confidence = result.get("confidence_level", 0.6)
-    if confidence >= 0.8:
-        score += 0.2
-    elif confidence >= 0.6:
-        score += 0.15
-    else:
-        score += 0.1
-
-    # 4. EXECUTION FLOW BONUS (0 → 0.2)
-    if result.get("execution_state", {}).get("current_step"):
-        score += 0.2
-
-    return round(score, 2)
-
-
-def classify_decision(score):
-
-    if score >= 0.7:
-        return "strong", "execute"
-    elif score >= 0.5:
-        return "moderate", "continue"
-    else:
-        return "weak", "hold"
+print("🔥 NEW CODE DEPLOYED")
 
 
 def generate_intelligent_action(session_data):
