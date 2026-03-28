@@ -445,7 +445,7 @@ def atlas_action():
 
         step_updates.append({
             "step": current_step,
-            "status": "success",   # later can be dynamic
+            "status": "started",   # later can be dynamic
             "timestamp": time.time()
         })
 
