@@ -312,19 +312,27 @@ def atlas_action():
         input_data = request.get_json(force=True)
 
         # =========================
-        # 🔵 LOAD STATE
+        # 🔵 LOAD STATE (STRICT OVERRIDE FIX)
         # =========================
+
         saved_state = load_state_from_sheet()
         force_input = input_data.get("force_input", False)
 
         if force_input:
-            active_state = input_data.get("active_state", {})
-        elif saved_state and isinstance(saved_state, dict):
-            active_state = saved_state
+            print("⚠️ FORCE INPUT MODE ACTIVE")
+            active_state = input_data.get("active_state", {}) or {}
         else:
-            active_state = input_data.get("active_state", {})
+            if saved_state and isinstance(saved_state, dict):
+                active_state = saved_state
+            else:
+                active_state = input_data.get("active_state", {}) or {}
 
-        print("✅ STATE LOADED")
+        print("✅ STATE LOADED:", active_state)
+
+        # 🔥 FORCE CLEAN EXECUTION STATE
+        if force_input:
+            active_state["step_updates"] = active_state.get("step_updates", [])
+            active_state["completed_steps"] = active_state.get("completed_steps", [])
 
         # =========================
         # 🔵 LOAD SESSION
