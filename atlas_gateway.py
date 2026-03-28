@@ -496,7 +496,11 @@ def atlas_action():
         current_step = execution_state.get("current_step")
         step_updates = execution_state.get("step_updates", [])
 
-        allowed, blocking_step = is_step_allowed(current_step, step_updates)
+        allowed, blocking_step = is_step_allowed(
+            current_step,
+            step_updates,
+            execution_state.get("completed_steps", [])
+        )
 
         if not allowed:
             print("🛑 BLOCKED BY DEPENDENCY:", blocking_step)
