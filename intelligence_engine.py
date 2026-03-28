@@ -8,7 +8,7 @@ from step_replacement_engine import replace_failed_step
 
 print("🔥 NEW CODE DEPLOYED")
 
-
+def is_step_allowed(current_step, step_updates):
 def generate_intelligent_action(session_data):
 
     # =========================
