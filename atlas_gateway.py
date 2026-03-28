@@ -457,7 +457,43 @@ def atlas_action():
 
                         result["action"] = f"Continue: {next_step}"
 
-                        print("➡️ MOVING TO NEXT STEP:", next_step)              
+                        print("➡️ MOVING TO NEXT STEP:", next_step) 
+
+        # =========================
+        # 🧠 FAILURE & LOOP CONTROL
+        # =========================
+
+        execution_state = result.get("execution_state", {})
+        current_step = execution_state.get("current_step")
+        step_updates = execution_state.get("step_updates", [])
+
+        # count failures for current step
+        failure_count = sum(
+            1 for update in step_updates
+            if update.get("step") == current_step and update.get("status") == "failed"
+        )
+
+        # count repeats
+        repeat_count = sum(
+            1 for step in execution_state.get("completed_steps", [])
+            if step == current_step
+        )
+
+        # 🚨 FAILURE LOGIC
+        if failure_count >= 2:
+            result["action"] = f"⚠️ Escalate: {current_step} is failing repeatedly"
+            result["step_decision"]["decision"] = "escalate"
+            result["step_decision"]["execution_action"] = "hold"
+
+            print("🚨 FAILURE ESCALATION TRIGGERED")
+
+        # 🔁 LOOP LOGIC
+        elif repeat_count >= 2:
+            result["action"] = f"🔁 Loop detected at: {current_step}, forcing change"
+            result["step_decision"]["decision"] = "adjust"
+            result["step_decision"]["execution_action"] = "hold"
+
+            print("🔁 LOOP DETECTED")                         
 
         # =========================
         # 🔥 SAVE DECISION
