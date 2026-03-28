@@ -210,6 +210,13 @@ def generate_intelligent_action(session_data):
     step_decision["execution_action"] = execution_action
     step_decision["decision"] = execution_action
 
+    if execution_action == "execute":
+        step_decision["reason"] = "High confidence decision, execute immediately"
+    elif execution_action == "continue":
+        step_decision["reason"] = "Moderate confidence, continue execution"
+    else:
+        step_decision["reason"] = "Low confidence, hold execution"
+
     # =========================
     # OUTPUT
     # =========================
