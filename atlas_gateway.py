@@ -240,7 +240,7 @@ def atlas_action():
         elif saved_state and isinstance(saved_state, dict):
             active_state = saved_state
         else:
-            ctive_state = input_data.get("active_state", {})
+            active_state = input_data.get("active_state", {})
 
         print("🔥 RAW SAVED STATE:", saved_state)
         print("🔥 FINAL ACTIVE STATE:", active_state)
