@@ -283,7 +283,7 @@ def complete_task():
 
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
-
+    print("🚀 REQUEST STARTED")
     try:
         input_data = request.get_json(force=True)
 
@@ -298,6 +298,9 @@ def atlas_action():
             active_state = saved_state
         else:
             active_state = input_data.get("active_state", {})
+        print("✅ STATE LOADED")
+        session = load_session_from_sheet()
+        print("✅ SESSION LOADED:", session.get("session_id"))
 
         # 🔥 SESSION
         session = load_session_from_sheet()
@@ -317,7 +320,11 @@ def atlas_action():
         session["active_state"] = active_state
 
         # 🔥 SESSION HEALTH
-        session_check = evaluate_session_health(session, active_state)
+        try:
+            session_check = evaluate_session_health(session, active_state)
+        except Exception as e:
+            print("❌ SESSION HEALTH ERROR:", e)
+            session_check = {"session_decision": "continue"}
 
         if session_check["session_decision"] == "reset_session":
             new_session_id = f"S-{int(time.time())}"
@@ -325,7 +332,15 @@ def atlas_action():
             active_state = {}
 
         # 🧠 INTELLIGENCE
-        result = generate_intelligent_action(session)
+        try:
+            result = generate_intelligent_action(session)
+            print("✅ INTELLIGENCE RESULT:", result.get("action"))
+        except Exception as e:
+            print("❌ INTELLIGENCE ERROR:", e)
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            })
 
         # =========================
         # 🔥 SAVE DECISION
