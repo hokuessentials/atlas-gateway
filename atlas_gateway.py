@@ -378,6 +378,20 @@ def atlas_action():
         }
 
         save_state_to_sheet(state)
+        
+        # =========================
+        # 🔥 SAVE SESSION
+        # =========================
+
+        session_payload = {
+            "session_id": session_id,
+            "module": session.get("focus_module", "general"),
+            "status": "active",
+            "current_step": result.get("execution_state", {}).get("current_step"),
+            "timestamp": datetime.now().isoformat()
+        }
+
+save_session_to_sheet(session_payload)
 
         return jsonify({
             "status": "success",
