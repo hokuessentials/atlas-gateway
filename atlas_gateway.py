@@ -193,6 +193,31 @@ def save_session_to_sheet(session):
 
     requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
 
+def update_decision_outcome(decision_id, outcome, lesson):
+
+    payload = {
+        "action": "update_decision",
+        "data": {
+            "Decision_ID": decision_id,
+            "Outcome_Status": outcome,
+            "Lesson_Learned": lesson
+        }
+    }
+
+    try:
+        requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+    except Exception as e:
+        print("❌ Update decision error:", e)
+
+        if decision_payload:
+
+    # simulate outcome for now
+    update_decision_outcome(
+        decision_id=decision_payload["Decision_ID"],
+        outcome="success",   # or failed
+        lesson="Initial execution completed"
+    )
+
 # =========================
 # ROUTES (UNCHANGED)
 # =========================
@@ -347,19 +372,6 @@ def atlas_action():
             }
 
             save_decision_to_sheet(decision_payload)
-            
-def update_decision_outcome(decision_id, outcome, lesson):
-
-    payload = {
-        "action": "update_decision",
-        "data": {
-            "Decision_ID": decision_id,
-            "Outcome_Status": outcome,
-            "Lesson_Learned": lesson
-        }
-    }
-
-    requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
 
         # =========================
         # 🔵 SAVE MEMORY
