@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import json
 import time
-from intelligence_engine import generate_intelligent_action, is_step_allowed
+from intelligence_engine import generate_intelligent_action, is_step_allowed, get_candidate_steps, filter_allowed_candidates, select_better_step
 import state_engine
 from session_engine import evaluate_session_health
 
@@ -381,7 +381,7 @@ def atlas_action():
 
             action = result.get("action", "")
             execution_plan = result.get("execution_plan", [])
-            
+
             print("✅ INTELLIGENCE RESULT:", result.get("action"))
         except Exception as e:
             print("❌ INTELLIGENCE ERROR:", e)
@@ -441,6 +441,52 @@ def atlas_action():
         if final_step and action.startswith("Switch"):
             result["action"] = f"Continue: {final_step}"
             print("🔁 ACTION REALIGNED:", result["action"])
+
+        # =========================
+        # 🧠 PHASE 2: CONTROLLED NON-LINEAR EXECUTION (SAFE FINAL)
+        # =========================
+
+        execution_plan = result.get("execution_plan", [])
+        execution_state = result.get("execution_state", {})
+
+        current_step = execution_state.get("current_step")
+        completed_steps = execution_state.get("completed_steps", [])
+        step_updates = execution_state.get("step_updates", [])
+
+        # 1. Get candidates (exclude current step)
+        candidates = [
+            step for step in get_candidate_steps(execution_plan, completed_steps)
+            if step != current_step
+        ]
+
+        # 2. Filter allowed (dependency-safe)
+        allowed_candidates = filter_allowed_candidates(candidates, step_updates)
+
+        # 3. Safety check
+        if allowed_candidates:
+
+            selected_step = select_better_step(
+                current_step,
+                allowed_candidates,
+                step_updates
+            )
+
+            # 4. Apply ONLY if changed
+            if selected_step and selected_step != current_step:
+
+                print("⚡ CONTROLLED SWITCH:", current_step, "→", selected_step)
+
+                execution_state["current_step"] = selected_step
+
+                # ✅ SYNC pending steps
+                execution_state["pending_steps"] = [
+                    s for s in execution_plan
+                    if s not in execution_state.get("completed_steps", [])
+                    and s != selected_step
+                ]
+
+                # ✅ SYNC action
+                result["action"] = f"Continue: {selected_step}"    
         
         # =========================
         # 🧠 DEPENDENCY CHECK (PHASE 1)
