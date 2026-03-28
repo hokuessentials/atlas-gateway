@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import json
 import time
-from intelligence_engine import generate_intelligent_action
+from intelligence_engine import generate_intelligent_action, is_step_allowed
 import state_engine
 from session_engine import evaluate_session_health
 
@@ -420,7 +420,7 @@ def atlas_action():
         # 🧠 DEPENDENCY CHECK (PHASE 1)
         # =========================
 
-        execution_state = result.get("execution_state", {})
+        execution_state = result["execution_state"]
         current_step = execution_state.get("current_step")
         step_updates = execution_state.get("step_updates", [])
 
