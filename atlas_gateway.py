@@ -314,6 +314,29 @@ def atlas_action():
         session["active_state"] = active_state
         result = generate_intelligent_action(session)
 
+            # 🔥 SAVE DECISION (ONLY IF VALID)
+            if result.get("action") and result["action"] != "Start by logging a decision":
+
+                decision_payload = {
+                    "Decision_ID": f"D-{int(time.time())}",
+                    "Session_ID": session.get("session_id"),
+                    "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Title": result.get("action"),
+                    "Description": result.get("reason"),
+                    "Module": "system",
+                    "Expected_ROI": 0,
+                    "Risk_Score": 0,
+                    "Confidence_Level": 0,
+                    "Reversible_Flag": True,
+                    "Decision_Owner": "Atlas",
+                    "Tags": "auto",
+                    "Decision_Type": "execution",
+                    "Outcome_Status": "pending",
+                    "Lesson_Learned": ""
+                }
+
+                save_decision_to_sheet(decision_payload)
+
         # 🔵 SAVE MEMORY
         if result.get("execution_state"):
             state = {
