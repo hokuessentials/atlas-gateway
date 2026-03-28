@@ -290,7 +290,6 @@ def atlas_action():
         # 🔵 LOAD MEMORY
         saved_state = load_state_from_sheet()
 
-        # 🔥 TEST OVERRIDE SUPPORT
         force_input = input_data.get("force_input", False)
 
         if force_input:
@@ -300,11 +299,7 @@ def atlas_action():
         else:
             active_state = input_data.get("active_state", {})
 
-        print("🔥 RAW SAVED STATE:", saved_state)
-        print("🔥 FINAL ACTIVE STATE:", active_state)
-
-        # 🔥 SESSION ENGINE (PHASE 1)
-
+        # 🔥 SESSION
         session = load_session_from_sheet()
 
         memory_session_id = active_state.get("session_id")
@@ -317,94 +312,87 @@ def atlas_action():
         else:
             final_session_id = f"S-{int(time.time())}"
 
-        # 🔥 FORCE SYNC
         session["session_id"] = final_session_id
         active_state["session_id"] = final_session_id
-
-        # Attach state
         session["active_state"] = active_state
 
-        # =========================
-        # 🔥 SESSION INTELLIGENCE
-        # =========================
-
+        # 🔥 SESSION HEALTH
         session_check = evaluate_session_health(session, active_state)
 
-        # 🔁 RESET SESSION IF NEEDED
         if session_check["session_decision"] == "reset_session":
-
             new_session_id = f"S-{int(time.time())}"
-
             session["session_id"] = new_session_id
+            active_state = {}
 
-            active_state = {}  # 🔥 HARD RESET
-
-            print("⚠️ SESSION RESET:", session_check["reason"])
-
-        # =========================
-        # 🧠 RUN INTELLIGENCE
-        # =========================
-
-        session["active_state"] = active_state
+        # 🧠 INTELLIGENCE
         result = generate_intelligent_action(session)
 
-    # =========================
-    # 🔥 SAVE DECISION
-    # =========================
+        # =========================
+        # 🔥 SAVE DECISION
+        # =========================
 
-decision_payload = None
+        if result.get("action") and result["action"] != "Start by logging a decision":
 
-if result.get("action") and result["action"] != "Start by logging a decision":
+            decision_payload = {
+                "Decision_ID": f"D-{int(time.time())}",
+                "Session_ID": session.get("session_id"),
+                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "Title": result.get("action"),
+                "Description": result.get("reason"),
+                "Module": session.get("focus_module", "general"),
+                "Expected_ROI": result.get("expected_roi", 10),
+                "Risk_Score": result.get("risk_score", 0.3),
+                "Confidence_Level": result.get("confidence_level", 0.6),
+                "Reversible_Flag": True,
+                "Decision_Owner": "Atlas",
+                "Tags": "auto",
+                "Decision_Type": "execution",
+                "Outcome_Status": "pending",
+                "Lesson_Learned": ""
+            }
 
-    decision_payload = {
-        "Decision_ID": f"D-{int(time.time())}",
-        "Session_ID": session.get("session_id"),
-        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "Title": result.get("action"),
-        "Description": result.get("reason"),
-        "Module": session.get("focus_module", "general"),
-        "Expected_ROI": result.get("expected_roi", 10),
-        "Risk_Score": result.get("risk_score", 0.3),
-        "Confidence_Level": result.get("confidence_level", 0.6),
-        "Reversible_Flag": True,
-        "Decision_Owner": "Atlas",
-        "Tags": "auto",
-        "Decision_Type": "execution",
-        "Outcome_Status": "pending",
-        "Lesson_Learned": ""
-    }
+            save_decision_to_sheet(decision_payload)
 
-    save_decision_to_sheet(decision_payload)
+        # =========================
+        # 🔵 SAVE STATE
+        # =========================
 
+        state = {
+            "session_id": session.get("session_id"),
+            "current_step": result.get("execution_state", {}).get("current_step"),
+            "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
+            "step_updates": result.get("execution_state", {}).get("step_updates", []),
+            "execution_plan": result.get("execution_plan", [])
+        }
 
-# =========================
-# 🔵 SAVE STATE
-# =========================
+        save_state_to_sheet(state)
 
-state = {
-    "session_id": session.get("session_id"),
-    "current_step": result.get("execution_state", {}).get("current_step"),
-    "completed_steps": result.get("execution_state", {}).get("completed_steps", []),
-    "step_updates": result.get("execution_state", {}).get("step_updates", []),
-    "execution_plan": result.get("execution_plan", [])
-}
+        # =========================
+        # 🔥 SAVE SESSION
+        # =========================
 
-save_state_to_sheet(state)
+        session_payload = {
+            "session_id": session.get("session_id"),
+            "module": session.get("focus_module", "general"),
+            "status": "active",
+            "current_step": result.get("execution_state", {}).get("current_step"),
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
 
+        save_session_to_sheet_async(session_payload)
 
-# =========================
-# 🔥 SAVE SESSION (ASYNC)
-# =========================
+        return jsonify({
+            "status": "success",
+            "session_id": session.get("session_id"),
+            "result": result
+        })
 
-session_payload = {
-    "session_id": session.get("session_id"),
-    "module": session.get("focus_module", "general"),
-    "status": "active",
-    "current_step": result.get("execution_state", {}).get("current_step"),
-    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-}
-
-save_session_to_sheet_async(session_payload)    
+    except Exception as e:
+        print("🔥 ACTION ERROR:", str(e))
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })   
 
 # =========================
 
