@@ -59,6 +59,30 @@ def save_state_to_sheet(active_state):
     except Exception as e:
         print("❌ STATE SAVE ERROR:", e)
 
+def save_decision_to_sheet(decision_data):
+    try:
+        payload = {
+            "action": "log_decision",
+            "data": decision_data
+        }
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        resp = requests.post(
+            APPS_SCRIPT_URL,
+            data=json.dumps(payload),
+            headers=headers,
+            timeout=10,
+            allow_redirects=True
+        )
+
+        print("🔥 DECISION SAVE:", resp.text)
+
+    except Exception as e:
+        print("❌ DECISION SAVE ERROR:", e)       
+
 def load_state_from_sheet():
     try:
         url = APPS_SCRIPT_URL + "?action=get_state"
