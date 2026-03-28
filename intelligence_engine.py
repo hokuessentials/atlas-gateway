@@ -193,16 +193,6 @@ def generate_intelligent_action(session_data):
         step_updates
     )
 
-    # =========================
-    # FINAL STEP DECISION
-    # =========================
-
-    step_decision = decide_step_action(
-        execution_state.get("current_step"),
-        step_updates
-    )
-
-    # ✅ ADD HERE
     best_score = best.get("score", 0)
 
     if best_score >= 0.7:
