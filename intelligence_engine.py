@@ -55,6 +55,59 @@ def is_step_allowed(current_step, step_updates):
             return False, dep
 
     return True, None
+
+# =========================
+# 🧠 CANDIDATE STEP ENGINE (PHASE 2)
+# =========================
+
+def get_candidate_steps(plan, completed_steps):
+    if not plan:
+        return []
+
+    return [step for step in plan if step not in (completed_steps or [])]
+
+
+def filter_allowed_candidates(candidates, step_updates):
+    allowed_steps = []
+
+    for step in candidates:
+        allowed, _ = is_step_allowed(step, step_updates)
+        if allowed:
+            allowed_steps.append(step)
+
+    return allowed_steps
+
+def select_better_step(current_step, candidates, step_updates):
+    """
+    SAFE SWITCH LOGIC:
+    - Switch only if blocked or repeated failures
+    - Otherwise stay on current_step
+    """
+
+    if not current_step or not candidates:
+        return current_step
+
+    current_updates = [
+        u for u in (step_updates or [])
+        if u.get("step") == current_step
+    ]
+
+    failure_count = sum(
+        1 for u in current_updates
+        if u.get("status") == "failed"
+    )
+
+    # RULE 1: Dependency blocked
+    allowed, _ = is_step_allowed(current_step, step_updates)
+    if not allowed:
+        return candidates[0]
+
+    # RULE 2: Multiple failures
+    if failure_count >= 2:
+        return candidates[0]
+
+    # RULE 3: Stay
+    return current_step    
     
 def generate_intelligent_action(session_data):
 
