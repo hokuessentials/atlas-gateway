@@ -496,6 +496,7 @@ def atlas_action():
         # 🚨 FAILURE LOGIC
         if failure_count >= 2:
             result["action"] = f"⚠️ Escalate: {current_step} is failing repeatedly"
+            result.setdefault("step_decision", {})
             result["step_decision"]["decision"] = "escalate"
             result["step_decision"]["execution_action"] = "hold"
 
