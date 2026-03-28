@@ -32,7 +32,7 @@ STEP_DEPENDENCIES = {
 # 🧠 DEPENDENCY CHECK ENGINE
 # =========================
 
-def is_step_allowed(current_step, step_updates):
+def is_step_allowed(current_step, step_updates, completed_steps=None):
 
     rule = STEP_DEPENDENCIES.get(current_step)
 
@@ -40,15 +40,20 @@ def is_step_allowed(current_step, step_updates):
     if not rule:
         return True, None
 
+    completed_steps = completed_steps or []
+
     for dep in rule["depends_on"]:
 
-        # get ALL matches
+        # ✅ FIRST: check completed_steps (STRONG SOURCE)
+        if dep in completed_steps:
+            continue
+
+        # ✅ SECOND: fallback to step_updates
         matches = [u for u in step_updates if u.get("step") == dep]
 
         if not matches:
             return False, dep
 
-        # take latest update
         latest = matches[-1]
 
         if rule["condition"] == "success" and latest.get("status") != "success":
@@ -71,7 +76,7 @@ def filter_allowed_candidates(candidates, step_updates):
     allowed_steps = []
 
     for step in candidates:
-        allowed, _ = is_step_allowed(step, step_updates)
+        allowed, _ = is_step_allowed(step, step_updates, completed_steps)
         if allowed:
             allowed_steps.append(step)
 
