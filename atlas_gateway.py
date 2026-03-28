@@ -27,17 +27,29 @@ def save_state_to_sheet(active_state):
             "data": active_state
         }
 
-        print("🔥 SAVING STATE:", active_state)
+        print("🔥 SAVING STATE:", payload)
+
+        headers = {
+            "Content-Type": "application/json"
+        }
 
         for attempt in range(2):
             try:
-                resp = requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+                resp = requests.post(
+                    APPS_SCRIPT_URL,
+                    data=json.dumps(payload),   # ✅ FIXED (NO json=payload)
+                    headers=headers,
+                    timeout=10,
+                    allow_redirects=True
+                )
+
+                print("🔥 SAVE STATUS:", resp.status_code)
+                print("🔥 SAVE RESPONSE:", resp.text)
 
                 if resp and resp.status_code == 200:
-                    print("🔥 SAVE RESPONSE:", resp.text)
                     return
                 else:
-                    print("⚠️ SAVE FAILED STATUS:", resp.status_code if resp else "No response")
+                    print("⚠️ SAVE FAILED")
 
             except Exception as retry_error:
                 print(f"⚠️ RETRY {attempt + 1} FAILED:", retry_error)
@@ -45,13 +57,17 @@ def save_state_to_sheet(active_state):
         print("❌ STATE SAVE FAILED AFTER RETRIES")
 
     except Exception as e:
-        print("STATE SAVE ERROR:", e)
-
+        print("❌ STATE SAVE ERROR:", e)
 
 def load_state_from_sheet():
     try:
         url = APPS_SCRIPT_URL + "?action=get_state"
-        resp = requests.get(url, timeout=5)
+        resp = requests.get(
+            url,
+            headers={"Accept": "application/json"},
+            timeout=10,
+            allow_redirects=True
+        )
 
         print("🔥 LOAD RESPONSE RAW:", resp.text)
 
@@ -97,7 +113,12 @@ def load_session_from_sheet():
 
     try:
         url = APPS_SCRIPT_URL + "?action=get_last_session"
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(
+            url,
+            headers={"Accept": "application/json"},
+            timeout=10,
+            allow_redirects=True
+        )
 
         if not resp or resp.status_code != 200:
             return session_data
