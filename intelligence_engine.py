@@ -8,7 +8,54 @@ from step_replacement_engine import replace_failed_step
 
 print("🔥 NEW CODE DEPLOYED")
 
+# =========================
+# 🧠 STEP DEPENDENCIES
+# =========================
+
+STEP_DEPENDENCIES = {
+    "Negotiate price": {
+        "depends_on": ["Check supplier pricing"],
+        "condition": "success"
+    },
+    "Check sample quality": {
+        "depends_on": ["Negotiate price"],
+        "condition": "success"
+    },
+    "Finalize supplier": {
+        "depends_on": ["Check sample quality"],
+        "condition": "success"
+    }
+}
+
+
+# =========================
+# 🧠 DEPENDENCY CHECK ENGINE
+# =========================
+
 def is_step_allowed(current_step, step_updates):
+
+    rule = STEP_DEPENDENCIES.get(current_step)
+
+    # No dependency → allowed
+    if not rule:
+        return True, None
+
+    for dep in rule["depends_on"]:
+
+        # get ALL matches
+        matches = [u for u in step_updates if u.get("step") == dep]
+
+        if not matches:
+            return False, dep
+
+        # take latest update
+        latest = matches[-1]
+
+        if rule["condition"] == "success" and latest.get("status") != "success":
+            return False, dep
+
+    return True, None
+    
 def generate_intelligent_action(session_data):
 
     # =========================
