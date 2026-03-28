@@ -389,16 +389,21 @@ def atlas_action():
         execution_state = result["execution_state"]
 
         # =========================
-        # ⚡ STEP OVERRIDE (HIGH VALUE)
+        # ⚡ STEP OVERRIDE (SAFE MODE)
         # =========================
-        action = result.get("action", "")
 
-        if action.startswith("Switch to higher value"):
-            execution_plan = result.get("execution_plan", [])
-            if execution_plan:
-                new_step = execution_plan[-1]
-                execution_state["current_step"] = new_step
-                print("⚡ STEP OVERRIDE:", new_step)
+        force_mode = execution_state.get("force_mode", False)
+
+        if not force_mode:
+
+            action = result.get("action", "")
+
+            if action.startswith("Switch to higher value"):
+                execution_plan = result.get("execution_plan", [])
+                if execution_plan:
+                    new_step = execution_plan[-1]
+                    execution_state["current_step"] = new_step
+                    print("⚡ STEP OVERRIDE:", new_step)
 
         # =========================
         # 🧠 STEP VALIDATION (SAFE MODE)
