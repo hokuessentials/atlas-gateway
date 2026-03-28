@@ -72,7 +72,7 @@ def get_candidate_steps(plan, completed_steps):
     return [step for step in plan if step not in (completed_steps or [])]
 
 
-def filter_allowed_candidates(candidates, step_updates):
+def filter_allowed_candidates(candidates, step_updates, completed_steps):
     allowed_steps = []
 
     for step in candidates:
@@ -82,11 +82,10 @@ def filter_allowed_candidates(candidates, step_updates):
 
     return allowed_steps
 
-def select_better_step(current_step, candidates, step_updates):
+
+def select_better_step(current_step, candidates, step_updates, completed_steps):
     """
-    SAFE SWITCH LOGIC:
-    - Switch only if blocked or repeated failures
-    - Otherwise stay on current_step
+    SAFE SWITCH LOGIC
     """
 
     if not current_step or not candidates:
@@ -102,17 +101,16 @@ def select_better_step(current_step, candidates, step_updates):
         if u.get("status") == "failed"
     )
 
-    # RULE 1: Dependency blocked
-    allowed, _ = is_step_allowed(current_step, step_updates)
+    # RULE 1: dependency block
+    allowed, _ = is_step_allowed(current_step, step_updates, completed_steps)
     if not allowed:
         return candidates[0]
 
-    # RULE 2: Multiple failures
+    # RULE 2: repeated failures
     if failure_count >= 2:
         return candidates[0]
 
-    # RULE 3: Stay
-    return current_step    
+    return current_step   
     
 def generate_intelligent_action(session_data):
 
