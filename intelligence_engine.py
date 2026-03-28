@@ -194,6 +194,32 @@ def generate_intelligent_action(session_data):
     )
 
     # =========================
+    # FINAL STEP DECISION
+    # =========================
+
+    step_decision = decide_step_action(
+        execution_state.get("current_step"),
+        step_updates
+    )
+
+    # ✅ ADD HERE
+    best_score = best.get("score", 0)
+
+    if best_score >= 0.7:
+        decision_quality = "strong"
+        execution_action = "execute"
+    elif best_score >= 0.5:
+        decision_quality = "moderate"
+        execution_action = "continue"
+    else:
+        decision_quality = "weak"
+        execution_action = "hold"
+
+    step_decision["decision_score"] = round(best_score, 2)
+    step_decision["decision_quality"] = decision_quality
+    step_decision["execution_action"] = execution_action
+
+    # =========================
     # OUTPUT
     # =========================
 
