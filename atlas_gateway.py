@@ -185,6 +185,14 @@ def load_session_from_sheet():
 
     return session_data
 
+def save_session_to_sheet(session):
+    payload = {
+        "action": "save_session",
+        "data": session
+    }
+
+    requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+
 # =========================
 # ROUTES (UNCHANGED)
 # =========================
