@@ -334,10 +334,10 @@ def atlas_action():
                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "Title": result.get("action"),
                 "Description": result.get("reason"),
-                "Module": "system",
-                "Expected_ROI": 0,
-                "Risk_Score": 0,
-                "Confidence_Level": 0,
+                "Module": session.get("focus_module", "general"),
+                "Expected_ROI": result.get("expected_roi", 10),
+                "Risk_Score": result.get("risk_score", 0.3),
+                "Confidence_Level": result.get("confidence_level", 0.6),
                 "Reversible_Flag": True,
                 "Decision_Owner": "Atlas",
                 "Tags": "auto",
@@ -347,6 +347,19 @@ def atlas_action():
             }
 
             save_decision_to_sheet(decision_payload)
+            
+def update_decision_outcome(decision_id, outcome, lesson):
+
+    payload = {
+        "action": "update_decision",
+        "data": {
+            "Decision_ID": decision_id,
+            "Outcome_Status": outcome,
+            "Lesson_Learned": lesson
+        }
+    }
+
+    requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
 
         # =========================
         # 🔵 SAVE MEMORY
