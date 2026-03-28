@@ -59,7 +59,10 @@ def compute_decision_scores(session_data):
 
         priority_boost = apply_priority_boost(title)
 
-        score = (base_score * success_weight * time_weight * prob) + priority_boost
+        raw_score = (base_score * success_weight * time_weight * prob) + priority_boost
+
+        # 🔥 NORMALIZATION (CRITICAL)
+        score = max(0, min(raw_score, 1))
 
         scored.append({
             "title": title,
