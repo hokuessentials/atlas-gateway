@@ -68,7 +68,16 @@ def is_step_allowed(current_step, step_updates, completed_steps=None):
 def get_candidate_steps(plan, completed_steps):
     if not plan:
         return []
-    return [step for step in plan if step not in (completed_steps or [])]
+
+    completed_steps = set(completed_steps or [])
+
+    candidates = []
+
+    for step in plan:
+        if step not in completed_steps:
+            candidates.append(step)
+
+    return candidates
 
 
 def filter_allowed_candidates(candidates, step_updates, completed_steps):
