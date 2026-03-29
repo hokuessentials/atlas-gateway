@@ -386,7 +386,17 @@ def atlas_action():
     elif isinstance(active_raw, list) and len(active_raw) >= 2:
         try:
             headers = active_raw[0]
-            values = active_raw[-1]
+
+            # 🔥 FIND LAST NON-EMPTY ROW
+            values = None
+
+            for row in reversed(active_raw[1:]):
+                if any(str(cell).strip() != "" for cell in row):
+                    values = row
+                    break
+
+            if not values:
+                values = []
 
             if isinstance(headers, list) and isinstance(values, list):
                 for i in range(min(len(headers), len(values))):
