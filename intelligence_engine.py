@@ -431,6 +431,9 @@ def generate_intelligent_action(session_data):
         execution_state,
         step_decision
     )
+    # ✅ SYNC current step with plan
+    if execution_state.get("current_step") not in adjusted_plan:
+        adjusted_plan.insert(0, execution_state.get("current_step"))
 
     # 👉 FINAL STATE (ONLY IF NO MEMORY)
     if not (existing_state and existing_state.get("current_step")):
