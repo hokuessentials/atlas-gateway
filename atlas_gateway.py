@@ -138,6 +138,7 @@ def load_state_from_sheet():
         return {}
 
 def read_full_system_memory():
+    print("🔥 USING URL:", APPS_SCRIPT_URL)
     try:
         url = APPS_SCRIPT_URL + "?action=read_full_memory"
 
@@ -146,7 +147,7 @@ def read_full_system_memory():
             headers={"Accept": "application/json"},
             timeout=10
         )
-
+        
         if not resp or resp.status_code != 200:
             return {}
 
