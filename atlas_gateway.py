@@ -361,7 +361,7 @@ def save_session_to_sheet(session):
 def atlas_action():
     print("🚀 REQUEST STARTED")
 
-try:
+    try:
     input_data = request.get_json(force=True)
 
     # =========================
