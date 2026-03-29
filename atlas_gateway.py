@@ -140,7 +140,7 @@ def load_state_from_sheet():
 def read_full_system_memory():
     try:
         print("🔥 USING URL:", APPS_SCRIPT_URL)
-        
+
         url = APPS_SCRIPT_URL + "?action=read_full_memory"
 
         resp = requests.get(
@@ -417,25 +417,71 @@ def atlas_action():
     # =========================
     # 🔹 SAFE JSON PARSE
     # =========================
-    def safe_json_parse(value):
-        if isinstance(value, list):
-            return value
-        if isinstance(value, str):
-            try:
-                return json.loads(value)
-            except:
-                return []
-        return []
 
+def safe_json_parse(value):
+    if isinstance(value, list):
+        return value
+
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except:
+            return []
+
+    return []
+
+
+def parse_active_state(active_state_raw):
+
+    # =========================
+    # 🛡️ SAFETY
+    # =========================
+    if not active_state_raw or len(active_state_raw) < 2:
+        return {
+            "current_step": None,
+            "completed_steps": [],
+            "execution_plan": [],
+            "pending_steps": []
+        }
+
+    # =========================
+    # 🔄 CONVERT LIST → DICT
+    # =========================
+    headers = active_state_raw[0]
+    values = active_state_raw[1]
+
+    active_state = {}
+
+    for i in range(len(headers)):
+        key = headers[i]
+        value = values[i] if i < len(values) else None
+        active_state[key] = value
+
+    # =========================
+    # 🔥 PARSE FIELDS
+    # =========================
     completed_steps = safe_json_parse(active_state.get("completed_steps", []))
     execution_plan = safe_json_parse(active_state.get("execution_plan", []))
 
     current_step = active_state.get("current_step")
 
+    # =========================
+    # 🧠 BUILD PENDING STEPS
+    # =========================
     pending_steps = [
-        s for s in execution_plan
-        if s not in completed_steps
+        step for step in execution_plan
+        if step not in completed_steps
     ]
+
+    # =========================
+    # ✅ FINAL OUTPUT
+    # =========================
+    return {
+        "current_step": current_step,
+        "completed_steps": completed_steps,
+        "execution_plan": execution_plan,
+        "pending_steps": pending_steps
+    }
 
     # =========================
     # 🧠 QUESTION MODE
