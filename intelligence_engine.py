@@ -157,6 +157,8 @@ def select_better_step(current_step, candidates, step_updates, completed_steps):
     # =========================
     # GET STATE
     # =========================
+    
+def generate_intelligent_action(session_data):
 
     active_state = session_data.get("active_state", {})
     existing_state = active_state if active_state else {}
