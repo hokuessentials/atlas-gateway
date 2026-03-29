@@ -6,6 +6,24 @@ from intelligence_engine import generate_intelligent_action, is_step_allowed, ge
 import state_engine
 from session_engine import evaluate_session_health
 
+def read_active_state_from_sheet():
+
+    SHEET_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
+
+    try:
+        response = requests.get(f"{SHEET_URL}?action=read_active_state")
+
+        if response.status_code != 200:
+            return None
+
+        data = response.json()
+
+        return data.get("active_state")
+
+    except Exception as e:
+        print("❌ ACTIVE_STATE READ ERROR:", e)
+        return None
+
 update_state = state_engine.update_state
 add_blocker = state_engine.add_blocker
 clear_blockers = state_engine.clear_blockers
