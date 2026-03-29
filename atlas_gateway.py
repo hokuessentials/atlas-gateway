@@ -369,22 +369,52 @@ def atlas_action():
         # =========================
 
         if input_data.get("question"):
-            system_memory = read_full_system_memory()
-            active_state = load_state_from_sheet()
 
-            return jsonify({
-                "status": "success",
-                "answer": {
-                    "current_step": active_state.get("current_step"),
-                    "completed_steps": active_state.get("completed_steps"),
-                    "pending_steps": [
-                        s for s in active_state.get("execution_plan", [])
-                        if s not in active_state.get("completed_steps", [])
-                    ],
-                    "execution_plan": active_state.get("execution_plan"),
-                    "roadmap": system_memory.get("roadmap", [])
-                }
-            })
+            system_memory = read_full_system_memory()
+
+    # =========================
+    # 🔥 CONVERT ACTIVE STATE
+    # =========================
+    active_raw = system_memory.get("active_state", [])
+
+    active_state = {}
+
+    if len(active_raw) >= 2:
+        headers = active_raw[0]
+        values = active_raw[-1]
+
+        for i in range(len(headers)):
+            active_state[headers[i]] = values[i]
+
+    # =========================
+    # 🔥 SAFE PARSE LISTS
+    # =========================
+    try:
+        completed_steps = json.loads(active_state.get("completed_steps", "[]"))
+    except:
+        completed_steps = []
+
+    try:
+        execution_plan = json.loads(active_state.get("execution_plan", "[]"))
+    except:
+        execution_plan = []
+
+    current_step = active_state.get("current_step")
+
+    pending_steps = [
+        s for s in execution_plan if s not in completed_steps
+    ]
+
+    return jsonify({
+        "status": "success",
+        "answer": {
+            "current_step": current_step,
+            "completed_steps": completed_steps,
+            "pending_steps": pending_steps,
+            "execution_plan": execution_plan,
+            "roadmap": system_memory.get("roadmap", [])
+        }
+    })
 
         # =========================
         # 🔵 LOAD STATE (STRICT OVERRIDE FIX)
