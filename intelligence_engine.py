@@ -62,57 +62,97 @@ def is_step_allowed(current_step, step_updates, completed_steps=None):
     return True, None
 
 # =========================
-# 🧠 CANDIDATE STEP ENGINE (PHASE 2)
+# 🧠 CANDIDATE STEP ENGINE (PHASE 3)
 # =========================
 
 def get_candidate_steps(plan, completed_steps):
     if not plan:
         return []
-
     return [step for step in plan if step not in (completed_steps or [])]
 
 
 def filter_allowed_candidates(candidates, step_updates, completed_steps):
     allowed_steps = []
-
     for step in candidates:
         allowed, _ = is_step_allowed(step, step_updates, completed_steps)
         if allowed:
             allowed_steps.append(step)
-
     return allowed_steps
+
+
+def score_steps_simple(current_step, candidates, step_updates):
+    """
+    VERY SAFE SCORING:
+    - Penalize failures
+    - Prefer steps with no failure history
+    - Keep simple to avoid instability
+    """
+
+    def failure_count(step):
+        return sum(
+            1 for u in (step_updates or [])
+            if u.get("step") == step and u.get("status") == "failed"
+        )
+
+    scores = {}
+
+    for step in candidates:
+        fail = failure_count(step)
+
+        # base score
+        score = 1.0
+
+        # failure penalty
+        if fail > 0:
+            score -= min(0.6, fail * 0.3)
+
+        scores[step] = round(score, 2)
+
+    # current step score
+    current_fail = failure_count(current_step)
+    current_score = 1.0 - min(0.6, current_fail * 0.3)
+
+    return scores, round(current_score, 2)
 
 
 def select_better_step(current_step, candidates, step_updates, completed_steps):
     """
-    SAFE SWITCH LOGIC
+    PHASE 3 LOGIC:
+    - Keep dependency safety
+    - Compare scores
+    - Switch only if clearly better (+0.2)
     """
 
     if not current_step or not candidates:
         return current_step
 
-    current_updates = [
-        u for u in (step_updates or [])
-        if u.get("step") == current_step
-    ]
-
-    failure_count = sum(
-        1 for u in current_updates
-        if u.get("status") == "failed"
-    )
-
+    # =========================
     # RULE 1: dependency block
+    # =========================
     allowed, _ = is_step_allowed(current_step, step_updates, completed_steps)
     if not allowed:
         return candidates[0]
 
-    # RULE 2: repeated failures
-    if failure_count >= 2:
-        return candidates[0]
+    # =========================
+    # SCORE COMPARISON
+    # =========================
+    scores, current_score = score_steps_simple(
+        current_step,
+        candidates,
+        step_updates
+    )
 
-    return current_step   
-    
-def generate_intelligent_action(session_data):
+    # best candidate
+    best_step = max(scores, key=scores.get)
+    best_score = scores[best_step]
+
+    # =========================
+    # RULE 2: SWITCH ONLY IF CLEARLY BETTER
+    # =========================
+    if best_score > current_score + 0.2:
+        return best_step
+
+    return current_step
 
     # =========================
     # GET STATE
