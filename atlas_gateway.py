@@ -359,9 +359,9 @@ def save_session_to_sheet(session):
         
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
-    print("🚀 REQUEST STARTED")
+print("🚀 REQUEST STARTED")
 
-    try:
+try:
     input_data = request.get_json(force=True)
 
     # =========================
@@ -374,7 +374,7 @@ def atlas_action():
 
         active_state = {}
 
-        if len(active_raw) >= 2:
+        if isinstance(active_raw, list) and len(active_raw) >= 2:
             headers = active_raw[0]
             values = active_raw[-1]
 
@@ -409,7 +409,7 @@ def atlas_action():
         })
 
     # =========================
-    # 🔵 NORMAL ENGINE FLOW (OUTSIDE IF)
+    # 🔵 NORMAL ENGINE FLOW
     # =========================
 
     saved_state = load_state_from_sheet()
@@ -424,19 +424,27 @@ def atlas_action():
         else:
             active_state = input_data.get("active_state", {}) or {}
 
-        print("✅ STATE LOADED:", active_state)
+    print("✅ STATE LOADED:", active_state)
 
+    # 🔥 FORCE CLEAN EXECUTION STATE
+    if force_input:
+        active_state["step_updates"] = active_state.get("step_updates", [])
+        active_state["completed_steps"] = active_state.get("completed_steps", [])
 
-        # 🔥 FORCE CLEAN EXECUTION STATE
-        if force_input:
-            active_state["step_updates"] = active_state.get("step_updates", [])
-            active_state["completed_steps"] = active_state.get("completed_steps", [])
+    # =========================
+    # 🔵 LOAD SESSION
+    # =========================
+    session = load_session_from_sheet() or {}
+    print("✅ SESSION LOADED:", session.get("session_id"))
 
-        # =========================
-        # 🔵 LOAD SESSION
-        # =========================
-        session = load_session_from_sheet() or {}
-            print("✅ SESSION LOADED:", session.get("session_id"))
+    # 👉 continue your existing logic from here...
+
+except Exception as e:
+    print("❌ FATAL ERROR:", e)
+    return jsonify({
+        "status": "error",
+        "message": str(e)
+    })
 
         # =========================
         # 🧠 SYSTEM AWARENESS (NEW)
