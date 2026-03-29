@@ -473,7 +473,8 @@ def atlas_action():
                 current_step,
                 allowed_candidates,
                 step_updates,
-                completed_steps
+                completed_steps,
+                session
             )
 
             # 4. Apply ONLY if changed
