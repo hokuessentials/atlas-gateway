@@ -449,12 +449,20 @@ def generate_intelligent_action(session_data):
     if current and current not in adjusted_plan:
         adjusted_plan.insert(0, current)
 
-    # 👉 FINAL STATE (ONLY IF NO MEMORY)
-    if not (existing_state and existing_state.get("current_step")):
-        execution_state = build_execution_state(
-            adjusted_plan,
-            completed_steps
-        )
+    # 👉 ALWAYS SYNC STATE WITH UPDATED PLAN
+    execution_state["execution_plan"] = adjusted_plan
+
+    # REMOVE COMPLETED STEPS NOT IN PLAN
+    execution_state["completed_steps"] = [
+        s for s in execution_state.get("completed_steps", [])
+        if s in adjusted_plan
+    ]
+
+    # FIX current_step if invalid
+    current = execution_state.get("current_step")
+
+    if current not in adjusted_plan:
+        execution_state["current_step"] = adjusted_plan[0]
 
     # =========================
     # FINAL STEP DECISION
