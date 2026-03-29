@@ -362,7 +362,7 @@ def atlas_action():
     print("🚀 REQUEST STARTED")
 
     try:
-        input_data = request.get_json(force=True)
+    input_data = request.get_json(force=True)
 
         # =========================
         # 🧠 QUESTION MODE (NEW)
