@@ -358,7 +358,7 @@ def save_session_to_sheet(session):
         print("❌ SESSION SAVE ERROR:", e)
         
 @app.route("/atlas/action", methods=["POST"])
-def atlas_action():
+def atlas_action():  
     print("🚀 REQUEST STARTED")
 
     # =========================
@@ -376,7 +376,7 @@ def atlas_action():
     system_memory = read_full_system_memory()
     active_raw = system_memory.get("active_state", [])
 
-    # 🔥 FIX: HANDLE BOTH LIST + DICT
+    # 🔥 FIX: HANDLE BOTH LIST + DICT SAFELY
 
     active_state = {}
 
@@ -384,30 +384,35 @@ def atlas_action():
         active_state = active_raw
 
     elif isinstance(active_raw, list) and len(active_raw) >= 2:
-        headers = active_raw[0]
-        values = active_raw[-1]
+        try:
+            headers = active_raw[0]
+            values = active_raw[-1]
 
-    for i in range(len(headers)):
-        active_state[headers[i]] = values[i]
+            if isinstance(headers, list) and isinstance(values, list):
+                for i in range(min(len(headers), len(values))):
+                    active_state[headers[i]] = values[i]
+        except Exception as e:
+            print("❌ ACTIVE_STATE PARSE ERROR:", e)
+            active_state = {}
+
+    else:
+        active_state = {}
 
     # =========================
     # 🔹 SAFE JSON PARSE
     # =========================
-    try:
-        completed_steps = json.loads(active_state.get("completed_steps", "[]"))
-    except:
-        completed_steps = []
+    def safe_json_parse(value):
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except:
+                return []
+        return []
 
-    try:
-        execution_plan = json.loads(active_state.get("execution_plan", "[]"))
-    except:
-        execution_plan = []
-
-    current_step = active_state.get("current_step")
-
-    pending_steps = [
-        s for s in execution_plan if s not in completed_steps
-    ]
+    completed_steps = safe_json_parse(active_state.get("completed_steps", []))
+    execution_plan = safe_json_parse(active_state.get("execution_plan", []))
 
     # =========================
     # 🧠 QUESTION MODE
