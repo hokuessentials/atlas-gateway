@@ -94,7 +94,10 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
     roi_list = session_data.get("roi_list", [])
     risk_list = session_data.get("risk_list", [])
     conf_list = session_data.get("confidence_list", [])
-    memory = build_step_memory(session_data)
+    try:
+        memory = build_step_memory(session_data)
+    except:
+        memory = {}
 
     def failure_count(step):
         return sum(
@@ -237,6 +240,8 @@ def select_better_step(current_step, candidates, step_updates, completed_steps, 
         step_updates,
         session_data
     )
+    if not scores:
+        return current_step
 
     best_step = max(scores, key=scores.get)
     best_score = scores[best_step]
