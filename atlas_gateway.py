@@ -359,7 +359,7 @@ def save_session_to_sheet(session):
         
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
-print("🚀 REQUEST STARTED")
+    print("🚀 REQUEST STARTED")
 
 try:
     input_data = request.get_json(force=True)
@@ -424,7 +424,7 @@ try:
         else:
             active_state = input_data.get("active_state", {}) or {}
 
-    print("✅ STATE LOADED:", active_state)
+        print("✅ STATE LOADED:", active_state)
 
 
         # 🔥 FORCE CLEAN EXECUTION STATE
