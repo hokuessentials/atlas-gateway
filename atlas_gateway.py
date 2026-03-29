@@ -359,46 +359,58 @@ def save_session_to_sheet(session):
         
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
-print("🚀 REQUEST STARTED")
+    print("🚀 REQUEST STARTED")
 
-try:
-    input_data = request.get_json(force=True)
+    # =========================
+    # 🔹 SAFE INPUT PARSE
+    # =========================
+    try:
+        input_data = request.get_json(force=True) or {}
+    except Exception as e:
+        print("❌ REQUEST PARSE ERROR:", e)
+        return jsonify({"status": "error", "message": str(e)})
+
+    # =========================
+    # 🔹 LOAD SYSTEM MEMORY (FIXED)
+    # =========================
+    system_memory = read_full_system_memory()
+    active_raw = system_memory.get("active_state", [])
+
+    active_state = {}
+
+    if isinstance(active_raw, list) and len(active_raw) >= 2:
+        headers = active_raw[0]
+        values = active_raw[-1]
+
+        for i in range(len(headers)):
+            active_state[headers[i]] = values[i]
+
+    # =========================
+    # 🔹 SAFE JSON PARSE
+    # =========================
+    try:
+        completed_steps = json.loads(active_state.get("completed_steps", "[]"))
+    except:
+        completed_steps = []
+
+    try:
+        execution_plan = json.loads(active_state.get("execution_plan", "[]"))
+    except:
+        execution_plan = []
+
+    current_step = active_state.get("current_step")
+
+    pending_steps = [
+        s for s in execution_plan if s not in completed_steps
+    ]
 
     # =========================
     # 🧠 QUESTION MODE
     # =========================
     if input_data.get("question"):
-
-        system_memory = read_full_system_memory()
-        active_raw = system_memory.get("active_state", [])
-
-        active_state = {}
-
-        if isinstance(active_raw, list) and len(active_raw) >= 2:
-            headers = active_raw[0]
-            values = active_raw[-1]
-
-            for i in range(len(headers)):
-                active_state[headers[i]] = values[i]
-
-        try:
-            completed_steps = json.loads(active_state.get("completed_steps", "[]"))
-        except:
-            completed_steps = []
-
-        try:
-            execution_plan = json.loads(active_state.get("execution_plan", "[]"))
-        except:
-            execution_plan = []
-
-        current_step = active_state.get("current_step")
-
-        pending_steps = [
-            s for s in execution_plan if s not in completed_steps
-        ]
-
         return jsonify({
             "status": "success",
+            "mode": "question",
             "answer": {
                 "current_step": current_step,
                 "completed_steps": completed_steps,
@@ -411,7 +423,7 @@ try:
     # =========================
     # 🔵 NORMAL ENGINE FLOW
     # =========================
-
+    
     saved_state = load_state_from_sheet()
     force_input = input_data.get("force_input", False)
 
@@ -437,71 +449,93 @@ try:
     session = load_session_from_sheet() or {}
     print("✅ SESSION LOADED:", session.get("session_id"))
 
-    # 👉 continue your existing logic from here...
+    # =========================
+    # 🔵 RE-EXTRACT EXECUTION DATA (FROM UPDATED STATE)
+    # =========================
+    try:
+        completed_steps = json.loads(active_state.get("completed_steps", "[]"))
+    except:
+        completed_steps = []
 
-except Exception as e:
-    print("❌ FATAL ERROR:", e)
+    try:
+        execution_plan = json.loads(active_state.get("execution_plan", "[]"))
+    except:
+        execution_plan = []
+
+    current_step = active_state.get("current_step")
+
+    pending_steps = [
+        s for s in execution_plan if s not in completed_steps
+    ]
+
+    # =========================
+    # 🔵 FINAL RESPONSE
+    # =========================
     return jsonify({
-        "status": "error",
-        "message": str(e)
+        "status": "success",
+        "mode": "execution",
+        "answer": {
+            "current_step": current_step,
+            "completed_steps": completed_steps,
+            "pending_steps": pending_steps,
+            "execution_plan": execution_plan,
+            "roadmap": system_memory.get("roadmap", [])
+        }
     })
+    # =========================
+    # 🧠 SYSTEM AWARENESS (NEW)
+    # =========================
 
-        # =========================
-        # 🧠 SYSTEM AWARENESS (NEW)
-        # =========================
+    system_memory = read_full_system_memory()
 
-        system_memory = read_full_system_memory()
+    session["system_memory"] = system_memory
 
-        session["system_memory"] = system_memory
+    # 🔥 MERGE STATE INTO SESSION (CRITICAL FIX)
+    session["active_state"] = active_state
 
-        # 🔥 MERGE STATE INTO SESSION (CRITICAL FIX)
+    # =========================
+    # 🔥 SESSION SYNC (ONLY STATE DRIVES)
+    # =========================
+    memory_session_id = active_state.get("session_id")
+
+    if memory_session_id:
+        final_session_id = memory_session_id
+    else:
+        final_session_id = f"S-{int(time.time())}"
+
+    session["session_id"] = final_session_id
+    active_state["session_id"] = final_session_id
+    session["active_state"] = active_state
+
+    # =========================
+    # 🔥 SESSION HEALTH
+    # =========================
+    try:
+        session_check = evaluate_session_health(session, active_state)
+    except Exception as e:
+        print("❌ SESSION HEALTH ERROR:", e)
+        session_check = {"session_decision": "continue"}
+
+    if session_check.get("session_decision") == "reset_session":
+        new_session_id = f"S-{int(time.time())}"
+        session["session_id"] = new_session_id
+        active_state = {"session_id": new_session_id}
         session["active_state"] = active_state
 
-        # =========================
-        # 🔥 SESSION SYNC (ONLY STATE DRIVES)
-        # =========================
-        memory_session_id = active_state.get("session_id")
-
-        if memory_session_id:
-            final_session_id = memory_session_id
-        else:
-            final_session_id = f"S-{int(time.time())}"
-
-        session["session_id"] = final_session_id
-        active_state["session_id"] = final_session_id
-        session["active_state"] = active_state
+    # =========================
+    # 🧠 INTELLIGENCE
+    # =========================
+    try:
+        result = generate_intelligent_action(session)
 
         # =========================
-        # 🔥 SESSION HEALTH
+        # 🔥 GLOBAL SAFE VARIABLES (CRITICAL FIX)
         # =========================
-        try:
-            session_check = evaluate_session_health(session, active_state)
-        except Exception as e:
-            print("❌ SESSION HEALTH ERROR:", e)
-            session_check = {"session_decision": "continue"}
 
-        if session_check.get("session_decision") == "reset_session":
-            new_session_id = f"S-{int(time.time())}"
-            session["session_id"] = new_session_id
-            active_state = {"session_id": new_session_id}
-            session["active_state"] = active_state
+        action = result.get("action", "")
+        execution_plan = result.get("execution_plan", [])
 
-        # =========================
-        # 🧠 INTELLIGENCE
-        # =========================
-        try:
-            result = generate_intelligent_action(session)
-            # =========================
-            # 🔥 GLOBAL SAFE VARIABLES (CRITICAL FIX)
-            # =========================
-
-            action = result.get("action", "")
-            execution_plan = result.get("execution_plan", [])
-
-            print("✅ INTELLIGENCE RESULT:", result.get("action"))
-        except Exception as e:
-            print("❌ INTELLIGENCE ERROR:", e)
-            return jsonify({"status": "error", "message": str(e)})
+        print("✅ INTELLIGENCE RESULT:", result.get("action"))
 
         # =========================
         # 🔥 SAFETY DEFAULTS
@@ -767,6 +801,7 @@ except Exception as e:
         })
 
     except Exception as e:
+        print("❌ INTELLIGENCE ERROR:", e)
         print("❌ FATAL ERROR:", e)
         return jsonify({
             "status": "error",
