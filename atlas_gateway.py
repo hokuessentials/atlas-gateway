@@ -556,6 +556,7 @@ def atlas_action():
             step_updates,
             completed_steps
         )
+        selected_step = None
 
         # 3. Safety check
         if allowed_candidates:
