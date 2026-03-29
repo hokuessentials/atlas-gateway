@@ -463,7 +463,7 @@ def atlas_action():
             step for step in candidates
             if step not in completed_steps
         ]
-        
+
         # 2. Filter allowed (dependency-safe)
         allowed_candidates = filter_allowed_candidates(
             candidates,
@@ -482,9 +482,14 @@ def atlas_action():
                 session
             )
 
-            # 4. Apply ONLY if changed
-            if selected_step and selected_step != current_step:
+            # 4. Apply ONLY if changed (SAFE)
 
+        if selected_step and selected_step != current_step:
+
+            # ❌ NEVER ALLOW COMPLETED STEP
+            if selected_step in completed_steps:
+                print("🚫 BLOCKED: Selected step already completed →", selected_step)
+            else:
                 print("⚡ CONTROLLED SWITCH:", current_step, "→", selected_step)
 
                 execution_state["current_step"] = selected_step
@@ -565,8 +570,20 @@ def atlas_action():
                 if final_step in execution_plan:
                     idx = execution_plan.index(final_step)
 
-                    if idx + 1 < len(execution_plan):
-                        next_step = execution_plan[idx + 1]
+                    # FIND NEXT VALID STEP (NOT COMPLETED)
+                    next_step = None
+
+                    for s in execution_plan:
+                        if s not in completed_steps:
+                            next_step = s
+                            break
+
+                    if next_step:
+                        execution_state["current_step"] = next_step
+                        execution_state["completed_steps"] = completed_steps
+
+                        result["action"] = f"Continue: {next_step}"
+                        print("➡️ NEXT STEP:", next_step)
 
                         execution_state["current_step"] = next_step
                         execution_state["completed_steps"] = completed_steps
