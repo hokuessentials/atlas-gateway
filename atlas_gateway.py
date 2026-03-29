@@ -376,14 +376,19 @@ def atlas_action():
     system_memory = read_full_system_memory()
     active_raw = system_memory.get("active_state", [])
 
+    # 🔥 FIX: HANDLE BOTH LIST + DICT
+
     active_state = {}
 
-    if isinstance(active_raw, list) and len(active_raw) >= 2:
-        headers = active_raw[0]
-        values = active_raw[-1]
+    if isinstance(active_raw, dict):
+    active_state = active_raw
 
-        for i in range(len(headers)):
-            active_state[headers[i]] = values[i]
+    elif isinstance(active_raw, list) and len(active_raw) >= 2:
+    headers = active_raw[0]
+    values = active_raw[-1]
+
+    for i in range(len(headers)):
+        active_state[headers[i]] = values[i]
 
     # =========================
     # 🔹 SAFE JSON PARSE
@@ -423,7 +428,7 @@ def atlas_action():
     # =========================
     # 🔵 NORMAL ENGINE FLOW
     # =========================
-    
+
     saved_state = load_state_from_sheet()
     force_input = input_data.get("force_input", False)
 
