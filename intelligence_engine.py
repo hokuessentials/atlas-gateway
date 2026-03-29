@@ -337,6 +337,32 @@ def generate_intelligent_action(session_data):
     last_outcome = str(outcomes[-1]).strip().lower() if outcomes else ""
 
     # =========================
+    # 🔥 MEMORY CONTROL LAYER (NEW)
+    # =========================
+
+    recent_outcomes = outcomes[-3:] if outcomes else []
+    failure_count = sum(1 for o in recent_outcomes if str(o).lower() == "failed")
+
+    # 🚨 HARD FAILURE CONTROL
+    if failure_count >= 2:
+        print("🚨 MEMORY CONTROL: Repeated failures detected")
+
+        # force strategy shift
+        return {
+            "action": f"Force switch due to repeated failure: {last_decision}",
+            "priority": "high",
+            "reason": "Multiple recent failures detected — forcing strategy change",
+            "execution_plan": [],
+            "execution_state": existing_state if existing_state else build_execution_state([]),
+            "step_decision": {
+                "decision": "force_switch",
+                "decision_quality": "weak",
+                "execution_action": "execute",
+                "reason": "Repeated failure pattern detected"
+            }
+        }
+
+    # =========================
     # SCORING
     # =========================
 
