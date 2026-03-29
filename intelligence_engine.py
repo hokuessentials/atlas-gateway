@@ -94,6 +94,7 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
     roi_list = session_data.get("roi_list", [])
     risk_list = session_data.get("risk_list", [])
     conf_list = session_data.get("confidence_list", [])
+    memory = build_step_memory(session_data)
 
     def failure_count(step):
         return sum(
@@ -117,6 +118,9 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
         roi = get_last_metric(step, roi_list)
         risk = get_last_metric(step, risk_list)
         conf = get_last_metric(step, conf_list)
+        mem = memory.get(step, {})
+        success_rate = mem.get("success_rate", 0)
+        failure_rate = mem.get("failure_rate", 0)
 
         # normalize
         roi = min(roi / 20, 1)
@@ -138,11 +142,15 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
         # failure penalty
         if fail > 0:
             score -= min(0.5, fail * 0.25)
-
+            score += success_rate * 0.3
+            score -= failure_rate * 0.3
         scores[step] = round(score, 2)
 
     # current step score
     current_fail = failure_count(current_step)
+    mem = memory.get(current_step, {})
+    success_rate = mem.get("success_rate", 0)
+    failure_rate = mem.get("failure_rate", 0)
     current_roi = get_last_metric(current_step, roi_list)
     current_risk = get_last_metric(current_step, risk_list)
     current_conf = get_last_metric(current_step, conf_list)
@@ -153,6 +161,8 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
 
     current_score = (
         0.5 +
+        + success_rate * 0.3
+        - failure_rate * 0.3
         current_roi * 0.3 +
         current_conf * 0.2 -
         current_risk * 0.3 -
@@ -160,6 +170,47 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
     )
 
     return scores, round(current_score, 2)
+
+# =========================
+# 🧠 MEMORY M2 — STEP INTELLIGENCE
+# =========================
+
+def build_step_memory(session_data):
+
+    decisions = session_data.get("decisions", [])
+    outcomes = session_data.get("outcome_list", [])
+
+    memory = {}
+
+    for i in range(len(decisions)):
+        step = decisions[i]
+        outcome = outcomes[i] if i < len(outcomes) else ""
+
+        if step not in memory:
+            memory[step] = {
+                "success": 0,
+                "fail": 0,
+                "total": 0
+            }
+
+        memory[step]["total"] += 1
+
+        if outcome == "success":
+            memory[step]["success"] += 1
+        elif outcome == "failed":
+            memory[step]["fail"] += 1
+
+    for step in memory:
+        total = memory[step]["total"]
+
+        if total > 0:
+            memory[step]["success_rate"] = memory[step]["success"] / total
+            memory[step]["failure_rate"] = memory[step]["fail"] / total
+        else:
+            memory[step]["success_rate"] = 0
+            memory[step]["failure_rate"] = 0
+
+    return memory    
 
 
 def select_better_step(current_step, candidates, step_updates, completed_steps, session_data):
@@ -201,11 +252,11 @@ def select_better_step(current_step, candidates, step_updates, completed_steps, 
 
     return current_step
 
+def generate_intelligent_action(session_data):
+    
     # =========================
     # GET STATE
     # =========================
-
-def generate_intelligent_action(session_data):
 
     active_state = session_data.get("active_state", {})
     existing_state = active_state if active_state else {}
