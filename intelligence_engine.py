@@ -145,8 +145,11 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
         # failure penalty
         if fail > 0:
             score -= min(0.5, fail * 0.25)
-            score += success_rate * 0.3
-            score -= failure_rate * 0.3
+
+        # ALWAYS APPLY MEMORY
+        score += success_rate * 0.3
+        score -= failure_rate * 0.3
+
         scores[step] = round(score, 2)
 
     # current step score
@@ -198,9 +201,9 @@ def build_step_memory(session_data):
 
         memory[step]["total"] += 1
 
-        if outcome == "success":
+        if str(outcome).lower() == "success":
             memory[step]["success"] += 1
-        elif outcome == "failed":
+        elif str(outcome).lower() == "failed":
             memory[step]["fail"] += 1
 
     for step in memory:
@@ -432,8 +435,10 @@ def generate_intelligent_action(session_data):
         step_decision
     )
     # ✅ SYNC current step with plan
-    if execution_state.get("current_step") not in adjusted_plan:
-        adjusted_plan.insert(0, execution_state.get("current_step"))
+    current = execution_state.get("current_step")
+
+    if current and current not in adjusted_plan:
+        adjusted_plan.insert(0, current)
 
     # 👉 FINAL STATE (ONLY IF NO MEMORY)
     if not (existing_state and existing_state.get("current_step")):
