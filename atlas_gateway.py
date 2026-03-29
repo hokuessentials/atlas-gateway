@@ -415,73 +415,46 @@ def atlas_action():
     print("🔥 PARSED STATE:", active_state)
 
     # =========================
-    # 🔹 SAFE JSON PARSE
+    # 🔥 FINAL PARSE (CORRECT)
     # =========================
 
-def safe_json_parse(value):
-    if isinstance(value, list):
-        return value
+    def safe_json_parse(value):
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except:
+                return []
+        return []
 
-    if isinstance(value, str):
+    parsed_state = {}
+
+    if isinstance(active_raw, list) and len(active_raw) >= 2:
         try:
-            return json.loads(value)
-        except:
-            return []
+            headers = active_raw[0]
 
-    return []
+            values = None
+            for row in reversed(active_raw[1:]):
+                if any(str(cell).strip() != "" for cell in row):
+                    values = row
+                    break
 
+            if values:
+                for i in range(min(len(headers), len(values))):
+                    parsed_state[headers[i]] = values[i]
+        except Exception as e:
+            print("❌ PARSE ERROR:", e)
 
-def parse_active_state(active_state_raw):
+    # 🔥 APPLY JSON PARSE
+    completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
+    execution_plan = safe_json_parse(parsed_state.get("execution_plan", []))
+    current_step = parsed_state.get("current_step")
 
-    # =========================
-    # 🛡️ SAFETY
-    # =========================
-    if not active_state_raw or len(active_state_raw) < 2:
-        return {
-            "current_step": None,
-            "completed_steps": [],
-            "execution_plan": [],
-            "pending_steps": []
-        }
-
-    # =========================
-    # 🔄 CONVERT LIST → DICT
-    # =========================
-    headers = active_state_raw[0]
-    values = active_state_raw[1]
-
-    active_state = {}
-
-    for i in range(len(headers)):
-        key = headers[i]
-        value = values[i] if i < len(values) else None
-        active_state[key] = value
-
-    # =========================
-    # 🔥 PARSE FIELDS
-    # =========================
-    completed_steps = safe_json_parse(active_state.get("completed_steps", []))
-    execution_plan = safe_json_parse(active_state.get("execution_plan", []))
-
-    current_step = active_state.get("current_step")
-
-    # =========================
-    # 🧠 BUILD PENDING STEPS
-    # =========================
     pending_steps = [
         step for step in execution_plan
         if step not in completed_steps
     ]
-
-    # =========================
-    # ✅ FINAL OUTPUT
-    # =========================
-    return {
-        "current_step": current_step,
-        "completed_steps": completed_steps,
-        "execution_plan": execution_plan,
-        "pending_steps": pending_steps
-    }
 
     # =========================
     # 🧠 QUESTION MODE
@@ -494,8 +467,7 @@ def parse_active_state(active_state_raw):
                 "current_step": current_step,
                 "completed_steps": completed_steps,
                 "pending_steps": pending_steps,
-                "execution_plan": execution_plan,
-                "roadmap": system_memory.get("roadmap", [])
+                "execution_plan": execution_plan
             }
         })
 
