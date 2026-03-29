@@ -381,11 +381,11 @@ def atlas_action():
     active_state = {}
 
     if isinstance(active_raw, dict):
-    active_state = active_raw
+        active_state = active_raw
 
     elif isinstance(active_raw, list) and len(active_raw) >= 2:
-    headers = active_raw[0]
-    values = active_raw[-1]
+        headers = active_raw[0]
+        values = active_raw[-1]
 
     for i in range(len(headers)):
         active_state[headers[i]] = values[i]
