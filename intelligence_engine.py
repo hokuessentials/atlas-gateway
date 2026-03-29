@@ -164,21 +164,22 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
 
 def select_better_step(current_step, candidates, step_updates, completed_steps, session_data):
     """
-    PHASE 4 SWITCHING:
-    - dependency safe
-    - value aware
-    - threshold protected
+    PHASE 4 SWITCHING (CLEAN FINAL)
     """
 
     if not current_step or not candidates:
         return current_step
 
+    # =========================
     # RULE 1: dependency block
+    # =========================
     allowed, _ = is_step_allowed(current_step, step_updates, completed_steps)
     if not allowed:
         return candidates[0]
 
+    # =========================
     # ADVANCED SCORING
+    # =========================
     scores, current_score = score_steps_advanced(
         current_step,
         candidates,
@@ -189,8 +190,13 @@ def select_better_step(current_step, candidates, step_updates, completed_steps, 
     best_step = max(scores, key=scores.get)
     best_score = scores[best_step]
 
-    # RULE 2: switch only if significantly better
+    print("📊 STEP SCORES:", scores, "| CURRENT:", current_score)
+
+    # =========================
+    # RULE 2: SWITCH ONLY IF CLEARLY BETTER
+    # =========================
     if best_score > current_score + 0.2:
+        print("⚡ SWITCH DECISION:", current_step, "→", best_step)
         return best_step
 
     return current_step
