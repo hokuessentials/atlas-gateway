@@ -160,14 +160,14 @@ def score_steps_advanced(current_step, candidates, step_updates, session_data):
     current_conf = min(current_conf, 1)
 
     current_score = (
-        0.5 +
+        0.5
         + success_rate * 0.3
         - failure_rate * 0.3
-        current_roi * 0.3 +
-        current_conf * 0.2 -
-        current_risk * 0.3 -
-        min(0.5, current_fail * 0.25)
-    )
+        + current_roi * 0.3
+        + current_conf * 0.2
+        - current_risk * 0.3
+        - min(0.5, current_fail * 0.25)
+)
 
     return scores, round(current_score, 2)
 
