@@ -458,7 +458,12 @@ def atlas_action():
             step for step in get_candidate_steps(execution_plan, completed_steps)
             if step != current_step
         ]
-
+        # FINAL SAFETY — NEVER ALLOW COMPLETED STEPS
+        candidates = [
+            step for step in candidates
+            if step not in completed_steps
+        ]
+        
         # 2. Filter allowed (dependency-safe)
         allowed_candidates = filter_allowed_candidates(
             candidates,
