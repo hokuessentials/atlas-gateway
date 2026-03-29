@@ -436,7 +436,7 @@ def atlas_action():
         # 🔵 LOAD SESSION
         # =========================
         session = load_session_from_sheet() or {}
-        print("✅ SESSION LOADED:", session.get("session_id"))
+            print("✅ SESSION LOADED:", session.get("session_id"))
 
         # =========================
         # 🧠 SYSTEM AWARENESS (NEW)
