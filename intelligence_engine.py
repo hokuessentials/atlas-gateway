@@ -62,7 +62,7 @@ def is_step_allowed(current_step, step_updates, completed_steps=None):
     return True, None
 
 # =========================
-# 🧠 CANDIDATE STEP ENGINE (PHASE 3)
+# 🧠 CANDIDATE STEP ENGINE (PHASE 4)
 # =========================
 
 def get_candidate_steps(plan, completed_steps):
@@ -80,13 +80,20 @@ def filter_allowed_candidates(candidates, step_updates, completed_steps):
     return allowed_steps
 
 
-def score_steps_simple(current_step, candidates, step_updates):
+def score_steps_advanced(current_step, candidates, step_updates, session_data):
     """
-    VERY SAFE SCORING:
-    - Penalize failures
-    - Prefer steps with no failure history
-    - Keep simple to avoid instability
+    PHASE 4 SCORING:
+    Combines:
+    - failure penalty
+    - ROI influence
+    - risk penalty
+    - confidence boost
     """
+
+    decisions = session_data.get("decisions", [])
+    roi_list = session_data.get("roi_list", [])
+    risk_list = session_data.get("risk_list", [])
+    conf_list = session_data.get("confidence_list", [])
 
     def failure_count(step):
         return sum(
@@ -94,37 +101,99 @@ def score_steps_simple(current_step, candidates, step_updates):
             if u.get("step") == step and u.get("status") == "failed"
         )
 
+    def get_last_metric(step, metric_list):
+        for i in range(len(decisions) - 1, -1, -1):
+            if decisions[i] == step:
+                if i < len(metric_list):
+                    return metric_list[i]
+        return 0
+
     scores = {}
 
     for step in candidates:
+
         fail = failure_count(step)
 
+        roi = get_last_metric(step, roi_list)
+        risk = get_last_metric(step, risk_list)
+        conf = get_last_metric(step, conf_list)
+
+        # normalize
+        roi = min(roi / 20, 1)
+        risk = min(risk, 1)
+        conf = min(conf, 1)
+
         # base score
-        score = 1.0
+        score = 0.5
+
+        # ROI boost
+        score += roi * 0.3
+
+        # confidence boost
+        score += conf * 0.2
+
+        # risk penalty
+        score -= risk * 0.3
 
         # failure penalty
         if fail > 0:
-            score -= min(0.6, fail * 0.3)
+            score -= min(0.5, fail * 0.25)
 
         scores[step] = round(score, 2)
 
     # current step score
     current_fail = failure_count(current_step)
-    current_score = 1.0 - min(0.6, current_fail * 0.3)
+    current_roi = get_last_metric(current_step, roi_list)
+    current_risk = get_last_metric(current_step, risk_list)
+    current_conf = get_last_metric(current_step, conf_list)
+
+    current_roi = min(current_roi / 20, 1)
+    current_risk = min(current_risk, 1)
+    current_conf = min(current_conf, 1)
+
+    current_score = (
+        0.5 +
+        current_roi * 0.3 +
+        current_conf * 0.2 -
+        current_risk * 0.3 -
+        min(0.5, current_fail * 0.25)
+    )
 
     return scores, round(current_score, 2)
 
 
-def select_better_step(current_step, candidates, step_updates, completed_steps):
+def select_better_step(current_step, candidates, step_updates, completed_steps, session_data):
     """
-    PHASE 3 LOGIC:
-    - Keep dependency safety
-    - Compare scores
-    - Switch only if clearly better (+0.2)
+    PHASE 4 SWITCHING:
+    - dependency safe
+    - value aware
+    - threshold protected
     """
 
     if not current_step or not candidates:
         return current_step
+
+    # RULE 1: dependency block
+    allowed, _ = is_step_allowed(current_step, step_updates, completed_steps)
+    if not allowed:
+        return candidates[0]
+
+    # ADVANCED SCORING
+    scores, current_score = score_steps_advanced(
+        current_step,
+        candidates,
+        step_updates,
+        session_data
+    )
+
+    best_step = max(scores, key=scores.get)
+    best_score = scores[best_step]
+
+    # RULE 2: switch only if significantly better
+    if best_score > current_score + 0.2:
+        return best_step
+
+    return current_step
 
     # =========================
     # RULE 1: dependency block
@@ -157,7 +226,7 @@ def select_better_step(current_step, candidates, step_updates, completed_steps):
     # =========================
     # GET STATE
     # =========================
-    
+
 def generate_intelligent_action(session_data):
 
     active_state = session_data.get("active_state", {})
