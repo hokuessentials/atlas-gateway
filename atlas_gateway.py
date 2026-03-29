@@ -138,8 +138,9 @@ def load_state_from_sheet():
         return {}
 
 def read_full_system_memory():
-    print("🔥 USING URL:", APPS_SCRIPT_URL)
     try:
+        print("🔥 USING URL:", APPS_SCRIPT_URL)
+        
         url = APPS_SCRIPT_URL + "?action=read_full_memory"
 
         resp = requests.get(
