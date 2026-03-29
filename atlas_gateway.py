@@ -137,6 +137,32 @@ def load_state_from_sheet():
         print("STATE LOAD ERROR:", e)
         return {}
 
+def read_full_system_memory():
+    try:
+        url = APPS_SCRIPT_URL + "?action=read_full_memory"
+
+        resp = requests.get(
+            url,
+            headers={"Accept": "application/json"},
+            timeout=10
+        )
+
+        if not resp or resp.status_code != 200:
+            return {}
+
+        data = resp.json()
+
+        return {
+            "active_state": data.get("active_state", {}),
+            "roadmap": data.get("roadmap_memory", []),
+            "problems": data.get("problem_intelligence", []),
+            "decisions": data.get("decision_log", [])
+        }
+
+    except Exception as e:
+        print("❌ FULL MEMORY READ ERROR:", e)
+        return {}
+
 # =========================
 # SESSION LOAD
 # =========================
@@ -173,6 +199,9 @@ def load_session_from_sheet():
         data = json.loads(text)
         records = data.get("records", [])
 
+        # 🔥 LIMIT MEMORY (ONLY LAST 10 RECORDS)
+        records = records[-10:]
+
         for r in records:
             title = r.get("Title")
             module = r.get("Module")
@@ -191,6 +220,12 @@ def load_session_from_sheet():
             session_data["confidence_list"].append(float(r.get("Confidence_Level") or 0))
             val = r.get("Outcome_Status") or ""
             session_data["outcome_list"].append(str(val).strip().lower())
+
+            # 🔥 FAILURE COUNT SIGNAL
+            session_data["failure_count"] = session_data.get("failure_count", 0)
+
+            if str(val).strip().lower() == "failed":
+                session_data["failure_count"] += 1
 
         session_data["decisions"].reverse()
         session_data["roi_list"].reverse()
@@ -330,6 +365,28 @@ def atlas_action():
         input_data = request.get_json(force=True)
 
         # =========================
+        # 🧠 QUESTION MODE (NEW)
+        # =========================
+
+        if input_data.get("question"):
+            system_memory = read_full_system_memory()
+            active_state = load_state_from_sheet()
+
+            return jsonify({
+                "status": "success",
+                "answer": {
+                    "current_step": active_state.get("current_step"),
+                    "completed_steps": active_state.get("completed_steps"),
+                    "pending_steps": [
+                        s for s in active_state.get("execution_plan", [])
+                        if s not in active_state.get("completed_steps", [])
+                    ],
+                    "execution_plan": active_state.get("execution_plan"),
+                    "roadmap": system_memory.get("roadmap", [])
+                }
+            })
+
+        # =========================
         # 🔵 LOAD STATE (STRICT OVERRIDE FIX)
         # =========================
 
@@ -358,6 +415,17 @@ def atlas_action():
         # =========================
         session = load_session_from_sheet() or {}
         print("✅ SESSION LOADED:", session.get("session_id"))
+
+        # =========================
+        # 🧠 SYSTEM AWARENESS (NEW)
+        # =========================
+
+        system_memory = read_full_system_memory()
+
+        session["system_memory"] = system_memory
+
+        # 🔥 MERGE STATE INTO SESSION (CRITICAL FIX)
+        session["active_state"] = active_state
 
         # =========================
         # 🔥 SESSION SYNC (ONLY STATE DRIVES)
