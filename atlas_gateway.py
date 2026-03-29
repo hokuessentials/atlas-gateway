@@ -33,7 +33,8 @@ ACTIVE_STATE = state_engine.ACTIVE_STATE
 app = Flask(__name__)
 
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
-
+print("🔥 ACTIVE RAW:", active_raw)
+print("🔥 PARSED STATE:", active_state)
 # =========================
 # 🔵 MEMORY LAYER
 # =========================
