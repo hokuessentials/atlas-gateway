@@ -414,6 +414,13 @@ def atlas_action():
     completed_steps = safe_json_parse(active_state.get("completed_steps", []))
     execution_plan = safe_json_parse(active_state.get("execution_plan", []))
 
+    current_step = active_state.get("current_step")
+
+    pending_steps = [
+        s for s in execution_plan
+        if s not in completed_steps
+    ]
+
     # =========================
     # 🧠 QUESTION MODE
     # =========================
