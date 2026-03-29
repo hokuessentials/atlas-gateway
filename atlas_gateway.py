@@ -359,18 +359,17 @@ def save_session_to_sheet(session):
         
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
-    print("🚀 REQUEST STARTED")
+print("🚀 REQUEST STARTED")
 
-    try:
+try:
     input_data = request.get_json(force=True)
 
     # =========================
-    # 🧠 QUESTION MODE (NEW)
+    # 🧠 QUESTION MODE
     # =========================
     if input_data.get("question"):
 
         system_memory = read_full_system_memory()
-
         active_raw = system_memory.get("active_state", [])
 
         active_state = {}
@@ -409,25 +408,24 @@ def atlas_action():
             }
         })
 
+    # =========================
+    # 🔵 NORMAL ENGINE FLOW (OUTSIDE IF)
+    # =========================
 
-        # =========================
-        # 🔵 LOAD STATE (STRICT OVERRIDE FIX)
-        # =========================
+    saved_state = load_state_from_sheet()
+    force_input = input_data.get("force_input", False)
 
-        saved_state = load_state_from_sheet()
-        force_input = input_data.get("force_input", False)
-
-        if force_input:
-            print("⚠️ FORCE INPUT MODE ACTIVE")
-            active_state = input_data.get("active_state", {}) or {}
-            active_state["force_mode"] = True
+    if force_input:
+        active_state = input_data.get("active_state", {}) or {}
+        active_state["force_mode"] = True
+    else:
+        if saved_state and isinstance(saved_state, dict):
+            active_state = saved_state
         else:
-            if saved_state and isinstance(saved_state, dict):
-                active_state = saved_state
-            else:
-                active_state = input_data.get("active_state", {}) or {}
+            active_state = input_data.get("active_state", {}) or {}
 
-        print("✅ STATE LOADED:", active_state)
+    print("✅ STATE LOADED:", active_state)
+
 
         # 🔥 FORCE CLEAN EXECUTION STATE
         if force_input:
