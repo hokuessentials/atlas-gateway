@@ -202,34 +202,6 @@ def select_better_step(current_step, candidates, step_updates, completed_steps, 
     return current_step
 
     # =========================
-    # RULE 1: dependency block
-    # =========================
-    allowed, _ = is_step_allowed(current_step, step_updates, completed_steps)
-    if not allowed:
-        return candidates[0]
-
-    # =========================
-    # SCORE COMPARISON
-    # =========================
-    scores, current_score = score_steps_simple(
-        current_step,
-        candidates,
-        step_updates
-    )
-
-    # best candidate
-    best_step = max(scores, key=scores.get)
-    best_score = scores[best_step]
-
-    # =========================
-    # RULE 2: SWITCH ONLY IF CLEARLY BETTER
-    # =========================
-    if best_score > current_score + 0.2:
-        return best_step
-
-    return current_step
-
-    # =========================
     # GET STATE
     # =========================
 
