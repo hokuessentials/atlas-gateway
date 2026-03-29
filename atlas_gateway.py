@@ -32,7 +32,7 @@ ACTIVE_STATE = state_engine.ACTIVE_STATE
 
 app = Flask(__name__)
 
-APPS_SCRIPT_URL = "https://script.google.com/macros/library/d/1hn6Wr6S_pLIo2T_mKkx7yLhZ_uoz97vXeV-aTHTuPioWn5PAxtmfg-2q/77"
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
 
 # =========================
 # 🔵 MEMORY LAYER
