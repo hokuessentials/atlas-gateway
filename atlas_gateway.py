@@ -377,7 +377,6 @@ def atlas_action():
     active_raw = system_memory.get("active_state", [])
 
     print("🔥 ACTIVE RAW:", active_raw)
-    print("🔥 PARSED STATE:", active_state)
 
     # 🔥 FIX: HANDLE BOTH LIST + DICT SAFELY
 
@@ -410,6 +409,8 @@ def atlas_action():
 
     else:
         active_state = {}
+
+    print("🔥 PARSED STATE:", active_state)
 
     # =========================
     # 🔹 SAFE JSON PARSE
