@@ -431,7 +431,21 @@ def atlas_action():
             )
 
             if failure_count >= 2:
-                return jsonify({"status": "warning", "decision": "blocked"})
+
+                try:
+                    save_decision_to_sheet({
+                        "session_id": parsed_state.get("session_id"),
+                        "decision": "blocked_due_to_failures",
+                        "failure_count": failure_count,
+                        "timestamp": time.time()
+                    })
+                except Exception as e:
+                    print("⚠️ FAILURE SAVE ERROR:", e)
+
+                return jsonify({
+                    "status": "warning",
+                    "decision": "blocked"
+                })
 
             # COMPLETE → ENGINE (SAFE)
             if not pending_steps:
@@ -460,6 +474,20 @@ def atlas_action():
 
                     step_decision = result.get("step_decision", {})
                     execution_action = step_decision.get("execution_action")
+
+                    # =========================
+                    # 💾 SAVE ENGINE OUTCOME TYPE
+                    # =========================
+                    try:
+                        save_decision_to_sheet({
+                            "session_id": parsed_state.get("session_id"),
+                            "decision": step_decision.get("decision"),
+                            "decision_quality": step_decision.get("decision_quality"),
+                            "score": step_decision.get("decision_score"),
+                            "timestamp": time.time()
+                        })
+                    except Exception as e:
+                        print("⚠️ ENGINE SAVE ERROR:", e)
 
                     # 🧠 DECISION CONTROL
                     if execution_action == "execute":
@@ -501,6 +529,18 @@ def atlas_action():
                         "status": "success",
                         "decision": "complete"
                     })
+            # =========================
+            # 💾 SAVE DECISION (NEW)
+            # =========================
+            try:
+               save_decision_to_sheet({
+                   "session_id": parsed_state.get("session_id"),
+                   "decision": result.get("action"),
+                   "current_step": current_step,
+                   "timestamp": time.time()
+               })
+            except Exception as e:
+                print("⚠️ DECISION SAVE FAILED:", e)
 
             # =========================
             # 🧠 SMART STEP SELECTION
@@ -552,6 +592,19 @@ def atlas_action():
                 "executed_step": next_step,
                 "next_step": updated_pending[0] if updated_pending else None
             })
+        
+            # =========================
+            # 💾 SAVE EXECUTION STEP
+            # =========================
+            try:
+                save_decision_to_sheet({
+                    "session_id": parsed_state.get("session_id"),
+                    "decision": next_step,
+                    "type": "execution",
+                    "timestamp": time.time()
+                })
+            except Exception as e:
+                print("⚠️ STEP SAVE FAILED:", e)
 
         return jsonify({"status": "invalid_request"})
 
