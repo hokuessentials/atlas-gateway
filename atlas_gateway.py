@@ -360,64 +360,21 @@ def save_session_to_sheet(session):
         print("❌ SESSION SAVE ERROR:", e)
         
 @app.route("/atlas/action", methods=["POST"])
-def atlas_action():  
+def atlas_action():
     print("🚀 REQUEST STARTED")
 
     try:
-        # =========================
-        # 🔹 SAFE INPUT PARSE
-        # =========================
-        try:
-            input_data = request.get_json(force=True) or {}
-        except Exception as e:
-            print("❌ REQUEST PARSE ERROR:", e)
-            return jsonify({"status": "error", "message": str(e)})
+        input_data = request.get_json(force=True) or {}
 
         # =========================
-        # 🔹 LOAD SYSTEM MEMORY (FIXED)
+        # 🔹 LOAD MEMORY
         # =========================
         system_memory = read_full_system_memory()
         active_raw = system_memory.get("active_state", [])
 
-        print("🔥 ACTIVE RAW:", active_raw)
-
-        # 🔥 FIX: HANDLE BOTH LIST + DICT SAFELY
-        active_state = {}
-
-        if isinstance(active_raw, dict):
-            active_state = active_raw
-
-        elif isinstance(active_raw, list) and len(active_raw) >= 2:
-            try:
-                headers = active_raw[0]
-
-                # 🔥 FIND LAST NON-EMPTY ROW
-                values = None
-
-                for row in reversed(active_raw[1:]):
-                    if any(str(cell).strip() != "" for cell in row):
-                        values = row
-                        break
-
-                if not values:
-                    values = []
-
-                if isinstance(headers, list) and isinstance(values, list):
-                    for i in range(min(len(headers), len(values))):
-                        active_state[headers[i]] = values[i]
-            except Exception as e:
-                print("❌ ACTIVE_STATE PARSE ERROR:", e)
-                active_state = {}
-
-        else:
-            active_state = {}
-
-        print("🔥 PARSED STATE:", active_state)
-
         # =========================
-        # 🔥 FINAL PARSE (CORRECT)
+        # 🔹 PARSE STATE
         # =========================
-
         def safe_json_parse(value):
             if isinstance(value, list):
                 return value
@@ -431,122 +388,167 @@ def atlas_action():
         parsed_state = {}
 
         if isinstance(active_raw, list) and len(active_raw) >= 2:
-            try:
-                headers = active_raw[0]
+            headers = active_raw[0]
+            values = None
 
-                values = None
-                for row in reversed(active_raw[1:]):
-                    if any(str(cell).strip() != "" for cell in row):
-                        values = row
-                        break
+            for row in reversed(active_raw[1:]):
+                if any(str(cell).strip() != "" for cell in row):
+                    values = row
+                    break
 
-                if values:
-                    for i in range(min(len(headers), len(values))):
-                        parsed_state[headers[i]] = values[i]
-            except Exception as e:
-                print("❌ PARSE ERROR:", e)
+            if values:
+                for i in range(min(len(headers), len(values))):
+                    parsed_state[headers[i]] = values[i]
 
-    # 🔥 APPLY JSON PARSE
-    completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
-    execution_plan = safe_json_parse(parsed_state.get("execution_plan", []))
-    current_step = parsed_state.get("current_step")
-    step_updates = safe_json_parse(parsed_state.get("step_updates", []))
+        completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
+        execution_plan = safe_json_parse(parsed_state.get("execution_plan", []))
+        current_step = parsed_state.get("current_step")
+        step_updates = safe_json_parse(parsed_state.get("step_updates", []))
 
-    pending_steps = [
-        step for step in execution_plan
-        if step not in completed_steps
-    ]
+        pending_steps = [
+            s for s in execution_plan if s not in completed_steps
+        ]
 
-    # =========================
-    # 🧠 QUESTION MODE
-    # =========================
-    if input_data.get("question"):
-        return jsonify({
-            "status": "success",
-            "mode": "question",
-            "answer": {
-                "current_step": current_step,
-                "completed_steps": completed_steps,
-                "pending_steps": pending_steps,
-                "execution_plan": execution_plan
-            }
-        })
-
-# =========================
-# 🚀 EXECUTION MODE (PHASE 2)
-# =========================
-if input_data.get("execute"):
-
-    if not execution_plan:
         # =========================
-        # 🚨 FAILURE + DUPLICATE PROTECTION
+        # 🧠 QUESTION MODE
         # =========================
-
-        # ❌ FAILURE COUNT
-        failure_count = sum(
-            1 for s in step_updates
-            if isinstance(s, dict) and s.get("status") == "failed"
-        )
-
-        if failure_count >= 2:
+        if input_data.get("question"):
             return jsonify({
-                "status": "warning",
-                "mode": "execution",
-                "decision": "blocked",
-                "reason": "Too many failures"
-            })
-
-        # ❌ DUPLICATE EXECUTION BLOCK
-        if current_step and current_step in completed_steps:
-
-            # =========================
-            # 🧠 TRY ENGINE BEFORE SKIP
-            # =========================
-            try:
-                session = load_session_from_sheet() or {}
-
-                session["active_state"] = {
-                    "session_id": parsed_state.get("session_id"),
+                "status": "success",
+                "mode": "question",
+                "answer": {
                     "current_step": current_step,
                     "completed_steps": completed_steps,
-                    "step_updates": safe_json_parse(parsed_state.get("step_updates", [])),
+                    "pending_steps": pending_steps,
                     "execution_plan": execution_plan
                 }
+            })
 
-                session.setdefault("decisions", [])
-                session.setdefault("roi_list", [])
-                session.setdefault("risk_list", [])
-                session.setdefault("confidence_list", [])
-                session.setdefault("outcome_list", [])
+        # =========================
+        # 🚀 EXECUTION MODE
+        # =========================
+        if input_data.get("execute"):
 
-                start_time = time.time()
+            # ❌ FAILURE GUARD
+            failure_count = sum(
+                1 for s in step_updates
+                if isinstance(s, dict) and s.get("status") == "failed"
+            )
 
-                result = None
+            if failure_count >= 2:
+                return jsonify({
+                    "status": "warning",
+                    "decision": "blocked"
+                })
+
+            # ❌ ALL COMPLETE → ENGINE TRIGGER
+            if not pending_steps:
 
                 try:
-                    result = generate_intelligent_action(session)
+                    session = load_session_from_sheet() or {}
+
+                    session["active_state"] = {
+                        "session_id": parsed_state.get("session_id"),
+                        "current_step": current_step,
+                        "completed_steps": completed_steps,
+                        "step_updates": step_updates,
+                        "execution_plan": execution_plan
+                    }
+
+                    session.setdefault("decisions", [])
+                    session.setdefault("roi_list", [])
+                    session.setdefault("risk_list", [])
+                    session.setdefault("confidence_list", [])
+                    session.setdefault("outcome_list", [])
+
+                    start = time.time()
+                    result = None
+
+                    try:
+                        result = generate_intelligent_action(session)
+                    except Exception as e:
+                        print("ENGINE ERROR:", e)
+
+                    if time.time() - start > 5 or not result:
+                        return jsonify({
+                            "status": "success",
+                            "decision": "complete",
+                            "message": "Engine skipped"
+                        })
+
+                    return jsonify({
+                        "status": "success",
+                        "decision": "engine_triggered",
+                        "next_plan": result.get("execution_plan", [])
+                    })
+
                 except Exception as e:
-                    print("❌ ENGINE ERROR:", e)
+                    print("ENGINE FAIL:", e)
+                    return jsonify({
+                        "status": "success",
+                        "decision": "complete"
+                    })
 
-                    # ⏱️ TIME GUARD (CRITICAL)
-                    if time.time() - start_time > 5:
-                        print("⚠️ ENGINE TIMEOUT — SKIPPING")
-                        result = None
+            # =========================
+            # 🧠 NORMAL EXECUTION
+            # =========================
 
-                return jsonify({
-                    "status": "success",
-                    "mode": "execution_complete",
-                    "decision": "engine_triggered",
-                    "next_plan": result.get("execution_plan", []) if result else [],
-                    "message": "Step already done, engine generated next plan"
-                })
+            next_step = pending_steps[0]
 
+            for step in pending_steps:
+                failed = any(
+                    isinstance(u, dict) and
+                    u.get("step") == step and
+                    u.get("status") == "failed"
+                    for u in step_updates
+                )
+                if not failed:
+                    next_step = step
+                    break
+
+            updated_completed = list(completed_steps)
+
+            if next_step not in updated_completed:
+                updated_completed.append(next_step)
+
+            updated_pending = [
+                s for s in execution_plan if s not in updated_completed
+            ]
+
+            # 🔥 SAVE
+            try:
+                requests.post(
+                    APPS_SCRIPT_URL,
+                    json={
+                        "action": "update_active_state",
+                        "payload": {
+                            "session_id": parsed_state.get("session_id"),
+                            "current_step": next_step,
+                            "completed_steps": updated_completed,
+                            "execution_plan": execution_plan,
+                            "step_updates": []
+                        }
+                    },
+                    timeout=10
+                )
             except Exception as e:
-                print("❌ ENGINE ERROR:", e)
-                return jsonify({
-                    "status": "error",
-                    "message": str(e)
-                })
+                print("SAVE ERROR:", e)
+
+            return jsonify({
+                "status": "success",
+                "decision": "proceed",
+                "executed_step": next_step,
+                "next_step": updated_pending[0] if updated_pending else None
+            })
+
+        return jsonify({"status": "invalid_request"})
+
+    except Exception as e:
+        print("FATAL ERROR:", e)
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
 
     # =========================
     # 🧠 TRIGGER INTELLIGENCE ENGINE or SMART STEP SELECTION
@@ -572,12 +574,12 @@ if input_data.get("execute"):
         session.setdefault("confidence_list", [])
         session.setdefault("outcome_list", [])
 
-            # =========================
-            # 🚀 CALL ENGINE
-            # =========================
-            result = generate_intelligent_action(session)
+        # =========================
+        # 🚀 CALL ENGINE
+        # =========================
+        result = generate_intelligent_action(session)
     
-        else:
+    else:
             # =========================
             # 🧠 SMART STEP SELECTION
             # =========================
