@@ -564,22 +564,32 @@ def atlas_action():
 
                 if not available_steps:
 
-                    # allow only one full reset
-                    if full_failure_count < (len(execution_plan) * 2):
-                        step_updates = []
+                    # check if reset already happened
+                    reset_done = any(
+                        isinstance(u, dict) and u.get("status") == "reset"
+                        for u in step_updates
+                    )
+
+                    if not reset_done:
+                        # mark reset in history (DO NOT clear)
+                        step_updates.append({
+                            "step": "system",
+                            "status": "reset",
+                            "timestamp": time.time()
+                    })
 
                         return jsonify({
                             "status": "retrying",
                             "reason": "All steps failed once, retrying",
                             "action": "retry_all_steps"
-                        })
+                    })
 
-                    else:
-                        return jsonify({
-                            "status": "hold",
-                            "reason": "All steps failed after retry",
-                            "action": "manual_review_required"
-                        })
+                else:
+                    return jsonify({
+                        "status": "hold",
+                        "reason": "All steps failed after retry",
+                        "action": "manual_review_required"
+                    })
 
                 if current_step in failed_steps and available_steps:
                     next_step = available_steps[0]
