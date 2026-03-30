@@ -486,7 +486,7 @@ def atlas_action():
             return jsonify({
                 "status": "success",
                 "mode": "execution",
-                "decision": "complete",
+                "decision" : "complete" if not updated_pending else "proceed",
                 "message": "All steps completed"
             })
 
