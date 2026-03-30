@@ -493,9 +493,9 @@ def atlas_action():
                                 "timestamp": time.time()
                             })
 
-                        # ✅ mark completed ONLY on success
-                        if current_step not in completed_steps:
-                            completed_steps.append(current_step)
+                            # ✅ mark completed ONLY on success
+                            if current_step not in completed_steps:
+                                completed_steps.append(current_step)
                          
                         # 🔥 SAVE STATE AFTER ENGINE UPDATE
                         try:
@@ -627,13 +627,6 @@ def atlas_action():
                             "reason": "All steps failed once, retrying",
                             "action": "retry_all_steps"
                         })
-
-                else:
-                    return jsonify({
-                        "status": "hold",
-                        "reason": "All steps failed after retry",
-                        "action": "manual_review_required"
-                    })
 
                 if current_step in failed_steps and available_steps:
                     next_step = available_steps[0]
