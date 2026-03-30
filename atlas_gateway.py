@@ -546,14 +546,30 @@ def atlas_action():
                         else:
                             return jsonify({
                                 "status": "success",
-                                "decision": "complete"
+                                "decision": "complete",
+                                "debug": {
+                                    "current_step": current_step,
+                                    "completed_steps": completed_steps,
+                                    "pending_steps": pending_steps,
+                                    "failed_steps": [],
+                                    "recent_updates": step_updates[-5:]
+                                }
                             })
 
                     except Exception as e:
                         return jsonify({
                             "status": "success",
-                            "decision": "complete"
-                       })
+                            "decision": "complete",
+                            "message": str(e),
+
+                            "debug": {
+                                "current_step": current_step if 'current_step' in locals() else None,
+                                "completed_steps": completed_steps if 'completed_steps' in locals() else [],
+                                "pending_steps": pending_steps if 'pending_steps' in locals() else [],
+                                "failed_steps": [],
+                                "recent_updates": step_updates[-5:] if 'step_updates' in locals() else []
+                            }
+                        })
 
                 # =========================
                 # 🔁 RETRY + SWITCH LOGIC
