@@ -691,7 +691,7 @@ def atlas_action():
 
                 # fallback safety
                 if not candidates:
-                    next_step = None
+                    next_step = current_step   # ✅ SAFE FALLBACK
                 else:
                     try:
                         # 🧠 get better step using intelligence layer
@@ -728,7 +728,7 @@ def atlas_action():
                                 "action": "update_active_state",
                                 "payload": {
                                 "session_id": parsed_state.get("session_id"),
-                                "current_step": next_step,
+                                "current_step": next_step if next_step else current_step,
                                 "completed_steps": updated_completed,
                                 "execution_plan": execution_plan,
                                 "step_updates": step_updates
@@ -753,7 +753,8 @@ def atlas_action():
                 # 🔁 UPDATE STATE FOR NEXT LOOP
                 completed_steps = completed_steps
                 pending_steps = updated_pending
-                current_step = next_step
+                if next_step:
+                    current_step = next_step
 
                 if not pending_steps:
                      continue   # go to engine
