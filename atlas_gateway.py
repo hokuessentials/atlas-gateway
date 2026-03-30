@@ -471,6 +471,39 @@ def atlas_action():
             }
         })
     # =========================
+    # 🚀 EXECUTION MODE (PHASE 2)
+    # =========================
+
+    if input_data.get("execute"):
+
+        # 🧠 Safety check
+        if not execution_plan:
+            return jsonify({
+                "status": "error",
+                "message": "No execution plan found"
+            })
+
+        # 🎯 If everything completed
+        if not pending_steps:
+            return jsonify({
+                "status": "success",
+                "mode": "execution",
+                "decision": "complete",
+                "message": "All steps completed"
+            })
+
+        # 🎯 Default: next step
+        next_step = pending_steps[0]
+
+        return jsonify({
+            "status": "success",
+            "mode": "execution",
+            "decision": "proceed",
+            "next_step": next_step,
+            "current_step": current_step,
+            "pending_steps": pending_steps
+        })
+    # =========================
     # 🚫 DISABLE ENGINE (PHASE 1)
     # =========================
 
