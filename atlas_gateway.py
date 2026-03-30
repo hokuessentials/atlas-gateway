@@ -461,7 +461,10 @@ def atlas_action():
                     return jsonify({
                         "status": "success",
                         "decision": "engine_triggered",
-                        "next_plan": result.get("execution_plan", [])
+                        "action": result.get("action"),
+                        "execution_plan": result.get("execution_plan", []),
+                        "execution_state": result.get("execution_state", {}),
+                        "step_decision": result.get("step_decision", {})
                     })
 
                 except Exception as e:
