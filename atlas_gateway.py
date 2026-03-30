@@ -424,174 +424,147 @@ def atlas_action():
         # =========================
         if input_data.get("execute"):
 
-            # FAILURE GUARD
-            failure_count = sum(
-                1 for s in step_updates
-                if isinstance(s, dict) and s.get("status") == "failed"
-            )
+            loop_count = 0
+            max_loops = 5   # safety limit
 
-            if failure_count >= 2:
+            final_response = None
 
+            while loop_count < max_loops:
+                loop_count += 1
+
+                # =========================
+                # FAILURE GUARD
+                # =========================
+                failure_count = sum(
+                    1 for s in step_updates
+                    if isinstance(s, dict) and s.get("status") == "failed"
+                )
+
+                if failure_count >= 2:
+                    return jsonify({
+                        "status": "warning",
+                        "decision": "blocked"
+                    })
+
+                # =========================
+                # COMPLETE → ENGINE
+                # =========================
+                if not pending_steps:
+                    try:
+                        session = load_session_from_sheet() or {}
+
+                        session["active_state"] = {
+                            "session_id": parsed_state.get("session_id"),
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "step_updates": step_updates,
+                            "execution_plan": execution_plan
+                        }
+
+                        result = generate_intelligent_action(session)
+
+                        step_decision = result.get("step_decision", {})
+                        execution_action = step_decision.get("execution_action")
+
+                        # SAVE ENGINE DECISION
+                        try:
+                            save_decision_to_sheet({
+                                "session_id": parsed_state.get("session_id"),
+                                "decision": step_decision.get("decision"),
+                                "decision_quality": step_decision.get("decision_quality"),
+                                "score": step_decision.get("decision_score"),
+                                "timestamp": time.time()
+                            })
+                        except:
+                            pass
+
+                        # 🧠 CONTROL FLOW
+                        if execution_action == "execute":
+                            execution_plan = result.get("execution_plan", [])
+                            pending_steps = execution_plan
+                            continue   # 🔁 LOOP CONTINUES
+
+                        elif execution_action in ["hold", "continue"]:
+                            return jsonify({
+                                "status": "success",
+                                "decision": execution_action,
+                                "step_decision": step_decision
+                            })
+
+                        else:
+                            return jsonify({
+                                "status": "success",
+                                "decision": "complete"
+                            })
+
+                    except Exception as e:
+                        return jsonify({
+                            "status": "success",
+                            "decision": "complete"
+                       })
+
+                # =========================
+                # STEP EXECUTION
+                # =========================
+                next_step = pending_steps[0]
+
+                updated_completed = list(completed_steps)
+
+                if next_step not in updated_completed:
+                    updated_completed.append(next_step)
+
+                updated_pending = [
+                    s for s in execution_plan if s not in updated_completed
+                ]
+
+                # SAVE STATE
+                try:
+                    requests.post(
+                        APPS_SCRIPT_URL,
+                        json={
+                                "action": "update_active_state",
+                                "payload": {
+                                "session_id": parsed_state.get("session_id"),
+                                "current_step": next_step,
+                                "completed_steps": updated_completed,
+                                "execution_plan": execution_plan,
+                                "step_updates": []
+                            }
+                        },
+                            timeout=10
+                    )
+                except:
+                    pass
+
+                # SAVE EXECUTION
                 try:
                     save_decision_to_sheet({
                         "session_id": parsed_state.get("session_id"),
-                        "decision": "blocked_due_to_failures",
-                        "failure_count": failure_count,
+                        "decision": next_step,
+                        "type": "execution",
                         "timestamp": time.time()
                     })
-                except Exception as e:
-                    print("⚠️ FAILURE SAVE ERROR:", e)
+                except:
+                    pass
 
-                return jsonify({
-                    "status": "warning",
-                    "decision": "blocked"
-                })
+                # 🔁 UPDATE STATE FOR NEXT LOOP
+                completed_steps = updated_completed
+                pending_steps = updated_pending
+                current_step = next_step
 
-            # COMPLETE → ENGINE (SAFE)
-            if not pending_steps:
-                try:
-                    session = load_session_from_sheet() or {}
+                if not pending_steps:
+                     continue   # go to engine
 
-                    session["active_state"] = {
-                        "session_id": parsed_state.get("session_id"),
-                        "current_step": current_step,
-                        "completed_steps": completed_steps,
-                        "step_updates": step_updates,
-                        "execution_plan": execution_plan
-                    }
+                final_response = {
+                    "status": "success",
+                    "decision": "proceed",
+                    "executed_step": next_step,
+                    "next_step": pending_steps[0] if pending_steps else None
+                }
 
-                    session.setdefault("decisions", [])
-                    session.setdefault("roi_list", [])
-                    session.setdefault("risk_list", [])
-                    session.setdefault("confidence_list", [])
-                    session.setdefault("outcome_list", [])
-
-                    start = time.time()
-                    result = generate_intelligent_action(session)
-
-                    if time.time() - start > 5:
-                        raise Exception("Engine timeout")
-
-                    step_decision = result.get("step_decision", {})
-                    execution_action = step_decision.get("execution_action")
-
-                    # =========================
-                    # 💾 SAVE ENGINE OUTCOME TYPE
-                    # =========================
-                    try:
-                        save_decision_to_sheet({
-                            "session_id": parsed_state.get("session_id"),
-                            "decision": step_decision.get("decision"),
-                            "decision_quality": step_decision.get("decision_quality"),
-                            "score": step_decision.get("decision_score"),
-                            "timestamp": time.time()
-                        })
-                    except Exception as e:
-                        print("⚠️ ENGINE SAVE ERROR:", e)
-
-                    # 🧠 DECISION CONTROL
-                    if execution_action == "execute":
-                        return jsonify({
-                            "status": "success",
-                            "decision": "execute_new_plan",
-                            "action": result.get("action"),
-                            "execution_plan": result.get("execution_plan", []),
-                            "execution_state": result.get("execution_state", {}),
-                            "step_decision": step_decision
-                        })
-
-                    elif execution_action == "continue":
-                        return jsonify({
-                            "status": "success",
-                            "decision": "continue",
-                            "step_decision": step_decision
-                        })
-
-                    elif execution_action == "hold":
-                        return jsonify({
-                            "status": "success",
-                            "decision": "hold",
-                            "reason": step_decision.get("reason"),
-                            "step_decision": step_decision
-                        })
-
-                    # fallback
-                    return jsonify({
-                        "status": "success",
-                        "decision": "engine_triggered",
-                        "execution_plan": result.get("execution_plan", [])
-                    })
-
-                except Exception as e:
-                    print("⚠️ ENGINE SKIPPED:", e)
-
-                    return jsonify({
-                        "status": "success",
-                        "decision": "complete"
-                    })
-
-            # =========================
-            # 🧠 SMART STEP SELECTION
-            # =========================
-            next_step = pending_steps[0]
-
-            for step in pending_steps:
-                failed = any(
-                    isinstance(u, dict) and
-                    u.get("step") == step and
-                    u.get("status") == "failed"
-                    for u in step_updates
-                )
-                if not failed:
-                    next_step = step
-                    break
-
-            updated_completed = list(completed_steps)
-
-            if next_step not in updated_completed:
-                updated_completed.append(next_step)
-
-            updated_pending = [
-                s for s in execution_plan if s not in updated_completed
-            ]
-
-            # SAVE STATE
-            try:
-                requests.post(
-                    APPS_SCRIPT_URL,
-                    json={
-                        "action": "update_active_state",
-                        "payload": {
-                            "session_id": parsed_state.get("session_id"),
-                            "current_step": next_step,
-                            "completed_steps": updated_completed,
-                            "execution_plan": execution_plan,
-                            "step_updates": []
-                        }
-                    },
-                    timeout=10
-                )
-            except Exception as e:
-                print("SAVE ERROR:", e)
-
-            # =========================
-            # 💾 SAVE EXECUTION STEP
-            # =========================
-            try:
-                save_decision_to_sheet({
-                    "session_id": parsed_state.get("session_id"),
-                    "decision": next_step,
-                    "type": "execution",
-                    "timestamp": time.time()
-                })
-            except Exception as e:
-                print("⚠️ STEP SAVE FAILED:", e)
-
-            return jsonify({
+            return jsonify(final_response or {
                 "status": "success",
-                "decision": "proceed",
-                "executed_step": next_step,
-                "next_step": updated_pending[0] if updated_pending else None
+                "decision": "loop_finished"
             })
 
         return jsonify({"status": "invalid_request"})
