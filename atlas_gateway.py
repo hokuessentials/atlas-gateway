@@ -458,13 +458,40 @@ def atlas_action():
                     if time.time() - start > 5:
                         raise Exception("Engine timeout")
 
+                    step_decision = result.get("step_decision", {})
+                    execution_action = step_decision.get("execution_action")
+
+                    # 🧠 DECISION CONTROL
+                    if execution_action == "execute":
+                        return jsonify({
+                            "status": "success",
+                            "decision": "execute_new_plan",
+                            "action": result.get("action"),
+                            "execution_plan": result.get("execution_plan", []),
+                            "execution_state": result.get("execution_state", {}),
+                            "step_decision": step_decision
+                        })
+
+                    elif execution_action == "continue":
+                        return jsonify({
+                            "status": "success",
+                            "decision": "continue",
+                            "step_decision": step_decision
+                        })
+
+                    elif execution_action == "hold":
+                        return jsonify({
+                            "status": "success",
+                            "decision": "hold",
+                            "reason": step_decision.get("reason"),
+                            "step_decision": step_decision
+                        })
+
+                    # fallback
                     return jsonify({
                         "status": "success",
                         "decision": "engine_triggered",
-                        "action": result.get("action"),
-                        "execution_plan": result.get("execution_plan", []),
-                        "execution_state": result.get("execution_state", {}),
-                        "step_decision": result.get("step_decision", {})
+                        "execution_plan": result.get("execution_plan", [])
                     })
 
                 except Exception as e:
