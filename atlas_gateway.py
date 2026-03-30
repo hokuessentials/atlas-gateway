@@ -251,7 +251,7 @@ def save_session_to_sheet_async(session_data):
                 "data": session_data
             }
 
-            requests.post(APPS_SCRIPT_URL, json=payload, timeout=5)
+            requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
 
         except Exception as e:
             print("❌ SESSION SAVE ERROR:", e)
@@ -420,7 +420,7 @@ def atlas_action():
             s for s in execution_plan
             if s and str(s).strip() != ""
         ]
-        
+
         # ✅ ALWAYS DEFINE FIRST
         current_step = (parsed_state.get("current_step") or "").strip()
 
@@ -775,13 +775,22 @@ def atlas_action():
                     pass
 
                 # 🔁 UPDATE STATE FOR NEXT LOOP
-                completed_steps = completed_steps
                 pending_steps = updated_pending
                 if next_step:
                     current_step = next_step
 
                 if not pending_steps:
-                     continue   # go to engine
+                    return jsonify({
+                        "status": "success",
+                        "decision": "complete",
+                        "debug": {
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": pending_steps,
+                            "failed_steps": [],
+                            "recent_updates": step_updates[-5:]
+                        }
+                    })
 
                 final_response = {
                     "status": "success",
