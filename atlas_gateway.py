@@ -456,6 +456,24 @@ def atlas_action():
                 # COMPLETE → ENGINE
                 # =========================
                 if not pending_steps:
+
+                    # ✅ ADD THIS BLOCK HERE (FIRST LINE INSIDE IF)
+                    if step_updates and any(
+                        u.get("step") == current_step and u.get("status") == "success"
+                        for u in step_updates
+                    ):
+                        return jsonify({
+                            "status": "success",
+                            "decision": "complete",
+                            "debug": {
+                                "current_step": current_step,
+                                "completed_steps": completed_steps,
+                                "pending_steps": pending_steps,
+                                "failed_steps": [],
+                                "recent_updates": step_updates[-5:]
+                            }
+                        })
+
                     try:
                         session = load_session_from_sheet() or {}
 
