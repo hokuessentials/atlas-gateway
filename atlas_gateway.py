@@ -466,6 +466,30 @@ def atlas_action():
                         step_decision = result.get("step_decision", {})
                         execution_action = step_decision.get("execution_action")
 
+                        decision = step_decision.get("decision")
+                        score = step_decision.get("decision_score", 0)
+
+                        reason = step_decision.get("reason", "").lower()
+
+                        is_real_failure = (
+                            decision in ["blocked"] or
+                            (decision == "hold" and "error" in reason) or
+                            score < 0.3
+                      )
+
+                        if is_real_failure:
+                            step_updates.append({
+                                "step": current_step,
+                                "status": "failed",
+                                "timestamp": time.time()
+                            })
+                        else:
+                            step_updates.append({
+                                "step": current_step,
+                                "status": "success",
+                                "timestamp": time.time()
+                            })
+
                         # SAVE ENGINE DECISION
                         try:
                             save_decision_to_sheet({
