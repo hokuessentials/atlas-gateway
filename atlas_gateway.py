@@ -683,30 +683,30 @@ def atlas_action():
                             }
                         })
                     
-                    # =========================
-                    # 🧠 INTELLIGENT STEP SELECTION
-                    # =========================
+                # =========================
+                # 🧠 INTELLIGENT STEP SELECTION
+                # =========================
 
-                    candidates = available_steps if available_steps else pending_steps
+                candidates = available_steps if available_steps else pending_steps
 
-                    # fallback safety
-                    if not candidates:
-                        next_step = None
-                    else:
-                        try:
-                            # 🧠 get better step using intelligence layer
-                            better_step = select_better_step(
-                               current_step=current_step,
-                               candidates=candidates,
-                               completed_steps=completed_steps,
-                               step_updates=step_updates
-                            )
+                # fallback safety
+                if not candidates:
+                    next_step = None
+                else:
+                    try:
+                        # 🧠 get better step using intelligence layer
+                        better_step = select_better_step(
+                            current_step=current_step,
+                            candidates=candidates,
+                            completed_steps=completed_steps,
+                            step_updates=step_updates
+                        )
 
-                            next_step = better_step if better_step else candidates[0]
+                        next_step = better_step if better_step else candidates[0]
 
-                        except Exception as e:
-                            print("⚠️ STEP SELECTION ERROR:", e)
-                            next_step = candidates[0]
+                    except Exception as e:
+                        print("⚠️ STEP SELECTION ERROR:", e)
+                        next_step = candidates[0]
 
 
                 # ❌ DO NOT mark completed here
