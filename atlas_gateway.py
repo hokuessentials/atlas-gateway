@@ -479,9 +479,8 @@ def atlas_action():
 
                         is_real_failure = (
                             decision in ["blocked"] or
-                            (decision == "hold" and "error" in reason) or
-                            score < 0.3
-                       )
+                            (decision == "hold" and "error" in reason)
+                        )
                         # =========================
                         # 🔁 TRACK STEP RESULT
                         # =========================
