@@ -475,8 +475,28 @@ def atlas_action():
                             decision in ["blocked"] or
                             (decision == "hold" and "error" in reason) or
                             score < 0.3
-                      )
+                       )
+                        # =========================
+                        # 🔁 TRACK STEP RESULT
+                        # =========================
 
+                        if is_real_failure:
+                            step_updates.append({
+                                "step": current_step,
+                                "status": "failed",
+                                "timestamp": time.time()
+                            })
+                        else:
+                            step_updates.append({
+                                "step": current_step,
+                                "status": "success",
+                                "timestamp": time.time()
+                            })
+
+                        # ✅ mark completed ONLY on success
+                        if current_step not in completed_steps:
+                            completed_steps.append(current_step)
+                         
                         # 🔥 SAVE STATE AFTER ENGINE UPDATE
                         try:
                             requests.post(
