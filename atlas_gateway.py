@@ -528,11 +528,48 @@ def atlas_action():
                        })
 
                 # =========================
-                # STEP EXECUTION
+                # 🔁 RETRY + SWITCH LOGIC
                 # =========================
-                next_step = pending_steps[0]
 
-                updated_completed = list(completed_steps)
+                failure_count_map = {}
+
+                for update in step_updates:
+                    if isinstance(update, dict):
+                        step = update.get("step")
+                        status = update.get("status")
+
+                    if status == "failed":
+                        failure_count_map[step] = failure_count_map.get(step, 0) + 1
+
+                MAX_RETRY = 2
+
+                failed_steps = [
+                    step for step, count in failure_count_map.items()
+                    if count >= MAX_RETRY
+                ]
+
+                pending_steps = [
+                    s for s in execution_plan
+                    if s not in completed_steps
+                ]
+
+                available_steps = [
+                    s for s in pending_steps
+                    if s not in failed_steps
+                ]
+
+                # 🚨 fallback (avoid dead loop)
+                if not available_steps:
+                    return jsonify({
+                        "status": "hold",
+                        "reason": "All steps exhausted",
+                        "action": "manual_review_required"
+                    })
+
+                if current_step in failed_steps and available_steps:
+                    next_step = available_steps[0]
+                else:
+                    next_step = pending_steps[0] if pending_steps else None
 
                 if next_step not in updated_completed:
                     updated_completed.append(next_step)
@@ -552,7 +589,7 @@ def atlas_action():
                                 "current_step": next_step,
                                 "completed_steps": updated_completed,
                                 "execution_plan": execution_plan,
-                                "step_updates": []
+                                "step_updates": step_updates
                             }
                         },
                             timeout=10
@@ -575,7 +612,6 @@ def atlas_action():
                 completed_steps = updated_completed
                 pending_steps = updated_pending
                 current_step = next_step
-                step_updates = []
 
                 if not pending_steps:
                      continue   # go to engine
