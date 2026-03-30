@@ -476,14 +476,12 @@ def atlas_action():
 
     if input_data.get("execute"):
 
-        # 🧠 Safety check
         if not execution_plan:
             return jsonify({
                 "status": "error",
                 "message": "No execution plan found"
             })
 
-        # 🎯 If everything completed
         if not pending_steps:
             return jsonify({
                 "status": "success",
@@ -492,17 +490,60 @@ def atlas_action():
                 "message": "All steps completed"
             })
 
-        # 🎯 Default: next step
         next_step = pending_steps[0]
 
-        return jsonify({
-            "status": "success",
-            "mode": "execution",
-            "decision": "proceed",
-            "next_step": next_step,
-            "current_step": current_step,
-            "pending_steps": pending_steps
-        })
+        # =========================
+        # 🔥 UPDATE STATE
+        # =========================
+
+        updated_completed = list(completed_steps)
+        if next_step not in updated_completed:
+            updated_completed.append(next_step)
+
+        updated_current = next_step
+
+        # next pending after update
+        updated_pending = [
+            step for step in execution_plan
+            if step not in updated_completed
+        ]
+
+    # =========================
+    # 🔥 SEND UPDATE TO SHEET
+    # =========================
+
+    try:
+        import requests
+
+        requests.post(
+            APPS_SCRIPT_URL,
+            json={
+                "action": "update_active_state",
+                "payload": {
+                    "session_id": parsed_state.get("session_id"),
+                    "current_step": updated_current,
+                    "completed_steps": updated_completed,
+                    "execution_plan": execution_plan,
+                    "step_updates": []
+                }
+            },
+            timeout=10
+        )
+    except Exception as e:
+        print("⚠️ Update failed:", e)
+
+    # =========================
+    # 🔥 RESPONSE
+    # =========================
+
+    return jsonify({
+        "status": "success",
+        "mode": "execution",
+        "decision": "proceed",
+        "executed_step": next_step,
+        "next_step": updated_pending[0] if updated_pending else None,
+        "completed_steps": updated_completed
+    })
     # =========================
     # 🚫 DISABLE ENGINE (PHASE 1)
     # =========================
