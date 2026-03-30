@@ -509,11 +509,8 @@ def atlas_action():
                             continue   # 🔁 LOOP CONTINUES
 
                         elif execution_action in ["hold", "continue"]:
-                            return jsonify({
-                                "status": "success",
-                                "decision": execution_action,
-                                "step_decision": step_decision
-                            })
+                        # 🔁 do NOT exit — allow retry/switch logic to run
+                            pass
 
                         else:
                             return jsonify({
