@@ -603,13 +603,6 @@ def atlas_action():
             "message": str(e)
         })
 
-    except Exception as e:
-        print("❌ INTELLIGENCE ERROR:", e)
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        })
-
 # =========================
 
 if __name__ == "__main__":
