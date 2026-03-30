@@ -477,6 +477,35 @@ def atlas_action():
     if input_data.get("execute"):
 
         if not execution_plan:
+            # =========================
+            # 🚨 FAILURE + DUPLICATE PROTECTION
+            # =========================
+
+            step_updates = safe_json_parse(parsed_state.get("step_updates", []))
+
+            # ❌ FAILURE COUNT
+            failure_count = sum(
+                1 for s in step_updates
+                if isinstance(s, dict) and s.get("status") == "failed"
+            )
+
+            if failure_count >= 2:
+                return jsonify({
+                    "status": "warning",
+                    "mode": "execution",
+                    "decision": "blocked",
+                    "reason": "Too many failures"
+            })
+
+            # ❌ DUPLICATE EXECUTION BLOCK
+            if current_step and current_step in completed_steps:
+                return jsonify({
+                    "status": "success",
+                    "mode": "execution",
+                    "decision": "skip",
+                    "message": "Already completed",
+                    "current_step": current_step
+         })
             return jsonify({
                 "status": "error",
                 "message": "No execution plan found"
@@ -486,11 +515,26 @@ def atlas_action():
             return jsonify({
                 "status": "success",
                 "mode": "execution",
-                "decision" : "complete" if not updated_pending else "proceed",
+                "decision": "complete",
                 "message": "All steps completed"
-            })
+         })
+
+        # =========================
+        # 🧠 SMART STEP SELECTION
+        # =========================
 
         next_step = pending_steps[0]
+
+        for step in pending_steps:
+            failed = any(
+                isinstance(u, dict) and
+                u.get("step") == step and
+                u.get("status") == "failed"
+                for u in step_updates
+        )
+            if not failed:
+                next_step = step
+                break
 
         # =========================
         # 🔥 UPDATE STATE
