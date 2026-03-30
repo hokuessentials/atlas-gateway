@@ -477,18 +477,24 @@ def atlas_action():
                             score < 0.3
                       )
 
-                        if is_real_failure:
-                            step_updates.append({
-                                "step": current_step,
-                                "status": "failed",
-                                "timestamp": time.time()
-                            })
-                        else:
-                            step_updates.append({
-                                "step": current_step,
-                                "status": "success",
-                                "timestamp": time.time()
-                            })
+                        # 🔥 SAVE STATE AFTER ENGINE UPDATE
+                        try:
+                            requests.post(
+                                APPS_SCRIPT_URL,
+                                json={
+                                    "action": "update_active_state",
+                                    "payload": {
+                                        "session_id": parsed_state.get("session_id"),
+                                        "current_step": current_step,
+                                        "completed_steps": completed_steps,
+                                        "execution_plan": execution_plan,
+                                        "step_updates": step_updates
+                                    }
+                                },
+                                timeout=10
+                            )
+                        except:
+                            pass
 
                         # SAVE ENGINE DECISION
                         try:
