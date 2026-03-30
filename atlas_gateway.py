@@ -695,7 +695,17 @@ def atlas_action():
                     "status": "success",
                     "decision": "proceed",
                     "executed_step": next_step,
-                    "next_step": pending_steps[0] if pending_steps else None
+                    "next_step": pending_steps[0] if pending_steps else None,
+
+                    # 🔥 DEBUG BLOCK (ADD HERE)
+                    "debug": {
+                        "current_step": current_step,
+                        "next_step": next_step,
+                        "completed_steps": completed_steps,
+                        "pending_steps": pending_steps,
+                        "failed_steps": failed_steps,
+                        "recent_updates": step_updates[-5:]
+                    }
                 }
 
             return jsonify(final_response or {
