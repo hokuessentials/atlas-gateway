@@ -571,6 +571,7 @@ def atlas_action():
                 else:
                     next_step = pending_steps[0] if pending_steps else None
 
+                updated_completed = list(completed_steps)
                 if next_step not in updated_completed:
                     updated_completed.append(next_step)
 
