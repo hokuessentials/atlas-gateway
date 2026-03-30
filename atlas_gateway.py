@@ -372,9 +372,6 @@ def atlas_action():
         system_memory = read_full_system_memory()
         active_raw = system_memory.get("active_state", [])
 
-        # =========================
-        # 🔹 PARSE STATE
-        # =========================
         def safe_json_parse(value):
             if isinstance(value, list):
                 return value
@@ -405,9 +402,7 @@ def atlas_action():
         current_step = parsed_state.get("current_step")
         step_updates = safe_json_parse(parsed_state.get("step_updates", []))
 
-        pending_steps = [
-            s for s in execution_plan if s not in completed_steps
-        ]
+        pending_steps = [s for s in execution_plan if s not in completed_steps]
 
         # =========================
         # 🧠 QUESTION MODE
@@ -429,70 +424,25 @@ def atlas_action():
         # =========================
         if input_data.get("execute"):
 
-            # ❌ FAILURE GUARD
+            # FAILURE GUARD
             failure_count = sum(
                 1 for s in step_updates
                 if isinstance(s, dict) and s.get("status") == "failed"
             )
 
             if failure_count >= 2:
+                return jsonify({"status": "warning", "decision": "blocked"})
+
+            # COMPLETE → ENGINE (SAFE)
+            if not pending_steps:
                 return jsonify({
-                    "status": "warning",
-                    "decision": "blocked"
+                    "status": "success",
+                    "decision": "complete"
                 })
 
-            # ❌ ALL COMPLETE → ENGINE TRIGGER
-            if not pending_steps:
-
-                try:
-                    session = load_session_from_sheet() or {}
-
-                    session["active_state"] = {
-                        "session_id": parsed_state.get("session_id"),
-                        "current_step": current_step,
-                        "completed_steps": completed_steps,
-                        "step_updates": step_updates,
-                        "execution_plan": execution_plan
-                    }
-
-                    session.setdefault("decisions", [])
-                    session.setdefault("roi_list", [])
-                    session.setdefault("risk_list", [])
-                    session.setdefault("confidence_list", [])
-                    session.setdefault("outcome_list", [])
-
-                    start = time.time()
-                    result = None
-
-                    try:
-                        result = generate_intelligent_action(session)
-                    except Exception as e:
-                        print("ENGINE ERROR:", e)
-
-                    if time.time() - start > 5 or not result:
-                        return jsonify({
-                            "status": "success",
-                            "decision": "complete",
-                            "message": "Engine skipped"
-                        })
-
-                    return jsonify({
-                        "status": "success",
-                        "decision": "engine_triggered",
-                        "next_plan": result.get("execution_plan", [])
-                    })
-
-                except Exception as e:
-                    print("ENGINE FAIL:", e)
-                    return jsonify({
-                        "status": "success",
-                        "decision": "complete"
-                    })
-
             # =========================
-            # 🧠 NORMAL EXECUTION
+            # 🧠 SMART STEP SELECTION
             # =========================
-
             next_step = pending_steps[0]
 
             for step in pending_steps:
@@ -515,7 +465,7 @@ def atlas_action():
                 s for s in execution_plan if s not in updated_completed
             ]
 
-            # 🔥 SAVE
+            # SAVE STATE
             try:
                 requests.post(
                     APPS_SCRIPT_URL,
@@ -544,7 +494,7 @@ def atlas_action():
         return jsonify({"status": "invalid_request"})
 
     except Exception as e:
-        print("FATAL ERROR:", e)
+        print("❌ FATAL ERROR:", e)
         return jsonify({
             "status": "error",
             "message": str(e)
