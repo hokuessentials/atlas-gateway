@@ -685,7 +685,7 @@ def atlas_action():
                     pass
 
                 # 🔁 UPDATE STATE FOR NEXT LOOP
-                completed_steps = updated_completed
+                completed_steps = completed_steps
                 pending_steps = updated_pending
                 current_step = next_step
 
