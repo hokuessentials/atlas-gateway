@@ -57,7 +57,7 @@ def save_state_to_sheet(active_state):
                     APPS_SCRIPT_URL,
                     data=json.dumps(payload),   # ✅ FIXED (NO json=payload)
                     headers=headers,
-                    timeout=10,
+                    timeout=3,
                     allow_redirects=True
                 )
 
@@ -92,7 +92,7 @@ def save_decision_to_sheet(decision_data):
             APPS_SCRIPT_URL,
             data=json.dumps(payload),
             headers=headers,
-            timeout=10,
+            timeout=3,
             allow_redirects=True
         )
 
@@ -107,7 +107,7 @@ def load_state_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=10,
+            timeout=3,
             allow_redirects=True
         )
 
@@ -146,7 +146,7 @@ def read_full_system_memory():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=10
+            timeout=3
         )
         
         if not resp or resp.status_code != 200:
@@ -186,7 +186,7 @@ def load_session_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=10,
+            timeou=3,
             allow_redirects=True
         )
 
@@ -251,7 +251,7 @@ def save_session_to_sheet_async(session_data):
                 "data": session_data
             }
 
-            requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+            requests.post(APPS_SCRIPT_URL, json=payload, timeout=3)
 
         except Exception as e:
             print("❌ SESSION SAVE ERROR:", e)
@@ -270,7 +270,7 @@ def update_decision_outcome(decision_id, outcome, lesson):
     }
 
     try:
-        requests.post(APPS_SCRIPT_URL, json=payload, timeout=10)
+        requests.post(APPS_SCRIPT_URL, json=payload, timeout=3)
     except Exception as e:
         print("❌ Update decision error:", e)
 
@@ -350,7 +350,7 @@ def save_session_to_sheet(session):
             APPS_SCRIPT_URL,
             json=payload,
             headers=headers,
-            timeout=10,
+            timeout=3,
             allow_redirects=True
         )
 
@@ -369,7 +369,7 @@ def atlas_action():
         # =========================
         # 🔹 LOAD MEMORY
         # =========================
-        system_memory = read_full_system_memory()
+        system_memory = read_full_system_memory() or {}
         active_raw = system_memory.get("active_state", [])
 
         def safe_json_parse(value):
@@ -453,13 +453,25 @@ def atlas_action():
         if input_data.get("execute"):
 
             loop_count = 0
-            max_loops = 3   # safety limit
+            max_loops = 2   # safety limit
+
+            start_time = time.time() 
 
             final_response = None
 
             while loop_count < max_loops:
                 loop_count += 1
 
+                if time.time() - start_time > 20:
+                    return jsonify({
+                        "status": "timeout_safe_exit",
+                        "decision": "partial",
+                        "debug": {
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": pending_steps
+            }
+        })
                 # =========================
                 # FAILURE GUARD
                 # =========================
@@ -557,7 +569,7 @@ def atlas_action():
                                         "step_updates": step_updates
                                     }
                                 },
-                                timeout=10
+                                timeout=3
                             )
                         except:
                             pass
@@ -674,7 +686,7 @@ def atlas_action():
                                         "step_updates": step_updates
                                     }
                                 },
-                                timeout=10
+                                timeout=3
                             )
                         except:
                             pass
@@ -758,7 +770,7 @@ def atlas_action():
                                 "step_updates": step_updates
                             }
                         },
-                            timeout=10
+                            timeout=3
                     )
                 except:
                     pass
