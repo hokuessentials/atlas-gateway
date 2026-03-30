@@ -682,13 +682,31 @@ def atlas_action():
                                 "recent_updates": step_updates[-5:]
                             }
                         })
+                    
                     # =========================
-                    # 🔁 STEP SELECTION
+                    # 🧠 INTELLIGENT STEP SELECTION
                     # =========================
-                if current_step in failed_steps and available_steps:
-                    next_step = available_steps[0]
-                else:
-                    next_step = pending_steps[0] if pending_steps else None
+
+                    candidates = available_steps if available_steps else pending_steps
+
+                    # fallback safety
+                    if not candidates:
+                        next_step = None
+                    else:
+                        try:
+                            # 🧠 get better step using intelligence layer
+                            better_step = select_better_step(
+                               current_step=current_step,
+                               candidates=candidates,
+                               completed_steps=completed_steps,
+                               step_updates=step_updates
+                            )
+
+                            next_step = better_step if better_step else candidates[0]
+
+                        except Exception as e:
+                            print("⚠️ STEP SELECTION ERROR:", e)
+                            next_step = candidates[0]
 
 
                 # ❌ DO NOT mark completed here
