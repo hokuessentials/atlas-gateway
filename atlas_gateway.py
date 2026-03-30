@@ -496,15 +496,49 @@ def atlas_action():
                         "reason": "Too many failures"
                     })
 
-            # ❌ DUPLICATE EXECUTION BLOCK
-            if current_step and current_step in completed_steps:
-                return jsonify({
-                    "status": "success",
-                    "mode": "execution",
-                    "decision": "skip",
-                    "message": "Already completed",
-                    "current_step": current_step
-                })
+    # ❌ DUPLICATE EXECUTION BLOCK
+    if current_step and current_step in completed_steps:
+
+        # =========================
+        # 🧠 TRY ENGINE BEFORE SKIP
+        # =========================
+        try:
+            session = load_session_from_sheet() or {}
+
+            session["active_state"] = {
+                "session_id": parsed_state.get("session_id"),
+                "current_step": current_step,
+                "completed_steps": completed_steps,
+                "step_updates": safe_json_parse(parsed_state.get("step_updates", [])),
+                "execution_plan": execution_plan
+            }
+
+            session.setdefault("decisions", [])
+            session.setdefault("roi_list", [])
+            session.setdefault("risk_list", [])
+            session.setdefault("confidence_list", [])
+            session.setdefault("outcome_list", [])
+
+            result = generate_intelligent_action(session)
+
+            return jsonify({
+                "status": "success",
+                "mode": "execution_complete",
+                "decision": "engine_triggered",
+                "next_plan": result.get("execution_plan", []),
+                "message": "Step already done, engine generated next plan"
+            })
+
+        except Exception as e:
+            print("❌ ENGINE ERROR (SKIP PATH):", e)
+
+            return jsonify({
+            "status": "success",
+            "mode": "execution",
+            "decision": "skip",
+            "message": "Already completed",
+            "current_step": current_step
+        })
 
             # =========================
             # 🧠 TRIGGER INTELLIGENCE ENGINE or SMART STEP SELECTION
