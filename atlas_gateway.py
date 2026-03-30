@@ -511,13 +511,36 @@ def atlas_action():
                 "message": "No execution plan found"
             })
 
-        if not pending_steps:
+    if not pending_steps:
+        
+        # =========================
+        # 🧠 TRIGGER INTELLIGENCE ENGINE
+        # =========================
+        try:
+            session = load_session_from_sheet() or {}
+
+            # Attach latest state
+            session["active_state"] = parsed_state
+
+            result = generate_intelligent_action(session)
+
+            return jsonify({
+                "status": "success",
+                "mode": "execution_complete",
+                "decision": "engine_triggered",
+                "next_plan": result.get("execution_plan", []),
+                "message": "Execution complete, new plan generated"
+            })
+
+        except Exception as e:
+            print("❌ ENGINE TRIGGER ERROR:", e)
+
             return jsonify({
                 "status": "success",
                 "mode": "execution",
                 "decision": "complete",
-                "message": "All steps completed"
-         })
+                "message": "All steps completed (engine failed fallback)"
+            })
 
         # =========================
         # 🧠 SMART STEP SELECTION
