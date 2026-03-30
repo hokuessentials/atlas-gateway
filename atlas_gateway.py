@@ -529,18 +529,6 @@ def atlas_action():
                         "status": "success",
                         "decision": "complete"
                     })
-            # =========================
-            # 💾 SAVE DECISION (NEW)
-            # =========================
-            try:
-               save_decision_to_sheet({
-                   "session_id": parsed_state.get("session_id"),
-                   "decision": result.get("action"),
-                   "current_step": current_step,
-                   "timestamp": time.time()
-               })
-            except Exception as e:
-                print("⚠️ DECISION SAVE FAILED:", e)
 
             # =========================
             # 🧠 SMART STEP SELECTION
@@ -586,13 +574,6 @@ def atlas_action():
             except Exception as e:
                 print("SAVE ERROR:", e)
 
-            return jsonify({
-                "status": "success",
-                "decision": "proceed",
-                "executed_step": next_step,
-                "next_step": updated_pending[0] if updated_pending else None
-            })
-        
             # =========================
             # 💾 SAVE EXECUTION STEP
             # =========================
@@ -605,6 +586,13 @@ def atlas_action():
                 })
             except Exception as e:
                 print("⚠️ STEP SAVE FAILED:", e)
+
+            return jsonify({
+                "status": "success",
+                "decision": "proceed",
+                "executed_step": next_step,
+                "next_step": updated_pending[0] if updated_pending else None
+            })
 
         return jsonify({"status": "invalid_request"})
 
