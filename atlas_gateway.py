@@ -470,6 +470,20 @@ def atlas_action():
                 "execution_plan": execution_plan
             }
         })
+    # =========================
+    # 🚫 DISABLE ENGINE (PHASE 1)
+    # =========================
+
+    return jsonify({
+        "status": "success",
+        "mode": "awareness",
+        "answer": {
+            "current_step": current_step,
+            "completed_steps": completed_steps,
+            "pending_steps": pending_steps,
+            "execution_plan": execution_plan
+        }
+    })
 
     # =========================
     # 🔵 NORMAL ENGINE FLOW
