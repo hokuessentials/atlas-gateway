@@ -538,8 +538,8 @@ def atlas_action():
                         step = update.get("step")
                         status = update.get("status")
 
-                    if status == "failed":
-                        failure_count_map[step] = failure_count_map.get(step, 0) + 1
+                        if status == "failed":
+                            failure_count_map[step] = failure_count_map.get(step, 0) + 1
 
                 MAX_RETRY = 2
 
