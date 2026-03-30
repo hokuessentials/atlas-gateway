@@ -403,12 +403,24 @@ def atlas_action():
             s for s in completed_steps
             if s and str(s).strip() != ""
         ]
+
         execution_plan = safe_json_parse(parsed_state.get("execution_plan", []))
+        # 🔥 AUTO-INITIALIZE IF EMPTY
+        if not execution_plan:
+            execution_plan = [
+                "Evaluate sample quality against standards.",
+                "Check supplier pricing",
+                "Negotiate price",
+                "Check sample quality",
+                "Finalize supplier"
+            ]
+
         # ✅ REMOVE EMPTY STEPS (FIX 4)
         execution_plan = [
             s for s in execution_plan
             if s and str(s).strip() != ""
         ]
+        
         # ✅ ALWAYS DEFINE FIRST
         current_step = (parsed_state.get("current_step") or "").strip()
 
