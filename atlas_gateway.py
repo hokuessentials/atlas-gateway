@@ -186,7 +186,7 @@ def load_session_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeou=3,
+            timeout=3,
             allow_redirects=True
         )
 
@@ -470,8 +470,8 @@ def atlas_action():
                             "current_step": current_step,
                             "completed_steps": completed_steps,
                             "pending_steps": pending_steps
-            }
-        })
+                        }
+                    })
                 # =========================
                 # FAILURE GUARD
                 # =========================
@@ -490,6 +490,16 @@ def atlas_action():
                 # COMPLETE → ENGINE
                 # =========================
                 if not pending_steps:
+                    if time.time() - start_time > 20:
+                        return jsonify({
+                            "status": "timeout_safe_exit",
+                            "decision": "partial",
+                            "debug": {
+                                "current_step": current_step,
+                                "completed_steps": completed_steps,
+                                "pending_steps": pending_steps
+                            }
+                        })
 
                     # ✅ ADD THIS BLOCK HERE (FIRST LINE INSIDE IF)
                     if step_updates and any(
