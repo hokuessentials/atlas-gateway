@@ -398,9 +398,19 @@ def atlas_action():
                     parsed_state[headers[i]] = values[i]
 
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
+        # 🔥 CLEAN BAD DATA FROM SHEET
+        completed_steps = [
+            s for s in completed_steps
+            if s and str(s).strip() != ""
+        ]
         execution_plan = safe_json_parse(parsed_state.get("execution_plan", []))
+        # ✅ REMOVE EMPTY STEPS (FIX 4)
+        execution_plan = [
+            s for s in execution_plan
+            if s and str(s).strip() != ""
+        ]
         # ✅ ALWAYS DEFINE FIRST
-        current_step = parsed_state.get("current_step") or ""
+        current_step = (parsed_state.get("current_step") or "").strip()
 
         # ✅ THEN FIX IF EMPTY
         if not current_step and execution_plan:
@@ -505,20 +515,21 @@ def atlas_action():
 
                         if is_real_failure:
                             step_updates.append({
-                                "step": current_step,
+                                "step": current_step if current_step else "invalid_step",
                                 "status": "failed",
                                 "timestamp": time.time()
                             })
                         else:
                             step_updates.append({
-                                "step": current_step,
+                                "step": current_step if current_step else "invalid_step",
                                 "status": "success",
                                 "timestamp": time.time()
                             })
 
                             # ✅ mark completed ONLY on success
-                            if current_step not in completed_steps:
-                                completed_steps.append(current_step)
+                            if current_step and current_step.strip() != "":
+                                if current_step not in completed_steps:
+                                    completed_steps.append(current_step)
                          
                         # 🔥 SAVE STATE AFTER ENGINE UPDATE
                         try:
@@ -702,7 +713,7 @@ def atlas_action():
                             step_updates=step_updates
                         )
 
-                        next_step = better_step if better_step else candidates[0]
+                        next_step = better_step if (better_step and str(better_step).strip() != "") else candidates[0]
 
                     except Exception as e:
                         print("⚠️ STEP SELECTION ERROR:", e)
@@ -713,8 +724,9 @@ def atlas_action():
                 updated_completed = list(completed_steps)
 
                 # ✅ TEMP FLOW CONTROL (IMPORTANT)
-                if next_step and next_step not in updated_completed:
-                    updated_completed.append(next_step)
+                if next_step and str(next_step).strip() != "":
+                    if next_step not in updated_completed:
+                        updated_completed.append(next_step)
 
                 updated_pending = [
                     s for s in execution_plan if s not in updated_completed
