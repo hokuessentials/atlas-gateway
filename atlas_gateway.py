@@ -625,13 +625,28 @@ def atlas_action():
                         return jsonify({
                             "status": "retrying",
                             "reason": "All steps failed once, retrying",
-                            "action": "retry_all_steps"
+                            "action": "retry_all_steps",
+                            
+                            "debug": {
+                                "current_step": current_step,
+                                "completed_steps": completed_steps,
+                                "pending_steps": pending_steps,
+                                "failed_steps": failed_steps,
+                                "recent_updates": step_updates[-5:]
+                            }
                         })
                     else:
                         return jsonify({
                             "status": "hold",
                             "reason": "All steps failed after retry",
-                            "action": "manual_review_required"
+                            "action": "manual_review_required",
+                            "debug": {
+                                "current_step": current_step,
+                                "completed_steps": completed_steps,
+                                "pending_steps": pending_steps,
+                                "failed_steps": failed_steps,
+                                "recent_updates": step_updates[-5:]
+                            }
                         })
                     # =========================
                     # 🔁 STEP SELECTION
