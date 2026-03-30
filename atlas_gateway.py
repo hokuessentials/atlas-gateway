@@ -446,7 +446,7 @@ def atlas_action():
                     if isinstance(s, dict) and s.get("status") == "failed"
                 )
 
-                if failure_count >= 2:
+                if failure_count >= 5:
                     return jsonify({
                         "status": "warning",
                         "decision": "blocked"
@@ -588,11 +588,6 @@ def atlas_action():
                 ]
 
                 # 🚨 fallback (avoid dead loop)
-                # count how many times full failure happened
-                full_failure_count = sum(
-                    1 for u in step_updates
-                    if isinstance(u, dict) and u.get("status") == "failed"
-                )
 
                 if not available_steps:
 
@@ -633,15 +628,27 @@ def atlas_action():
                             "reason": "All steps failed once, retrying",
                             "action": "retry_all_steps"
                         })
-
+                    else:
+                        return jsonify({
+                            "status": "hold",
+                            "reason": "All steps failed after retry",
+                            "action": "manual_review_required"
+                        })
+                    # =========================
+                    # 🔁 STEP SELECTION
+                    # =========================
                 if current_step in failed_steps and available_steps:
                     next_step = available_steps[0]
                 else:
                     next_step = pending_steps[0] if pending_steps else None
 
-                updated_completed = list(completed_steps)
+
                 # ❌ DO NOT mark completed here
                 updated_completed = list(completed_steps)
+
+                # ✅ TEMP FLOW CONTROL (IMPORTANT)
+                if next_step and next_step not in updated_completed:
+                    updated_completed.append(next_step)
 
                 updated_pending = [
                     s for s in execution_plan if s not in updated_completed
