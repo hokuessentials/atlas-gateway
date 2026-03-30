@@ -571,18 +571,36 @@ def atlas_action():
                     )
 
                     if not reset_done:
-                        # mark reset in history (DO NOT clear)
                         step_updates.append({
                             "step": "system",
                             "status": "reset",
                             "timestamp": time.time()
-                    })
+                        })
+
+                        # 🔥 SAVE STATE BEFORE RETURN
+                        try:
+                            requests.post(
+                                APPS_SCRIPT_URL,
+                                json={
+                                    "action": "update_active_state",
+                                    "payload": {
+                                        "session_id": parsed_state.get("session_id"),
+                                        "current_step": current_step,
+                                        "completed_steps": completed_steps,
+                                        "execution_plan": execution_plan,
+                                        "step_updates": step_updates
+                                    }
+                                },
+                                timeout=10
+                            )
+                        except:
+                            pass
 
                         return jsonify({
                             "status": "retrying",
                             "reason": "All steps failed once, retrying",
                             "action": "retry_all_steps"
-                    })
+                        })
 
                 else:
                     return jsonify({
