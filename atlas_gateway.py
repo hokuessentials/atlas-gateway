@@ -499,41 +499,34 @@ def atlas_action():
             "status": "error",
             "message": str(e)
         })
-
     # =========================
     # 🧠 TRIGGER INTELLIGENCE ENGINE or SMART STEP SELECTION
     # =========================
-    if not pending_steps:
-        session = load_session_from_sheet() or {}
+    try:
 
-        # =========================
-        # 🧠 PREPARE ENGINE INPUT
-        # =========================
-        session["active_state"] = {
-            "session_id": parsed_state.get("session_id"),
-            "current_step": current_step,
-            "completed_steps": completed_steps,
-            "step_updates": step_updates,
-            "execution_plan": execution_plan
-        }
-
-        # Ensure required fields exist
-        session.setdefault("decisions", [])
-        session.setdefault("roi_list", [])
-        session.setdefault("risk_list", [])
-        session.setdefault("confidence_list", [])
-        session.setdefault("outcome_list", [])
-
-        # =========================
-        # 🚀 CALL ENGINE
-        # =========================
-        result = generate_intelligent_action(session)
-    
-    else:
-            # =========================
-            # 🧠 SMART STEP SELECTION
-            # =========================
+        if not pending_steps:
             session = load_session_from_sheet() or {}
+
+            # 🧠 PREPARE ENGINE INPUT
+            session["active_state"] = {
+                "session_id": parsed_state.get("session_id"),
+                "current_step": current_step,
+                "completed_steps": completed_steps,
+                "step_updates": step_updates,
+                "execution_plan": execution_plan
+            }
+
+            session.setdefault("decisions", [])
+            session.setdefault("roi_list", [])
+            session.setdefault("risk_list", [])
+            session.setdefault("confidence_list", [])
+            session.setdefault("outcome_list", [])
+
+            result = generate_intelligent_action(session)
+
+        else:
+            session = load_session_from_sheet() or {}
+
             session.setdefault("decisions", [])
             session.setdefault("roi_list", [])
             session.setdefault("risk_list", [])
@@ -548,196 +541,111 @@ def atlas_action():
                     u.get("step") == step and
                     u.get("status") == "failed"
                     for u in step_updates
-                )
+            )
                 if not failed:
                     next_step = step
                     break
 
-            # =========================
-            # 🔥 UPDATE STATE
-            # =========================
             updated_completed = list(completed_steps)
             if next_step not in updated_completed:
                 updated_completed.append(next_step)
 
-            updated_current = next_step
-
-            # next pending after update
             updated_pending = [
                 step for step in execution_plan
                 if step not in updated_completed
             ]
 
-            # =========================
-            # 🔥 SEND UPDATE TO SHEET
-            # =========================
-            try:
-                requests.post(
-                    APPS_SCRIPT_URL,
-                    json={
-                        "action": "update_active_state",
-                        "payload": {
-                            "session_id": parsed_state.get("session_id"),
-                            "current_step": updated_current,
-                            "completed_steps": updated_completed,
-                            "execution_plan": execution_plan,
-                            "step_updates": []
-                        }
-                    },
-                    timeout=10
-                )
-            except Exception as e:
-                print("⚠️ Update failed:", e)
+        try:
+            requests.post(
+                APPS_SCRIPT_URL,
+                json={
+                    "action": "update_active_state",
+                    "payload": {
+                        "session_id": parsed_state.get("session_id"),
+                        "current_step": next_step,
+                        "completed_steps": updated_completed,
+                        "execution_plan": execution_plan,
+                        "step_updates": []
+                    }
+                },
+                timeout=10
+            )
+        except Exception as e:
+            print("⚠️ Update failed:", e)
 
-            # =========================
-            # 🔥 RESPONSE
-            # =========================
+        return jsonify({
+            "status": "success",
+            "mode": "execution",
+            "decision": "proceed",
+            "executed_step": next_step,
+            "next_step": updated_pending[0] if updated_pending else None,
+            "completed_steps": updated_completed
+        })
+
+        # =========================
+        # 🔥 SAFE INTELLIGENCE HANDLING
+        # =========================
+
+        if not result or not isinstance(result, dict):
             return jsonify({
                 "status": "success",
-                "mode": "execution",
-                "decision": "proceed",
-                "executed_step": next_step,
-                "next_step": updated_pending[0] if updated_pending else None,
-                "completed_steps": updated_completed
+                "decision": "complete",
+                "message": "Engine skipped or failed"
             })
 
-    # =========================
-    # 🔥 GLOBAL SAFE VARIABLES (CRITICAL FIX)
-    # =========================
-    action = result.get("action", "")
-    execution_plan = result.get("execution_plan", [])
-
-    print("✅ INTELLIGENCE RESULT:", result.get("action"))
-
-    # =========================
-    # 🔥 SAFETY DEFAULTS
-    # =========================
-    result.setdefault("execution_state", {})
-    result.setdefault("step_decision", {})
-
-    execution_state = result["execution_state"]
-
-    # =========================
-    # ⚡ STEP OVERRIDE (SAFE MODE)
-    # =========================
-    force_mode = execution_state.get("force_mode", False)
-
-    if not force_mode:
-        if action.startswith("Switch to higher value"):
-            execution_plan = result.get("execution_plan", [])
-            if execution_plan:
-                new_step = execution_plan[-1]
-                execution_state["current_step"] = new_step
-                print("⚡ STEP OVERRIDE:", new_step)
-
-    # =========================
-    # 🧠 STEP VALIDATION (SAFE MODE)
-    # =========================
-    force_mode = execution_state.get("force_mode", False)
-
-    if not force_mode:
-        current_step = execution_state.get("current_step")
-        completed_steps = execution_state.get("completed_steps", [])
+        action = result.get("action", "")
         execution_plan = result.get("execution_plan", [])
 
-        if current_step in execution_plan:
-            idx = execution_plan.index(current_step)
-            missing = [s for s in execution_plan[:idx] if s not in completed_steps]
+        print("✅ INTELLIGENCE RESULT:", action)
 
-            if missing:
-                corrected = missing[0]
-                execution_state["current_step"] = corrected
-                print("🛑 STEP BLOCKED →", corrected)
+        result.setdefault("execution_state", {})
+        result.setdefault("step_decision", {})
 
-    # =========================
-    # 🔁 ACTION REALIGN
-    # =========================
-    final_step = execution_state.get("current_step")
+        execution_state = result["execution_state"]
 
-    if final_step and action.startswith("Switch"):
-        result["action"] = f"Continue: {final_step}"
-        print("🔁 ACTION REALIGNED:", result["action"])
+        # =========================
+        # ⚡ STEP OVERRIDE
+        # =========================
+        if not execution_state.get("force_mode", False):
+            if action.startswith("Switch to higher value"):
+                if execution_plan:
+                    execution_state["current_step"] = execution_plan[-1]
 
-    # =========================
-    # 🧠 PHASE 2: CONTROLLED NON-LINEAR EXECUTION (SAFE FINAL)
-    # =========================
-    execution_plan = result.get("execution_plan", [])
-    execution_state = result.get("execution_state", {})
+        # =========================
+        # 🧠 DEPENDENCY CHECK
+        # =========================
+        current_step = execution_state.get("current_step")
 
-    current_step = execution_state.get("current_step")
-    completed_steps = execution_state.get("completed_steps", [])
-    step_updates = execution_state.get("step_updates", [])
-
-    # 1. Get candidates (exclude current step)
-    candidates = [
-        step for step in get_candidate_steps(execution_plan, completed_steps)
-        if step != current_step
-    ]
-    # FINAL SAFETY — NEVER ALLOW COMPLETED STEPS
-    candidates = [
-        step for step in candidates
-        if step not in completed_steps
-    ]
-
-    # 2. Filter allowed (dependency-safe)
-    allowed_candidates = filter_allowed_candidates(
-        candidates,
-        step_updates,
-        completed_steps
-    )
-    selected_step = None
-
-    # 3. Safety check
-    if allowed_candidates:
-        selected_step = select_better_step(
+        allowed, blocking_step = is_step_allowed(
             current_step,
-            allowed_candidates,
-            step_updates,
-            completed_steps,
-            session
+            execution_state.get("step_updates", []),
+            execution_state.get("completed_steps", [])
         )
 
-    # 4. Apply ONLY if changed (SAFE)
-    if selected_step and selected_step != current_step:
-        # ❌ NEVER ALLOW COMPLETED STEP
-        if selected_step in completed_steps:
-            print("🚫 BLOCKED: Selected step already completed →", selected_step)
-        else:
-            print("⚡ CONTROLLED SWITCH:", current_step, "→", selected_step)
+        if not allowed:
+            result["action"] = f"Complete prerequisite: {blocking_step}"
+            result.setdefault("step_decision", {})
+            result["step_decision"]["execution_action"] = "blocked"
 
-            execution_state["current_step"] = selected_step
+            return jsonify({
+                "status": "success",
+                "session_id": session.get("session_id"),
+                "result": result
+            })
 
-            # ✅ SYNC pending steps
-            execution_state["pending_steps"] = [
-                s for s in execution_plan
-                if s not in execution_state.get("completed_steps", [])
-                and s != selected_step
-            ]
+        # =========================
+        # 💾 SAVE STATE
+        # =========================
+        state = {
+            "session_id": session.get("session_id"),
+            "current_step": execution_state.get("current_step"),
+            "completed_steps": execution_state.get("completed_steps", []),
+            "step_updates": execution_state.get("step_updates", []),
+            "execution_plan": execution_plan
+        }
 
-            # ✅ SYNC action
-            result["action"] = f"Continue: {selected_step}"
-
-    # =========================
-    # 🧠 DEPENDENCY CHECK (PHASE 1)
-    # =========================
-    execution_state = result["execution_state"]
-    current_step = execution_state.get("current_step")
-    step_updates = execution_state.get("step_updates", [])
-
-    allowed, blocking_step = is_step_allowed(
-        current_step,
-        step_updates,
-        execution_state.get("completed_steps", [])
-    )
-
-    if not allowed:
-        print("🛑 BLOCKED BY DEPENDENCY:", blocking_step)
-
-        result["action"] = f"Complete prerequisite: {blocking_step}"
-
-        result.setdefault("step_decision", {})
-        result["step_decision"]["execution_action"] = "blocked"
-        result["step_decision"]["reason"] = f"{current_step} depends on {blocking_step}"
+        save_state_to_sheet(state)
+        save_session_to_sheet(session)
 
         return jsonify({
             "status": "success",
@@ -745,119 +653,8 @@ def atlas_action():
             "result": result
         })
 
-    # =========================
-    # 📝 STEP LOGGING (FIXED)
-    # =========================
-    step_updates = execution_state.get("step_updates", [])
-
-    status = "success" if result.get("step_decision", {}).get("execution_action") == "execute" else "started"
-
-    step_updates.append({
-        "step": final_step,
-        "status": status,
-        "timestamp": time.time()
-    })
-
-    execution_state["step_updates"] = step_updates
-
-    # =========================
-    # 📊 PENDING STEPS (FIXED)
-    # =========================
-    pending_steps = [
-        s for s in execution_plan
-        if s not in completed_steps and s != final_step
-    ]
-
-    execution_state["pending_steps"] = pending_steps
-
-    # =========================
-    # ✅ STEP PROGRESSION
-    # =========================
-    if result.get("step_decision", {}).get("execution_action") == "execute":
-
-        if final_step and final_step not in completed_steps:
-            completed_steps.append(final_step)
-            print("✅ STEP COMPLETED:", final_step)
-
-            if final_step in execution_plan:
-                idx = execution_plan.index(final_step)
-
-                # FIND NEXT VALID STEP (NOT COMPLETED)
-                next_step = None
-
-                for s in execution_plan:
-                    if s not in completed_steps:
-                        next_step = s
-                        break
-
-                if next_step:
-                    execution_state["current_step"] = next_step
-                    execution_state["completed_steps"] = completed_steps
-
-                    result["action"] = f"Continue: {next_step}"
-                    print("➡️ NEXT STEP:", next_step)
-
-    # =========================
-    # 🔥 SAVE DECISION (FIXED MODULE)
-    # =========================
-    if result.get("action") and result["action"] != "Start by logging a decision":
-
-        decision_payload = {
-            "Decision_ID": f"D-{int(time.time())}",
-            "Session_ID": session.get("session_id"),
-            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "Title": result.get("action"),
-            "Description": result.get("reason"),
-            "Module": active_state.get("focus_module", "general"),
-            "Expected_ROI": result.get("expected_roi", 10),
-            "Risk_Score": result.get("risk_score", 0.3),
-            "Confidence_Level": result.get("confidence_level", 0.6),
-            "Reversible_Flag": True,
-            "Decision_Owner": "Atlas",
-            "Tags": "auto",
-            "Decision_Type": "execution",
-            "Outcome_Status": "pending",
-            "Lesson_Learned": ""
-        }
-
-        save_decision_to_sheet(decision_payload)
-
-        update_decision_outcome(
-            decision_id=decision_payload["Decision_ID"],
-            outcome="success",
-            lesson="Initial execution completed"
-        )
-
-    # =========================
-    # 💾 SAVE STATE
-    # =========================
-    state = {
-        "session_id": session.get("session_id"),
-        "current_step": execution_state.get("current_step"),
-        "completed_steps": execution_state.get("completed_steps", []),
-        "step_updates": execution_state.get("step_updates", []),
-        "execution_plan": result.get("execution_plan", [])
-    }
-
-    save_state_to_sheet(state)
-
-    # =========================
-    # 💾 SAVE SESSION
-    # =========================
-    save_session_to_sheet(session)
-
-    # =========================
-    # ✅ RESPONSE
-    # =========================
-    return jsonify({
-        "status": "success",
-        "session_id": session.get("session_id"),
-        "result": result
-    })
-    
     except Exception as e:
         print("❌ INTELLIGENCE ERROR:", e)
-        print("❌ FATAL ERROR:", e)
         return jsonify({
             "status": "error",
             "message": str(e)
