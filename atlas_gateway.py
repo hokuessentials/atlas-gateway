@@ -435,10 +435,42 @@ def atlas_action():
 
             # COMPLETE → ENGINE (SAFE)
             if not pending_steps:
-                return jsonify({
-                    "status": "success",
-                    "decision": "complete"
-                })
+                try:
+                    session = load_session_from_sheet() or {}
+
+                    session["active_state"] = {
+                        "session_id": parsed_state.get("session_id"),
+                        "current_step": current_step,
+                        "completed_steps": completed_steps,
+                        "step_updates": step_updates,
+                        "execution_plan": execution_plan
+                    }
+
+                    session.setdefault("decisions", [])
+                    session.setdefault("roi_list", [])
+                    session.setdefault("risk_list", [])
+                    session.setdefault("confidence_list", [])
+                    session.setdefault("outcome_list", [])
+
+                    start = time.time()
+                    result = generate_intelligent_action(session)
+
+                    if time.time() - start > 5:
+                        raise Exception("Engine timeout")
+
+                    return jsonify({
+                        "status": "success",
+                        "decision": "engine_triggered",
+                        "next_plan": result.get("execution_plan", [])
+                    })
+
+                except Exception as e:
+                    print("⚠️ ENGINE SKIPPED:", e)
+
+                    return jsonify({
+                        "status": "success",
+                        "decision": "complete"
+                    })
 
             # =========================
             # 🧠 SMART STEP SELECTION
