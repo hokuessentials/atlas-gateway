@@ -531,79 +531,8 @@ def atlas_action():
             "status": "error",
             "message": str(e)
         })
-    # =========================
-    # 🧠 TRIGGER INTELLIGENCE ENGINE or SMART STEP SELECTION
-    # =========================
-    try:
 
-        if not pending_steps:
-            session = load_session_from_sheet() or {}
-
-            # 🧠 PREPARE ENGINE INPUT
-            session["active_state"] = {
-                "session_id": parsed_state.get("session_id"),
-                "current_step": current_step,
-                "completed_steps": completed_steps,
-                "step_updates": step_updates,
-                "execution_plan": execution_plan
-            }
-
-            session.setdefault("decisions", [])
-            session.setdefault("roi_list", [])
-            session.setdefault("risk_list", [])
-            session.setdefault("confidence_list", [])
-            session.setdefault("outcome_list", [])
-
-            result = generate_intelligent_action(session)
-
-        else:
-            session = load_session_from_sheet() or {}
-
-            session.setdefault("decisions", [])
-            session.setdefault("roi_list", [])
-            session.setdefault("risk_list", [])
-            session.setdefault("confidence_list", [])
-            session.setdefault("outcome_list", [])
-
-            next_step = pending_steps[0]
-
-            for step in pending_steps:
-                failed = any(
-                    isinstance(u, dict) and
-                    u.get("step") == step and
-                    u.get("status") == "failed"
-                    for u in step_updates
-            )
-                if not failed:
-                    next_step = step
-                    break
-
-            updated_completed = list(completed_steps)
-            if next_step not in updated_completed:
-                updated_completed.append(next_step)
-
-            updated_pending = [
-                step for step in execution_plan
-                if step not in updated_completed
-            ]
-
-        try:
-            requests.post(
-                APPS_SCRIPT_URL,
-                json={
-                    "action": "update_active_state",
-                    "payload": {
-                        "session_id": parsed_state.get("session_id"),
-                        "current_step": next_step,
-                        "completed_steps": updated_completed,
-                        "execution_plan": execution_plan,
-                        "step_updates": []
-                    }
-                },
-                timeout=10
-            )
-        except Exception as e:
-            print("⚠️ Update failed:", e)
+        print("⚠️ Update failed:", e)
 
         return jsonify({
             "status": "success",
