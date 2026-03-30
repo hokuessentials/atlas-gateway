@@ -556,15 +556,30 @@ def atlas_action():
                 ]
 
                 # 🚨 fallback (avoid dead loop)
-                if not available_steps:
-                    # 🔁 RESET FAILED STEPS ONCE
-                    step_updates = []
+                # count how many times full failure happened
+                full_failure_count = sum(
+                    1 for u in step_updates
+                    if isinstance(u, dict) and u.get("status") == "failed"
+                )
 
-                    return jsonify({
-                        "status": "retrying",
-                        "reason": "All steps failed once, resetting retry cycle",
-                        "action": "retry_all_steps"
-                    })
+                if not available_steps:
+
+                    # allow only one full reset
+                    if full_failure_count < (len(execution_plan) * 2):
+                        step_updates = []
+
+                        return jsonify({
+                            "status": "retrying",
+                            "reason": "All steps failed once, retrying",
+                            "action": "retry_all_steps"
+                        })
+
+                    else:
+                        return jsonify({
+                            "status": "hold",
+                            "reason": "All steps failed after retry",
+                            "action": "manual_review_required"
+                        })
 
                 if current_step in failed_steps and available_steps:
                     next_step = available_steps[0]
