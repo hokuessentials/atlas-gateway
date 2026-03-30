@@ -425,7 +425,7 @@ def atlas_action():
         if input_data.get("execute"):
 
             loop_count = 0
-            max_loops = 5   # safety limit
+            max_loops = 3   # safety limit
 
             final_response = None
 
@@ -551,6 +551,7 @@ def atlas_action():
                 completed_steps = updated_completed
                 pending_steps = updated_pending
                 current_step = next_step
+                step_updates = []
 
                 if not pending_steps:
                      continue   # go to engine
