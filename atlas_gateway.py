@@ -399,9 +399,13 @@ def atlas_action():
 
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         execution_plan = safe_json_parse(parsed_state.get("execution_plan", []))
-        
+        # ✅ ALWAYS DEFINE FIRST
+        current_step = parsed_state.get("current_step") or ""
+
+        # ✅ THEN FIX IF EMPTY
         if not current_step and execution_plan:
             current_step = execution_plan[0]
+
         step_updates = safe_json_parse(parsed_state.get("step_updates", []))
 
         pending_steps = [s for s in execution_plan if s not in completed_steps]
