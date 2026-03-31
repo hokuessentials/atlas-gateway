@@ -586,19 +586,21 @@ def atlas_action():
                     ):
                         # 🔥 ADD THIS (CRITICAL FIX)
                         try:
-                           save_decision_to_sheet({
-                               "session_id": parsed_state.get("session_id"),
-                               "decision": "complete",
-                               "decision_quality": "final_step",
-                               "score": 1,
-                               "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                           })
+                            save_decision_to_sheet({
+                               "Decision_ID": str(time.time()),
+                               "Decision": decision_value,   # dynamic
+                               "Decision_Quality": decision_quality_value if decision_quality_value else "",
+                               "Score": score_value if score_value else "",
+                               "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                            })
                         except:
                             pass
 
                         return jsonify({
                             "status": "success",
-                            "decision": "complete",
+                            "Decision": "complete",
+                            "Decision_Quality": "final_step",
+                            "Score": 1,
                             "debug": {
                                 "current_step": current_step,
                                 "completed_steps": completed_steps,
@@ -677,11 +679,11 @@ def atlas_action():
                         # SAVE ENGINE DECISION
                         try:
                             save_decision_to_sheet({
-                                "session_id": parsed_state.get("session_id"),
-                                "decision": step_decision.get("decision"),
-                                "decision_quality": step_decision.get("decision_quality"),
-                                "score": step_decision.get("decision_score"),
-                                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                                "Decision_ID": str(time.time()),
+                                "Decision": decision_value,   # dynamic
+                                "Decision_Quality": decision_quality_value if decision_quality_value else "",
+                                "Score": score_value if score_value else "",
+                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                             })
                         except:
                             pass
@@ -699,7 +701,9 @@ def atlas_action():
                         else:
                             return jsonify({
                                 "status": "success",
-                                "decision": "complete",
+                                "Decision": "complete",
+                                "Decision_Quality": "final_step",
+                                "Score": 1,
                                 "debug": {
                                     "current_step": current_step,
                                     "completed_steps": completed_steps,
@@ -712,7 +716,9 @@ def atlas_action():
                     except Exception as e:
                         return jsonify({
                             "status": "success",
-                            "decision": "complete",
+                            "Decision": "complete",
+                            "Decision_Quality": "final_step",
+                            "Score": 1,
                             "message": str(e),
 
                             "debug": {
@@ -866,10 +872,11 @@ def atlas_action():
                 # SAVE EXECUTION
                 try:
                     save_decision_to_sheet({
-                        "session_id": parsed_state.get("session_id"),
-                        "decision": next_step,
-                        "type": "execution",
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                        "Decision_ID": str(time.time()),
+                        "Decision": decision_value,   # dynamic
+                        "Decision_Quality": decision_quality_value if decision_quality_value else "",
+                        "Score": score_value if score_value else "",
+                        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
                 except:
                     pass
@@ -891,19 +898,21 @@ def atlas_action():
 
                     # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
                     try:
-                       save_decision_to_sheet({
-                           "session_id": parsed_state.get("session_id"),
-                           "decision": "complete",
-                           "decision_quality": "final_step",
-                           "score": 1,
-                           "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                       })
+                        save_decision_to_sheet({
+                           "Decision_ID": str(time.time()),
+                           "Decision": decision_value,   # dynamic
+                           "Decision_Quality": decision_quality_value if decision_quality_value else "",
+                           "Score": score_value if score_value else "",
+                           "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                        })
                     except:
                         pass
 
                     return jsonify({
                         "status": "success",
-                        "decision": "complete",
+                        "Decision": "complete",
+                        "Decision_Quality": "final_step",
+                        "Score": 1,
                         "debug": {
                             "current_step": current_step,
                             "completed_steps": completed_steps,
