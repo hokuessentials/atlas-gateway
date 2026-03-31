@@ -875,6 +875,19 @@ def atlas_action():
                 ]
 
                 if not pending_steps:
+
+                    # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
+                    try:
+                       save_decision_to_sheet({
+                           "session_id": parsed_state.get("session_id"),
+                           "decision": "complete",
+                           "decision_quality": "final_step",
+                           "score": 1,
+                           "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                       })
+                    except:
+                        pass
+
                     return jsonify({
                         "status": "success",
                         "decision": "complete",
