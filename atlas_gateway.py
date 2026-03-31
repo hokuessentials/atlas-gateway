@@ -861,7 +861,7 @@ def atlas_action():
                     # 🔥 DEBUG BLOCK (ADD HERE)
                     "debug": {
                         "current_step": current_step,
-                        "next_step": next_step,
+                        "selected_step": next_step,
                         "completed_steps": completed_steps,
                         "pending_steps": pending_steps,
                         "failed_steps": failed_steps,
