@@ -757,11 +757,6 @@ def atlas_action():
                 # ❌ DO NOT mark completed here
                 updated_completed = list(completed_steps)
 
-                # ✅ TEMP FLOW CONTROL (IMPORTANT)
-                if next_step and str(next_step).strip() != "":
-                    if next_step not in updated_completed:
-                        updated_completed.append(next_step)
-
                 updated_pending = [
                     s for s in execution_plan if s not in updated_completed
                 ]
