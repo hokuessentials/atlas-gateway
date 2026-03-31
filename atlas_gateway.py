@@ -466,6 +466,41 @@ def atlas_action():
             while loop_count < max_loops:
                 loop_count += 1
 
+                # =========================
+                # 🔥 FORCE EXECUTION OF CURRENT STEP
+                # =========================
+
+                if current_step and current_step not in completed_steps:
+
+                    print("⚡ EXECUTING STEP:", current_step)
+
+                    step_updates.append({
+                        "step": current_step,
+                        "status": "success",
+                        "timestamp": time.time()
+                    })
+
+                    completed_steps.append(current_step)
+
+                    # SAVE STATE IMMEDIATELY
+                    try:
+                        requests.post(
+                            APPS_SCRIPT_URL,
+                            json={
+                                "action": "update_active_state",
+                                "payload": {
+                                    "session_id": parsed_state.get("session_id"),
+                                    "current_step": current_step,
+                                    "completed_steps": completed_steps,
+                                    "execution_plan": execution_plan,
+                                    "step_updates": step_updates
+                                }
+                            },
+                            timeout=3
+                        )
+                    except:
+                        pass
+
                 if time.time() - start_time > 20:
                 
                     return jsonify({
@@ -638,40 +673,6 @@ def atlas_action():
                                 "recent_updates": step_updates[-5:] if 'step_updates' in locals() else []
                             }
                         })
-            # =========================
-            # 🔥 FORCE EXECUTION OF CURRENT STEP
-            # =========================
-
-            if current_step and current_step not in completed_steps:
-
-                print("⚡ EXECUTING STEP:", current_step)
-
-                step_updates.append({
-                    "step": current_step,
-                    "status": "success",
-                    "timestamp": time.time()
-                })
-
-                completed_steps.append(current_step)
-
-                # SAVE STATE IMMEDIATELY
-                try:
-                    requests.post(
-                        APPS_SCRIPT_URL,
-                        json={
-                            "action": "update_active_state",
-                            "payload": {
-                                "session_id": parsed_state.get("session_id"),
-                                "current_step": current_step,
-                                "completed_steps": completed_steps,
-                                "execution_plan": execution_plan,
-                                "step_updates": step_updates
-                            }
-                        },
-                        timeout=3
-                    )
-                except:
-                    pass
 
                 # =========================
                 # 🔁 RETRY + SWITCH LOGIC
