@@ -587,18 +587,28 @@ def atlas_action():
                         # 🔥 ADD THIS (CRITICAL FIX)
                         try:
                             save_decision_to_sheet({
-                               "Decision_ID": str(time.time()),
-                               "Decision": "complete",
-                               "Decision_Quality": "final_step",
-                               "Score": 1,
-                               "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                                "Decision_ID": str(time.time()),
+                                "Session_ID": parsed_state.get("session_id"),
+                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                "Title": "Execution Step",
+                                "Description": "Auto decision by Atlas",
+                                "Module": "Execution Engine",
+                                "Expected_ROI": 0,
+                                "Risk_Score": 0,
+                                "Confidence_Level": 0,
+                                "Reversible_Flag": True,
+                                "Decision_Owner": "Atlas",
+                                "Tags": "auto",
+                                "Decision_Type": "execution",
+                                "Outcome_Status": "pending",
+                                "Lesson_Learned": ""
                             })
                         except:
                             pass
 
                         return jsonify({
                             "status": "success",
-                            "Decision": "complete",
+                            "decision": "complete",
                             "Decision_Quality": "final_step",
                             "Score": 1,
                             "debug": {
@@ -680,10 +690,20 @@ def atlas_action():
                         try:
                             save_decision_to_sheet({
                                 "Decision_ID": str(time.time()),
-                                "Decision": step_decision.get("decision"),
-                                "Decision_Quality": step_decision.get("decision_quality"),
-                                "Score": step_decision.get("decision_score"),
-                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                                "Session_ID": parsed_state.get("session_id"),
+                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                "Title": "Execution Step",
+                                "Description": "Auto decision by Atlas",
+                                "Module": "Execution Engine",
+                                "Expected_ROI": 0,
+                                "Risk_Score": 0,
+                                "Confidence_Level": 0,
+                                "Reversible_Flag": True,
+                                "Decision_Owner": "Atlas",
+                                "Tags": "auto",
+                                "Decision_Type": "execution",
+                                "Outcome_Status": "pending",
+                                "Lesson_Learned": ""
                             })
                         except:
                             pass
@@ -701,7 +721,7 @@ def atlas_action():
                         else:
                             return jsonify({
                                 "status": "success",
-                                "Decision": "complete",
+                                "decision": "complete",
                                 "Decision_Quality": "final_step",
                                 "Score": 1,
                                 "debug": {
@@ -716,7 +736,7 @@ def atlas_action():
                     except Exception as e:
                         return jsonify({
                             "status": "success",
-                            "Decision": "complete",
+                            "decision": "complete",
                             "Decision_Quality": "final_step",
                             "Score": 1,
                             "message": str(e),
@@ -873,10 +893,20 @@ def atlas_action():
                 try:
                     save_decision_to_sheet({
                         "Decision_ID": str(time.time()),
-                        "Decision": next_step,
-                        "Decision_Quality": "execution_step",
-                        "Score": 0,
-                        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                        "Session_ID": parsed_state.get("session_id"),
+                        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "Title": "Execution Step",
+                        "Description": "Auto decision by Atlas",
+                        "Module": "Execution Engine",
+                        "Expected_ROI": 0,
+                        "Risk_Score": 0,
+                        "Confidence_Level": 0,
+                        "Reversible_Flag": True,
+                        "Decision_Owner": "Atlas",
+                        "Tags": "auto",
+                        "Decision_Type": "execution",
+                        "Outcome_Status": "pending",
+                        "Lesson_Learned": ""
                     })
                 except:
                     pass
@@ -899,18 +929,28 @@ def atlas_action():
                     # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
                     try:
                         save_decision_to_sheet({
-                           "Decision_ID": str(time.time()),
-                           "Decision": "complete",
-                           "Decision_Quality": "final_step",
-                           "Score": 1,
-                           "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                            "Decision_ID": str(time.time()),
+                            "Session_ID": parsed_state.get("session_id"),
+                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "Title": "Execution Step",
+                            "Description": "Auto decision by Atlas",
+                            "Module": "Execution Engine",
+                            "Expected_ROI": 0,
+                            "Risk_Score": 0,
+                            "Confidence_Level": 0,
+                            "Reversible_Flag": True,
+                            "Decision_Owner": "Atlas",
+                            "Tags": "auto",
+                            "Decision_Type": "execution",
+                            "Outcome_Status": "success",
+                            "Lesson_Learned": ""
                         })
                     except:
                         pass
 
                     return jsonify({
                         "status": "success",
-                        "Decision": "complete",
+                        "decision": "complete",
                         "Decision_Quality": "final_step",
                         "Score": 1,
                         "debug": {
