@@ -846,7 +846,7 @@ def atlas_action():
                     "status": "success",
                     "decision": "proceed",
                     "executed_step": current_step,
-                    "next_step": pending_steps[0] if pending_steps else None,
+                    "next_step": next_step if next_step else (pending_steps[0] if pending_steps else None),
 
                     # 🔥 DEBUG BLOCK (ADD HERE)
                     "debug": {
@@ -865,7 +865,7 @@ def atlas_action():
                     "status": "success",
                     "decision": "proceed",
                     "executed_step": current_step,
-                    "next_step": pending_steps[0] if pending_steps else None,
+                    "next_step": next_step if next_step else (pending_steps[0] if pending_steps else None),
                     "debug": {
                         "current_step": current_step,
                         "completed_steps": completed_steps,
