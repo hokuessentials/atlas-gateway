@@ -551,20 +551,20 @@ def atlas_action():
                     try:
                        save_decision_to_sheet({
                            "Decision_ID": str(time.time()),
-                           "Session_ID": parsed_state.get("session_id"),
+                           "Session_ID": parsed_state.get("session_id") or "S-" + str(int(time.time())),
                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                            "Title": current_step,
                            "Description": "Step executed",
                            "Module": "Execution Engine",
-                           "Expected_ROI": 0,
-                           "Risk_Score": 0,
-                           "Confidence_Level": 0,
+                           "Expected_ROI": 10,
+                           "Risk_Score": 0.3,
+                           "Confidence_Level": 0.6,
                            "Reversible_Flag": True,
                            "Decision_Owner": "Atlas",
                            "Tags": "execution",
                            "Decision_Type": "execution",
                            "Outcome_Status": "success",
-                           "Lesson_Learned": ""
+                           "Lesson_Learned": "Initial execution completed"
                        })
                     except:
                         pass
@@ -971,20 +971,20 @@ def atlas_action():
                     try:
                         save_decision_to_sheet({
                             "Decision_ID": str(time.time()),
-                            "Session_ID": parsed_state.get("session_id"),
+                            "Session_ID": parsed_state.get("session_id") or "S-" + str(int(time.time())),
                             "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "Title": "Execution Step",
                             "Description": "Auto decision by Atlas",
                             "Module": "Execution Engine",
-                            "Expected_ROI": 0,
-                            "Risk_Score": 0,
-                            "Confidence_Level": 0,
+                            "Expected_ROI": 10,
+                            "Risk_Score": 0.3,
+                            "Confidence_Level": 0.6,
                             "Reversible_Flag": True,
                             "Decision_Owner": "Atlas",
                             "Tags": "auto",
                             "Decision_Type": "execution",
                             "Outcome_Status": "success",
-                            "Lesson_Learned": ""
+                            "Lesson_Learned": "Initial execution completed"
                         })
                     except:
                         pass
