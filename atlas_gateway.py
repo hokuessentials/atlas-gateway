@@ -53,12 +53,11 @@ def save_state_to_sheet(active_state):
 
         for attempt in range(2):
             try:
-                resp = requests.post(
+                requests.post(
                     APPS_SCRIPT_URL,
-                    data=json.dumps(payload),   # ✅ FIXED (NO json=payload)
-                    headers=headers,
-                    timeout=3,
-                    allow_redirects=True
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                    timeout=3
                 )
 
                 print("🔥 SAVE STATUS:", resp.status_code)
@@ -122,12 +121,11 @@ def save_decision_to_sheet(decision_data):
             "Content-Type": "application/json"
         }
 
-        resp = requests.post(
+        requests.post(
             APPS_SCRIPT_URL,
-            data=json.dumps(payload),
-            headers=headers,
-            timeout=3,
-            allow_redirects=True
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=3
         )
 
         print("🔥 DECISION SAVE:", resp.text)
@@ -285,7 +283,12 @@ def save_session_to_sheet_async(session_data):
                 "data": session_data
             }
 
-            requests.post(APPS_SCRIPT_URL, json=payload, timeout=3)
+            requests.post(
+                APPS_SCRIPT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=3
+            )
 
         except Exception as e:
             print("❌ SESSION SAVE ERROR:", e)
@@ -304,7 +307,12 @@ def update_decision_outcome(decision_id, outcome, lesson):
     }
 
     try:
-        requests.post(APPS_SCRIPT_URL, json=payload, timeout=3)
+        requests.post(
+            APPS_SCRIPT_URL,
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
     except Exception as e:
         print("❌ Update decision error:", e)
 
@@ -521,20 +529,23 @@ def atlas_action():
 
                     # SAVE STATE IMMEDIATELY
                     try:
-                        requests.post(
-                            APPS_SCRIPT_URL,
-                            json={
-                                "action": "update_active_state",
-                                "payload": {
-                                    "session_id": parsed_state.get("session_id"),
-                                    "current_step": current_step,
-                                    "completed_steps": completed_steps,
-                                    "execution_plan": execution_plan,
-                                    "step_updates": step_updates
-                                }
-                            },
-                            timeout=3
-                        )
+                       save_decision_to_sheet({
+                           "Decision_ID": str(time.time()),
+                           "Session_ID": parsed_state.get("session_id"),
+                           "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                           "Title": current_step,
+                           "Description": "Step executed",
+                           "Module": "Execution Engine",
+                           "Expected_ROI": 0,
+                           "Risk_Score": 0,
+                           "Confidence_Level": 0,
+                           "Reversible_Flag": True,
+                           "Decision_Owner": "Atlas",
+                           "Tags": "execution",
+                           "Decision_Type": "execution",
+                           "Outcome_Status": "success",
+                           "Lesson_Learned": ""
+                       })
                     except:
                         pass
 
@@ -1024,6 +1035,20 @@ def atlas_action():
                     })
                 except:
                     pass   
+
+                try:
+                   save_session_to_sheet({
+                       "Session_ID": parsed_state.get("session_id"),
+                       "Session_Type": "execution",
+                       "Active_Module": "Execution Engine",
+                       "Active_Phase": "Phase 3.5",
+                       "Tasks_Worked": len(completed_steps),
+                       "Issues_Found": 0,
+                       "Status": "ACTIVE",
+                       "Notes": "Auto session update"
+                    })
+                except:
+                    pass
 
             return jsonify(final_response or {
                 "status": "success",
