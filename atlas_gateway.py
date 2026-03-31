@@ -588,9 +588,9 @@ def atlas_action():
                         try:
                             save_decision_to_sheet({
                                "Decision_ID": str(time.time()),
-                               "Decision": decision_value,   # dynamic
-                               "Decision_Quality": decision_quality_value if decision_quality_value else "",
-                               "Score": score_value if score_value else "",
+                               "Decision": "complete",
+                               "Decision_Quality": "final_step",
+                               "Score": 1,
                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                             })
                         except:
@@ -680,9 +680,9 @@ def atlas_action():
                         try:
                             save_decision_to_sheet({
                                 "Decision_ID": str(time.time()),
-                                "Decision": decision_value,   # dynamic
-                                "Decision_Quality": decision_quality_value if decision_quality_value else "",
-                                "Score": score_value if score_value else "",
+                                "Decision": step_decision.get("decision"),
+                                "Decision_Quality": step_decision.get("decision_quality"),
+                                "Score": step_decision.get("decision_score"),
                                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                             })
                         except:
@@ -873,9 +873,9 @@ def atlas_action():
                 try:
                     save_decision_to_sheet({
                         "Decision_ID": str(time.time()),
-                        "Decision": decision_value,   # dynamic
-                        "Decision_Quality": decision_quality_value if decision_quality_value else "",
-                        "Score": score_value if score_value else "",
+                        "Decision": next_step,
+                        "Decision_Quality": "execution_step",
+                        "Score": 0,
                         "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
                 except:
@@ -900,9 +900,9 @@ def atlas_action():
                     try:
                         save_decision_to_sheet({
                            "Decision_ID": str(time.time()),
-                           "Decision": decision_value,   # dynamic
-                           "Decision_Quality": decision_quality_value if decision_quality_value else "",
-                           "Score": score_value if score_value else "",
+                           "Decision": "complete",
+                           "Decision_Quality": "final_step",
+                           "Score": 1,
                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                         })
                     except:
