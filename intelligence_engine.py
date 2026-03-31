@@ -228,46 +228,100 @@ def build_step_memory(session_data):
     return memory    
 
 
-def select_better_step(current_step, candidates, step_updates, completed_steps, session_data):
-    """
-    PHASE 4 SWITCHING (CLEAN FINAL)
-    """
+def select_better_step(current_step, candidates, step_updates, completed_steps):
+    try:
+        if not candidates:
+            return current_step
 
-    if not current_step or not candidates:
-        return current_step
+        import time
+        now = time.time()
 
-    # =========================
-    # RULE 1: dependency block
-    # =========================
-    allowed, _ = is_step_allowed(current_step, step_updates, completed_steps)
-    if not allowed:
-        return candidates[0]
+        # -------------------------
+        # HELPERS
+        # -------------------------
 
-    # =========================
-    # ADVANCED SCORING
-    # =========================
-    scores, current_score = score_steps_advanced(
-        current_step,
-        candidates,
-        step_updates,
-        session_data
-    )
-    if not scores:
-        return current_step
+        def failure_count(step):
+            return sum(
+                1 for u in step_updates
+                if isinstance(u, dict)
+                and u.get("step") == step
+                and u.get("status") == "failed"
+            )
 
-    best_step = max(scores, key=scores.get)
-    best_score = scores[best_step]
+        def last_executed_time(step):
+            times = [
+                u.get("timestamp", 0)
+                for u in step_updates
+                if isinstance(u, dict)
+                and u.get("step") == step
+            ]
+            return max(times) if times else 0
 
-    print("📊 STEP SCORES:", scores, "| CURRENT:", current_score)
+        def success_count(step):
+            return sum(
+                1 for u in step_updates
+                if isinstance(u, dict)
+                and u.get("step") == step
+                and u.get("status") == "success"
+            )
 
-    # =========================
-    # RULE 2: SWITCH ONLY IF CLEARLY BETTER
-    # =========================
-    if best_score > current_score + 0.2:
-        print("⚡ SWITCH DECISION:", current_step, "→", best_step)
-        return best_step
+        # -------------------------
+        # SCORING
+        # -------------------------
 
-    return current_step
+        scores = {}
+        total_steps = len(candidates) + len(completed_steps) + 1
+
+        for i, step in enumerate(candidates):
+
+            score = 0
+
+            # 1. FAILURE PENALTY
+            fails = failure_count(step)
+            score -= min(1.5, fails * 0.6)
+
+            # 2. FRESHNESS (avoid recent steps)
+            last_time = last_executed_time(step)
+            if last_time > 0:
+                time_gap = now - last_time
+                freshness = min(1, time_gap / 60)
+                score += freshness * 0.8
+            else:
+                score += 0.6
+
+            # 3. COMPLETION DISTANCE (FIXED PROPERLY)
+            position_score = 1 - (i / total_steps)
+            score += position_score * 0.5
+
+            # 4. EXPLORATION BOOST
+            if step not in completed_steps and success_count(step) == 0:
+                score += 0.4
+
+            # 5. CURRENT STEP PENALTY (STRONG)
+            if step == current_step:
+                score -= 0.7
+
+            scores[step] = round(score, 3)
+
+        # -------------------------
+        # SELECT BEST
+        # -------------------------
+
+        best_step = max(scores, key=scores.get)
+        best_score = scores.get(best_step, 0)
+
+        # SAFETY
+        if best_score < -1:
+            return candidates[0]
+
+        print("🧠 STEP SCORES:", scores)
+        print("🏆 SELECTED:", best_step)
+
+        return best_step if best_step else candidates[0]
+
+    except Exception as e:
+        print("❌ SCORING ERROR:", e)
+        return candidates[0] if candidates else current_step
 
 def generate_intelligent_action(session_data):
     
