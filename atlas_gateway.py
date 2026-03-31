@@ -831,6 +831,11 @@ def atlas_action():
                 pending_steps = updated_pending
                 if next_step:
                     current_step = next_step
+                # 🔥 RECOMPUTE pending AFTER updating current_step
+                pending_steps = [
+                    s for s in execution_plan
+                    if s not in completed_steps and s != current_step
+                ]
 
                 if not pending_steps:
                     return jsonify({
