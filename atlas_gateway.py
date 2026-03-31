@@ -426,6 +426,22 @@ def atlas_action():
 
         parsed_state = {}
 
+        if not parsed_state.get("session_id"):
+            parsed_state["session_id"] = "S-" + str(int(time.time()))
+
+            try:
+                save_session_to_sheet({
+                    "Session_ID": parsed_state["session_id"],
+                    "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Session_Type": "execution",
+                    "Active_Module": "Execution Engine",
+                    "Active_Phase": "Phase 3.5",
+                    "Status": "ACTIVE",
+                    "Notes": "Auto started"
+                })
+            except:
+                pass
+
         if isinstance(active_raw, list) and len(active_raw) >= 2:
             headers = active_raw[0]
             values = None
@@ -440,6 +456,10 @@ def atlas_action():
                     parsed_state[headers[i]] = values[i]
 
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
+        completed_steps = list(dict.fromkeys([
+            s.strip() for s in completed_steps if s and str(s).strip()
+        ]))
+        
         # 🔥 CLEAN BAD DATA FROM SHEET
         completed_steps = [
             s for s in completed_steps
@@ -613,6 +633,16 @@ def atlas_action():
                                 "Decision_Type": "execution",
                                 "Outcome_Status": "pending",
                                 "Lesson_Learned": ""
+                            })
+                        except:
+                            pass
+
+                        try:
+                            save_session_to_sheet({
+                                "Session_ID": parsed_state.get("session_id"),
+                                "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                "Status": "CLOSED",
+                                "Notes": "Auto closed"
                             })
                         except:
                             pass
@@ -955,6 +985,16 @@ def atlas_action():
                             "Decision_Type": "execution",
                             "Outcome_Status": "success",
                             "Lesson_Learned": ""
+                        })
+                    except:
+                        pass
+
+                    try:
+                        save_session_to_sheet({
+                            "Session_ID": parsed_state.get("session_id"),
+                            "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "Status": "CLOSED",
+                            "Notes": "Auto closed"
                         })
                     except:
                         pass
