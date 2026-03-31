@@ -775,25 +775,6 @@ def atlas_action():
                     s for s in execution_plan if s not in updated_completed
                 ]
 
-                # SAVE STATE
-                try:
-                    requests.post(
-                        APPS_SCRIPT_URL,
-                        json={
-                                "action": "update_active_state",
-                                "payload": {
-                                "session_id": parsed_state.get("session_id"),
-                                "current_step": next_step if next_step else current_step,
-                                "completed_steps": updated_completed,
-                                "execution_plan": execution_plan,
-                                "step_updates": step_updates
-                            }
-                        },
-                            timeout=3
-                    )
-                except:
-                    pass
-
                 # SAVE EXECUTION
                 try:
                     save_decision_to_sheet({
