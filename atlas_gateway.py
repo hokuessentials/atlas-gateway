@@ -732,7 +732,17 @@ def atlas_action():
                 # 🧠 INTELLIGENT STEP SELECTION
                 # =========================
 
-                candidates = available_steps if available_steps else pending_steps
+                raw_candidates = available_steps if available_steps else pending_steps
+
+                # 🧠 APPLY DEPENDENCY FILTER
+                candidates = [
+                    step for step in raw_candidates
+                    if is_step_allowed(step, step_updates, completed_steps)[0]
+                ]
+
+                # fallback if everything blocked
+                if not candidates:
+                    candidates = raw_candidates
 
                 # fallback safety
                 if not candidates:
