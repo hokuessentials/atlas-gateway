@@ -522,7 +522,7 @@ def atlas_action():
         if input_data.get("execute"):
 
             loop_count = 0
-            max_loops = 2   # safety limit
+            max_loops = 1  # safety limit
 
             start_time = time.time() 
 
