@@ -121,7 +121,7 @@ def save_decision_to_sheet(decision_data):
             "Content-Type": "application/json"
         }
 
-        requests.post(
+        resp = requests.post(
             APPS_SCRIPT_URL,
             json=payload,
             headers={"Content-Type": "application/json"},
@@ -424,7 +424,7 @@ def atlas_action():
                     return []
             return []
 
-        parsed_state = {}
+        parsed_state = load_state_from_sheet() or {}
 
         if not parsed_state.get("session_id"):
             parsed_state["session_id"] = "S-" + str(int(time.time()))
@@ -550,7 +550,7 @@ def atlas_action():
                     # SAVE STATE IMMEDIATELY
                     try:
                        save_decision_to_sheet({
-                           "Decision_ID": str(time.time()),
+                           "Decision_ID": str(int(time.time())),
                            "Session_ID": parsed_state.get("session_id") or "S-" + str(int(time.time())),
                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                            "Title": current_step,
@@ -618,7 +618,7 @@ def atlas_action():
                         # 🔥 ADD THIS (CRITICAL FIX)
                         try:
                             save_decision_to_sheet({
-                                "Decision_ID": str(time.time()),
+                                "Decision_ID": str(int(time.time())),
                                 "Session_ID": parsed_state.get("session_id"),
                                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                                 "Title": "Execution Step",
@@ -730,7 +730,7 @@ def atlas_action():
                         # SAVE ENGINE DECISION
                         try:
                             save_decision_to_sheet({
-                                "Decision_ID": str(time.time()),
+                                "Decision_ID": str(int(time.time())),
                                 "Session_ID": parsed_state.get("session_id"),
                                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                                 "Title": "Execution Step",
@@ -933,7 +933,7 @@ def atlas_action():
                 # SAVE EXECUTION
                 try:
                     save_decision_to_sheet({
-                        "Decision_ID": str(time.time()),
+                        "Decision_ID": str(int(time.time())),
                         "Session_ID": parsed_state.get("session_id"),
                         "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "Title": "Execution Step",
@@ -970,7 +970,7 @@ def atlas_action():
                     # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
                     try:
                         save_decision_to_sheet({
-                            "Decision_ID": str(time.time()),
+                            "Decision_ID": str(int(time.time())),
                             "Session_ID": parsed_state.get("session_id") or "S-" + str(int(time.time())),
                             "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "Title": "Execution Step",
