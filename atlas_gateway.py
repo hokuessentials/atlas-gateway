@@ -867,6 +867,22 @@ def atlas_action():
 
                 if next_step:
                     current_step = next_step
+
+                # 🔥 UPDATE MASTER TRACKER
+                try:
+                    update_tracker({
+                        "module": "Execution Engine",
+                        "phase": "Phase 3.5",
+                        "task": "Control Layer Build",
+                        "status": final_response.get("decision", "proceed"),
+                        "current_step": current_step,
+                        "next_step": final_response.get("next_step"),
+                        "owner": "Atlas",
+                        "notes": "Auto-updated from execution"
+                    })
+                except:
+                    pass
+
                 # 🔥 RECOMPUTE pending AFTER updating current_step
                 pending_steps = [
                     s for s in execution_plan
@@ -932,21 +948,6 @@ def atlas_action():
                     })
                 except:
                     pass   
-
-                # 🔥 UPDATE MASTER TRACKER
-                try:
-                    update_tracker({
-                        "module": "Execution Engine",
-                        "phase": "Phase 3.5",
-                        "task": "Control Layer Build",
-                        "status": final_response.get("decision", "proceed"),
-                        "current_step": current_step,
-                        "next_step": final_response.get("next_step"),
-                        "owner": "Atlas",
-                        "notes": "Auto-updated from execution"
-                    })
-                except:
-                    pass
 
             return jsonify(final_response or {
                 "status": "success",
