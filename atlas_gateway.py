@@ -425,6 +425,24 @@ def atlas_action():
             return []
 
         parsed_state = load_state_from_sheet() or {}
+        session_id = parsed_state.get("session_id")
+
+        if not session_id:
+            session_id = "S-" + str(int(time.time()))
+            parsed_state["session_id"] = session_id
+            try:
+               requests.post(
+                   APPS_SCRIPT_URL,
+                   json={
+                       "action": "update_active_state",
+                       "payload": {
+                           "session_id": session_id
+                        }
+                    },
+                    timeout=3
+                )
+            except:
+               pass
 
         if not parsed_state.get("session_id"):
             parsed_state["session_id"] = "S-" + str(int(time.time()))
@@ -639,7 +657,7 @@ def atlas_action():
 
                         try:
                             save_session_to_sheet({
-                                "Session_ID": parsed_state.get("session_id"),
+                                "Session_ID": session_id,
                                 "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                                 "Status": "CLOSED",
                                 "Notes": "Auto closed"
@@ -665,7 +683,7 @@ def atlas_action():
                         session = load_session_from_sheet() or {}
 
                         session["active_state"] = {
-                            "session_id": parsed_state.get("session_id"),
+                            "Session_ID": session_id,
                             "current_step": current_step,
                             "completed_steps": completed_steps,
                             "step_updates": step_updates,
@@ -934,7 +952,7 @@ def atlas_action():
                 try:
                     save_decision_to_sheet({
                         "Decision_ID": str(int(time.time())),
-                        "Session_ID": parsed_state.get("session_id"),
+                        "Session_ID": session_id,
                         "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "Title": "Execution Step",
                         "Description": "Auto decision by Atlas",
@@ -971,7 +989,7 @@ def atlas_action():
                     try:
                         save_decision_to_sheet({
                             "Decision_ID": str(int(time.time())),
-                            "Session_ID": parsed_state.get("session_id") or "S-" + str(int(time.time())),
+                            "Session_ID": session_id,
                             "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "Title": "Execution Step",
                             "Description": "Auto decision by Atlas",
@@ -991,7 +1009,7 @@ def atlas_action():
 
                     try:
                         save_session_to_sheet({
-                            "Session_ID": parsed_state.get("session_id"),
+                            "Session_ID": "Session_ID": session_id,
                             "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "Status": "CLOSED",
                             "Notes": "Auto closed"
