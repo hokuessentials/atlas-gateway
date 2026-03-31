@@ -870,8 +870,8 @@ def atlas_action():
                     })
 
                 final_response = {
-                    "status": final_response.get("status", "success"),
-                    "decision": final_response.get("decision", "proceed"),
+                    "status": "success",
+                    "decision": "proceed",
                     "executed_step": previous_step,
                     "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
 
