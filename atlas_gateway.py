@@ -467,21 +467,7 @@ def atlas_action():
                 loop_count += 1
 
                 if time.time() - start_time > 20:
-                # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
-                    if not final_response:
-                        final_response = {
-                            "status": "success",
-                            "decision": "proceed",
-                            "executed_step": current_step,
-                            "next_step": pending_steps[0] if pending_steps else None,
-                            "debug": {
-                                "current_step": current_step,
-                                "completed_steps": completed_steps,
-                                "pending_steps": pending_steps,
-                                "failed_steps": [],
-                                "recent_updates": step_updates[-5:]
-                            }
-                        }
+                
                     return jsonify({
                         "status": "timeout_safe_exit",
                         "decision": "partial",
@@ -871,7 +857,22 @@ def atlas_action():
                         "recent_updates": step_updates[-5:]
                     }
                 }
-
+            
+            # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
+            if not final_response:
+                final_response = {
+                    "status": "success",
+                    "decision": "proceed",
+                    "executed_step": current_step,
+                    "next_step": pending_steps[0] if pending_steps else None,
+                    "debug": {
+                        "current_step": current_step,
+                        "completed_steps": completed_steps,
+                        "pending_steps": pending_steps,
+                        "failed_steps": [],
+                        "recent_updates": step_updates[-5:]
+                    }
+                }
             return jsonify(final_response or {
                 "status": "success",
                 "decision": "loop_finished"
