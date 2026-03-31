@@ -53,7 +53,7 @@ def save_state_to_sheet(active_state):
 
         for attempt in range(2):
             try:
-                requests.post(
+                resp = requests.post(
                     APPS_SCRIPT_URL,
                     json=payload,
                     headers={"Content-Type": "application/json"},
@@ -444,12 +444,11 @@ def atlas_action():
             except:
                pass
 
-        if not parsed_state.get("session_id"):
-            parsed_state["session_id"] = "S-" + str(int(time.time()))
+        if not parsed_state.get("session_started"):
 
             try:
                 save_session_to_sheet({
-                    "Session_ID": parsed_state["session_id"],
+                    "Session_ID": session_id,
                     "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                     "Session_Type": "execution",
                     "Active_Module": "Execution Engine",
@@ -457,6 +456,9 @@ def atlas_action():
                     "Status": "ACTIVE",
                     "Notes": "Auto started"
                 })
+
+                parsed_state["session_started"] = True
+
             except:
                 pass
 
@@ -569,7 +571,7 @@ def atlas_action():
                     try:
                        save_decision_to_sheet({
                            "Decision_ID": str(int(time.time())),
-                           "Session_ID": parsed_state.get("session_id") or "S-" + str(int(time.time())),
+                           "Session_ID": session_id,
                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                            "Title": current_step,
                            "Description": "Step executed",
@@ -637,14 +639,14 @@ def atlas_action():
                         try:
                             save_decision_to_sheet({
                                 "Decision_ID": str(int(time.time())),
-                                "Session_ID": parsed_state.get("session_id"),
+                                "Session_ID": session_id,
                                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                                 "Title": "Execution Step",
                                 "Description": "Auto decision by Atlas",
                                 "Module": "Execution Engine",
-                                "Expected_ROI": 0,
-                                "Risk_Score": 0,
-                                "Confidence_Level": 0,
+                                "Expected_ROI": 10,
+                                "Risk_Score": 0.3,
+                                "Confidence_Level": 0.6,
                                 "Reversible_Flag": True,
                                 "Decision_Owner": "Atlas",
                                 "Tags": "auto",
@@ -733,7 +735,7 @@ def atlas_action():
                                 json={
                                     "action": "update_active_state",
                                     "payload": {
-                                        "session_id": parsed_state.get("session_id"),
+                                        "session_id": session_id,
                                         "current_step": current_step,
                                         "completed_steps": completed_steps,
                                         "execution_plan": execution_plan,
@@ -754,9 +756,9 @@ def atlas_action():
                                 "Title": "Execution Step",
                                 "Description": "Auto decision by Atlas",
                                 "Module": "Execution Engine",
-                                "Expected_ROI": 0,
-                                "Risk_Score": 0,
-                                "Confidence_Level": 0,
+                                "Expected_ROI": 10,
+                                "Risk_Score": 0.3,
+                                "Confidence_Level": 0.6,
                                 "Reversible_Flag": True,
                                 "Decision_Owner": "Atlas",
                                 "Tags": "auto",
@@ -957,9 +959,9 @@ def atlas_action():
                         "Title": "Execution Step",
                         "Description": "Auto decision by Atlas",
                         "Module": "Execution Engine",
-                        "Expected_ROI": 0,
-                        "Risk_Score": 0,
-                        "Confidence_Level": 0,
+                        "Expected_ROI": 10,
+                        "Risk_Score": 0.3,
+                        "Confidence_Level": 0.6,
                         "Reversible_Flag": True,
                         "Decision_Owner": "Atlas",
                         "Tags": "auto",
@@ -1009,7 +1011,7 @@ def atlas_action():
 
                     try:
                         save_session_to_sheet({
-                            "Session_ID": "Session_ID": session_id,
+                            "Session_ID": session_id,
                             "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "Status": "CLOSED",
                             "Notes": "Auto closed"
@@ -1096,7 +1098,7 @@ def atlas_action():
 
                 try:
                    save_session_to_sheet({
-                       "Session_ID": parsed_state.get("session_id"),
+                       "Session_ID": session_id,
                        "Session_Type": "execution",
                        "Active_Module": "Execution Engine",
                        "Active_Phase": "Phase 3.5",
