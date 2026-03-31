@@ -868,21 +868,6 @@ def atlas_action():
                 if next_step:
                     current_step = next_step
 
-                # 🔥 UPDATE MASTER TRACKER
-                try:
-                    update_tracker({
-                        "module": "Execution Engine",
-                        "phase": "Phase 3.5",
-                        "task": "Control Layer Build",
-                        "status": final_response.get("decision", "proceed"),
-                        "current_step": current_step,
-                        "next_step": final_response.get("next_step"),
-                        "owner": "Atlas",
-                        "notes": "Auto-updated from execution"
-                    })
-                except:
-                    pass
-
                 # 🔥 RECOMPUTE pending AFTER updating current_step
                 pending_steps = [
                     s for s in execution_plan
@@ -919,21 +904,37 @@ def atlas_action():
                     }
                 }
             
-            # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
-            if not final_response:
-                final_response = {
-                    "status": "success",
-                    "decision": "proceed",
-                    "executed_step": previous_step,
-                    "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
-                    "debug": {
-                        "current_step": current_step,
-                        "completed_steps": completed_steps,
-                        "pending_steps": pending_steps,
-                        "failed_steps": [],
-                        "recent_updates": step_updates[-5:]
+                # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
+                if not final_response:
+                    final_response = {
+                        "status": "success",
+                        "decision": "proceed",
+                        "executed_step": previous_step,
+                        "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
+                        "debug": {
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": pending_steps,
+                            "failed_steps": [],
+                            "recent_updates": step_updates[-5:]
+                        }
                     }
-                }
+
+                # 🔥 UPDATE MASTER TRACKER (CORRECT)
+                try:
+                   update_tracker({
+                       "module": "Execution Engine",
+                       "phase": "Phase 3.5",
+                       "task": "Control Layer Build",
+                       "status": "complete" if final_response["decision"] == "complete" else "active",
+                       "current_step": current_step,
+                       "next_step": final_response.get("next_step"),
+                       "owner": "Atlas",
+                       "notes": "Live execution update"
+                    })
+                except:
+                    pass
+
                 # 🔥 AUTO LOG EXECUTION
                 try:
                     log_execution_to_sheet({
