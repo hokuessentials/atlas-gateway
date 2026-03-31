@@ -94,6 +94,23 @@ def log_execution_to_sheet(data):
     except Exception as e:
         print("❌ LOG ERROR:", e)
 
+def update_tracker(data):
+    try:
+        payload = {
+            "action": "update_tracker",
+            "data": data
+        }
+
+        requests.post(
+            APPS_SCRIPT_URL,
+            data=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
+
+    except Exception as e:
+        print("❌ TRACKER ERROR:", e)
+
 def save_decision_to_sheet(decision_data):
     try:
         payload = {
@@ -915,6 +932,21 @@ def atlas_action():
                     })
                 except:
                     pass   
+
+                # 🔥 UPDATE MASTER TRACKER
+                try:
+                    update_tracker({
+                        "module": "Execution Engine",
+                        "phase": "Phase 3.5",
+                        "task": "Control Layer Build",
+                        "status": final_response.get("decision", "proceed"),
+                        "current_step": current_step,
+                        "next_step": final_response.get("next_step"),
+                        "owner": "Atlas",
+                        "notes": "Auto-updated from execution"
+                    })
+                except:
+                    pass
 
             return jsonify(final_response or {
                 "status": "success",
