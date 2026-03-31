@@ -577,12 +577,25 @@ def atlas_action():
                                 "pending_steps": pending_steps
                             }
                         })
-
+                    
+                if not pending_steps:
                     # ✅ ADD THIS BLOCK HERE (FIRST LINE INSIDE IF)
                     if step_updates and any(
                         u.get("step") == current_step and u.get("status") == "success"
                         for u in step_updates
                     ):
+                        # 🔥 ADD THIS (CRITICAL FIX)
+                        try:
+                           save_decision_to_sheet({
+                               "session_id": parsed_state.get("session_id"),
+                               "decision": "complete",
+                               "decision_quality": "final_step",
+                               "score": 1,
+                               "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                           })
+                        except:
+                            pass
+
                         return jsonify({
                             "status": "success",
                             "decision": "complete",
