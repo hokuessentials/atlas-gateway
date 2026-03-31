@@ -406,7 +406,7 @@ def atlas_action():
 
         execution_plan = safe_json_parse(parsed_state.get("execution_plan", []))
         # 🔥 AUTO-INITIALIZE IF EMPTY
-        if not execution_plan:
+        if not execution_plan and not completed_steps:
             execution_plan = [
                 "Evaluate sample quality against standards.",
                 "Check supplier pricing",
@@ -425,8 +425,12 @@ def atlas_action():
         current_step = (parsed_state.get("current_step") or "").strip()
 
         # ✅ THEN FIX IF EMPTY
-        if not current_step and execution_plan:
-            current_step = execution_plan[0]
+        if not current_step:
+            if completed_steps:
+                remaining = [s for s in execution_plan if s not in completed_steps]
+                current_step = remaining[0] if remaining else execution_plan[0]
+            elif execution_plan:
+                current_step = execution_plan[0]
 
         step_updates = safe_json_parse(parsed_state.get("step_updates", []))
 
