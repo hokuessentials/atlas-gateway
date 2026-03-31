@@ -434,7 +434,10 @@ def atlas_action():
 
         step_updates = safe_json_parse(parsed_state.get("step_updates", []))
 
-        pending_steps = [s for s in execution_plan if s not in completed_steps]
+        pending_steps = [
+            s for s in execution_plan
+            if s not in completed_steps and s != current_step
+        ]
 
         # =========================
         # 🧠 QUESTION MODE
@@ -697,7 +700,7 @@ def atlas_action():
 
                 pending_steps = [
                     s for s in execution_plan
-                    if s not in completed_steps
+                    if s not in completed_steps and s != current_step
                 ]
 
                 available_steps = [
