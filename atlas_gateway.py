@@ -771,6 +771,8 @@ def atlas_action():
                 # =========================
 
                 raw_candidates = available_steps if available_steps else pending_steps
+                # ❌ REMOVE CURRENT STEP FROM SELECTION
+                raw_candidates = [s for s in raw_candidates if s != current_step]
 
                 # 🧠 APPLY DEPENDENCY FILTER
                 candidates = [
