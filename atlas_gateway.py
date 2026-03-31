@@ -829,6 +829,8 @@ def atlas_action():
 
                 # 🔁 UPDATE STATE FOR NEXT LOOP
                 pending_steps = updated_pending
+                previous_step = current_step
+
                 if next_step:
                     current_step = next_step
                 # 🔥 RECOMPUTE pending AFTER updating current_step
@@ -853,8 +855,8 @@ def atlas_action():
                 final_response = {
                     "status": "success",
                     "decision": "proceed",
-                    "executed_step": current_step,
-                    "next_step": next_step if next_step else (pending_steps[0] if pending_steps else None),
+                    "executed_step": previous_step,
+                    "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
 
                     # 🔥 DEBUG BLOCK (ADD HERE)
                     "debug": {
@@ -872,8 +874,8 @@ def atlas_action():
                 final_response = {
                     "status": "success",
                     "decision": "proceed",
-                    "executed_step": current_step,
-                    "next_step": next_step if next_step else (pending_steps[0] if pending_steps else None),
+                    "executed_step": previous_step,
+                    "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
                     "debug": {
                         "current_step": current_step,
                         "completed_steps": completed_steps,
