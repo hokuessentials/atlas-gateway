@@ -845,7 +845,7 @@ def atlas_action():
                 final_response = {
                     "status": "success",
                     "decision": "proceed",
-                    "executed_step": next_step,
+                    "executed_step": current_step,
                     "next_step": pending_steps[0] if pending_steps else None,
 
                     # 🔥 DEBUG BLOCK (ADD HERE)
