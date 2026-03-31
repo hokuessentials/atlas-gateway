@@ -497,7 +497,7 @@ def atlas_action():
                     step_updates.append({
                         "step": current_step,
                         "status": "success",
-                        "timestamp": time.time()
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
                     completed_steps.append(current_step)
@@ -611,13 +611,13 @@ def atlas_action():
                             step_updates.append({
                                 "step": current_step if current_step else "invalid_step",
                                 "status": "failed",
-                                "timestamp": time.time()
+                                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                             })
                         else:
                             step_updates.append({
                                 "step": current_step if current_step else "invalid_step",
                                 "status": "success",
-                                "timestamp": time.time()
+                                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                             })
 
                             # ✅ mark completed ONLY on success
@@ -651,7 +651,7 @@ def atlas_action():
                                 "decision": step_decision.get("decision"),
                                 "decision_quality": step_decision.get("decision_quality"),
                                 "score": step_decision.get("decision_score"),
-                                "timestamp": time.time()
+                                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                             })
                         except:
                             pass
@@ -739,7 +739,7 @@ def atlas_action():
                         step_updates.append({
                             "step": "system",
                             "status": "reset",
-                            "timestamp": time.time()
+                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                         })
 
                         # 🔥 SAVE STATE BEFORE RETURN
@@ -839,7 +839,7 @@ def atlas_action():
                         "session_id": parsed_state.get("session_id"),
                         "decision": next_step,
                         "type": "execution",
-                        "timestamp": time.time()
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
                 except:
                     pass
@@ -885,21 +885,6 @@ def atlas_action():
                         "recent_updates": step_updates[-5:]
                     }
                 }
-
-                # 🔥 AUTO LOG EXECUTION
-                try:
-                    log_execution_to_sheet({
-                        "timestamp": time.time(),
-                        "executed_step": previous_step,
-                        "next_step": current_step,
-                        "current_step": current_step,
-                        "completed_steps": ";".join(completed_steps),
-                        "pending_steps": ";".join(pending_steps),
-                        "status": final_response.get("status", "success"),
-                        "decision": final_response.get("decision", "proceed")
-                    })
-                except:
-                    pass
             
             # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
             if not final_response:
@@ -916,6 +901,21 @@ def atlas_action():
                         "recent_updates": step_updates[-5:]
                     }
                 }
+                # 🔥 AUTO LOG EXECUTION
+                try:
+                    log_execution_to_sheet({
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "executed_step": previous_step,
+                        "next_step": current_step,
+                        "current_step": current_step,
+                        "completed_steps": ";".join(completed_steps),
+                        "pending_steps": ";".join(pending_steps),
+                        "status": final_response.get("status", "success"),
+                        "decision": final_response.get("decision", "proceed")
+                    })
+                except:
+                    pass   
+
             return jsonify(final_response or {
                 "status": "success",
                 "decision": "loop_finished"
