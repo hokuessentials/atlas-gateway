@@ -77,6 +77,23 @@ def save_state_to_sheet(active_state):
     except Exception as e:
         print("❌ STATE SAVE ERROR:", e)
 
+def log_execution_to_sheet(data):
+    try:
+        payload = {
+            "action": "log_execution",
+            "data": data
+        }
+
+        requests.post(
+            APPS_SCRIPT_URL,
+            data=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
+
+    except Exception as e:
+        print("❌ LOG ERROR:", e)
+
 def save_decision_to_sheet(decision_data):
     try:
         payload = {
@@ -853,8 +870,8 @@ def atlas_action():
                     })
 
                 final_response = {
-                    "status": "success",
-                    "decision": "proceed",
+                    "status": final_response.get("status", "success"),
+                    "decision": final_response.get("decision", "proceed")
                     "executed_step": previous_step,
                     "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
 
@@ -868,12 +885,27 @@ def atlas_action():
                         "recent_updates": step_updates[-5:]
                     }
                 }
+
+                # 🔥 AUTO LOG EXECUTION
+                try:
+                    log_execution_to_sheet({
+                        "timestamp": time.time(),
+                        "executed_step": previous_step,
+                        "next_step": current_step,
+                        "current_step": current_step,
+                        "completed_steps": ";".join(completed_steps),
+                        "pending_steps": ";".join(pending_steps),
+                        "status": final_response.get("status", "success"),
+                        "decision": final_response.get("decision", "proceed")
+                    })
+                except:
+                    pass
             
             # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
             if not final_response:
                 final_response = {
-                    "status": "success",
-                    "decision": "proceed",
+                    "status": final_response.get("status", "success"),
+                    "decision": final_response.get("decision", "proceed"),
                     "executed_step": previous_step,
                     "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
                     "debug": {
