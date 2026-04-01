@@ -52,24 +52,15 @@ def save_state_to_sheet(active_state):
         }
 
         for attempt in range(2):
-            try:
-                resp = requests.post(
-                    APPS_SCRIPT_URL,
-                    json=payload,
-                    headers={"Content-Type": "application/json"},
-                    timeout=3
-                )
-
-                print("🔥 SAVE STATUS:", resp.status_code)
-                print("🔥 SAVE RESPONSE:", resp.text)
-
-                if resp and resp.status_code == 200:
-                    return
-                else:
-                    print("⚠️ SAVE FAILED")
-
-            except Exception as retry_error:
-                print(f"⚠️ RETRY {attempt + 1} FAILED:", retry_error)
+                try:
+                    resp = requests.post(
+                        APPS_SCRIPT_URL,
+                        json=payload,
+                        headers={"Content-Type": "application/json"},
+                        timeout=10
+                    )
+                except Exception as e:
+                    print("⚠️ API CALL FAILED:", e)
 
         print("❌ STATE SAVE FAILED AFTER RETRIES")
 
@@ -87,7 +78,7 @@ def log_execution_to_sheet(data):
             APPS_SCRIPT_URL,
             data=json.dumps(payload),
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=10
         )
 
     except Exception as e:
@@ -104,7 +95,7 @@ def update_tracker(data):
             APPS_SCRIPT_URL,
             data=json.dumps(payload),
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=10
         )
 
     except Exception as e:
@@ -125,7 +116,7 @@ def save_decision_to_sheet(decision_data):
             APPS_SCRIPT_URL,
             json=payload,
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=10
         )
 
         print("🔥 DECISION SAVE:", resp.text)
@@ -139,7 +130,7 @@ def load_state_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=3,
+            timeout=10,
             allow_redirects=True
         )
 
@@ -178,7 +169,7 @@ def read_full_system_memory():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=3
+            timeout=10,
         )
         
         if not resp or resp.status_code != 200:
@@ -218,7 +209,7 @@ def load_session_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=3,
+            timeout=10,
             allow_redirects=True
         )
 
@@ -289,7 +280,7 @@ def update_decision_outcome(decision_id, outcome, lesson):
             APPS_SCRIPT_URL,
             json=payload,
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=10
         )
     except Exception as e:
         print("❌ Update decision error:", e)
@@ -370,7 +361,7 @@ def save_session_to_sheet(session):
             APPS_SCRIPT_URL,
             json=payload,
             headers=headers,
-            timeout=3,
+            timeout=10,
             allow_redirects=True
         )
 
@@ -417,7 +408,7 @@ def atlas_action():
                            "session_id": session_id
                         }
                     },
-                    timeout=3
+                    timeout=10
                 )
             except:
                pass
@@ -543,7 +534,7 @@ def atlas_action():
                                     "step_updates": step_updates
                                }
                            },
-                        timeout=3
+                        timeout=10
                         )
                     except:
                         pass
@@ -739,7 +730,7 @@ def atlas_action():
                                     "step_updates": step_updates
                                 }
                             },
-                            timeout=3
+                            timeout=10
                         )
                     except:
                         pass
