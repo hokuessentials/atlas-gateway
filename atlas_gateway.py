@@ -567,7 +567,7 @@ def atlas_action():
 
                     completed_steps.append(current_step)
                     
-                    score = 1
+                    score = 0.6
                     confidence = round(score, 2)
                     expected_roi = round(score * 10, 2)
                     risk_score = round(1 - score, 2)
@@ -708,35 +708,6 @@ def atlas_action():
                                 },
                                 timeout=3
                             )
-                        except:
-                            pass
-                        
-                        score = 1
-                        confidence = round(score, 2)
-                        expected_roi = round(score * 10, 2)
-                        risk_score = round(1 - score, 2)
-                        decision_quality = "execution"
-
-                        # SAVE ENGINE DECISION
-                        try:
-                            save_decision_to_sheet({
-                                "Decision_ID": str(int(time.time())),
-                                "Session_ID": session_id,
-                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "Title": "Execution Step",
-                                "Description": "Auto decision by Atlas",
-                                "Module": "Execution Engine",
-                                "Expected_ROI": expected_roi,
-                                "Risk_Score": risk_score,
-                                "Confidence_Level": confidence,
-                                "Decision_Quality": decision_quality,
-                                "Reversible_Flag": True,
-                                "Decision_Owner": "Atlas",
-                                "Tags": "auto",
-                                "Decision_Type": "execution",
-                                "Outcome_Status": "pending",
-                                "Lesson_Learned": ""
-                            })
                         except:
                             pass
 
@@ -941,7 +912,7 @@ def atlas_action():
                 ]
 
                 if not pending_steps:
-                    score = 1
+                    score = score if score else 1
                     confidence = round(score, 2)
                     expected_roi = round(score * 10, 2)
                     risk_score = round(1 - score, 2)
@@ -980,12 +951,6 @@ def atlas_action():
                     except:
                         pass
 
-                    score = 1
-                    decision_quality = "final_step"
-
-                    confidence = round(score, 2)
-                    expected_roi = round(score * 10, 2)
-                    risk_score = round(1 - score, 2)
                     return jsonify({
                         "status": "success",
                         "decision": "complete",
