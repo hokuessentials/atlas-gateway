@@ -51,18 +51,15 @@ def save_state_to_sheet(active_state):
             "Content-Type": "application/json"
         }
 
-        for attempt in range(2):
-                try:
-                    resp = requests.post(
-                        APPS_SCRIPT_URL,
-                        json=payload,
-                        headers={"Content-Type": "application/json"},
-                        timeout=10
-                    )
-                except Exception as e:
-                    print("⚠️ API CALL FAILED:", e)
-
-        print("❌ STATE SAVE FAILED AFTER RETRIES")
+        try:
+            resp = requests.post(
+                APPS_SCRIPT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10
+            )
+        except Exception as e:
+            print("⚠️ API CALL FAILED:", e)
 
     except Exception as e:
         print("❌ STATE SAVE ERROR:", e)
@@ -735,69 +732,69 @@ def atlas_action():
                     except:
                         pass
 
-                        return jsonify({
-                            "status": "retrying",
-                            "reason": "All steps failed once, retrying",
-                            "action": "retry_all_steps",
+                    return jsonify({
+                        "status": "retrying",
+                        "reason": "All steps failed once, retrying",
+                        "action": "retry_all_steps",
                             
-                            "debug": {
-                                "current_step": current_step,
-                                "completed_steps": completed_steps,
-                                "pending_steps": pending_steps,
-                                "failed_steps": failed_steps,
-                                "recent_updates": step_updates[-5:]
-                            }
-                        })
-                    else:
-                        return jsonify({
-                            "status": "hold",
-                            "reason": "All steps failed after retry",
-                            "action": "manual_review_required",
-                            "debug": {
-                                "current_step": current_step,
-                                "completed_steps": completed_steps,
-                                "pending_steps": pending_steps,
-                                "failed_steps": failed_steps,
-                                "recent_updates": step_updates[-5:]
-                            }
-                        })
-                    
-                # =========================
-                # 🧠 INTELLIGENT STEP SELECTION
-                # =========================
-
-                raw_candidates = available_steps if available_steps else pending_steps
-                # ❌ REMOVE CURRENT STEP FROM SELECTION
-                raw_candidates = [s for s in raw_candidates if s != current_step]
-
-                # 🧠 APPLY DEPENDENCY FILTER
-                candidates = [
-                    step for step in raw_candidates
-                    if is_step_allowed(step, step_updates, completed_steps)[0]
-                ]
-
-                # fallback if everything blocked
-                if not candidates:
-                    candidates = raw_candidates
-
-                # fallback safety
-                if not candidates:
-                    next_step = current_step   # ✅ SAFE FALLBACK
+                        "debug": {
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": pending_steps,
+                            "failed_steps": failed_steps,
+                            "recent_updates": step_updates[-5:]
+                        }
+                    })
                 else:
-                    try:
-                        # 🧠 get better step using intelligence layer
-                        better_step = select_better_step(
-                            current_step=current_step,
-                            candidates=candidates,
-                            completed_steps=completed_steps,
-                            step_updates=step_updates
-                        )
+                    return jsonify({
+                        "status": "hold",
+                        "reason": "All steps failed after retry",
+                        "action": "manual_review_required",
+                        "debug": {
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": pending_steps,
+                            "failed_steps": failed_steps,
+                            "recent_updates": step_updates[-5:]
+                        }
+                    })
+                    
+            # =========================
+            # 🧠 INTELLIGENT STEP SELECTION
+            # =========================
 
-                        next_step = better_step if (better_step and str(better_step).strip() != "") else candidates[0]
+            raw_candidates = available_steps if available_steps else pending_steps
+            # ❌ REMOVE CURRENT STEP FROM SELECTION
+            raw_candidates = [s for s in raw_candidates if s != current_step]
 
-                    except Exception as e:
-                        print("⚠️ STEP SELECTION ERROR:", e)
-                        next_step = candidates[0]
+            # 🧠 APPLY DEPENDENCY FILTER
+            candidates = [
+                step for step in raw_candidates
+                if is_step_allowed(step, step_updates, completed_steps)[0]
+            ]
+
+            # fallback if everything blocked
+            if not candidates:
+                candidates = raw_candidates
+
+            # fallback safety
+            if not candidates:
+                    next_step = current_step   # ✅ SAFE FALLBACK
+            else:
+                try:
+                    # 🧠 get better step using intelligence layer
+                    better_step = select_better_step(
+                        current_step=current_step,
+                        candidates=candidates,
+                        completed_steps=completed_steps,
+                        step_updates=step_updates
+                    )
+
+                    next_step = better_step if (better_step and str(better_step).strip() != "") else candidates[0]
+
+                except Exception as e:
+                    print("⚠️ STEP SELECTION ERROR:", e)
+                    next_step = candidates[0]
 
 
                 # ❌ DO NOT mark completed here
