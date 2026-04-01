@@ -454,7 +454,7 @@ def atlas_action():
                     "Session_Type": "execution",
                     "Active_Module": "Execution Engine",
                     "Active_Phase": "Phase 3.5",
-                    "Tasks_Worked": len(completed_steps),
+                    "Tasks_Worked": 0,
                     "Issues_Found": 0,
                     "Status": "ACTIVE",
                     "Snapshot_ID": "",
@@ -895,12 +895,6 @@ def atlas_action():
                 updated_pending = [
                     s for s in execution_plan if s not in updated_completed
                 ]
-                    
-                score = 1
-                confidence = round(score, 2)
-                expected_roi = round(score * 10, 2)
-                risk_score = round(1 - score, 2)
-                decision_quality = "execution"
 
                 # 🔁 UPDATE STATE FOR NEXT LOOP
                 pending_steps = updated_pending
@@ -949,15 +943,15 @@ def atlas_action():
                         save_session_to_sheet({
                             "Session_ID": session_id,
                             "Start_Time": "",
-                            "End_Time": "",
+                            "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "Session_Type": "execution",
                             "Active_Module": "Execution Engine",
                             "Active_Phase": "Phase 3.5",
                             "Tasks_Worked": len(completed_steps),
                             "Issues_Found": 0,
-                            "Status": "ACTIVE",
+                            "Status": "CLOSED",
                             "Snapshot_ID": "",
-                            "Notes": "Auto session update"
+                            "Notes": "Auto closed"
                         })
                     
                     except:
@@ -1045,15 +1039,15 @@ def atlas_action():
                     save_session_to_sheet({
                         "Session_ID": session_id,
                         "Start_Time": "",
-                        "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "End_Time": "",
                         "Session_Type": "execution",
                         "Active_Module": "Execution Engine",
                         "Active_Phase": "Phase 3.5",
                         "Tasks_Worked": len(completed_steps),
                         "Issues_Found": 0,
-                        "Status": "CLOSED",
+                        "Status": "ACTIVE",
                         "Snapshot_ID": "",
-                        "Notes": "Auto closed"
+                        "Notes": "Auto session update"
                     })
                 except:
                     pass
