@@ -607,6 +607,7 @@ def atlas_action():
                 # COMPLETE → ENGINE
                 # =========================
                 if not pending_steps:
+
                     if time.time() - start_time > 20:
                         return jsonify({
                             "status": "timeout_safe_exit",
@@ -617,6 +618,60 @@ def atlas_action():
                                 "pending_steps": pending_steps
                             }
                         })
+
+                    # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
+                    score = 1
+                    confidence = 1
+                    expected_roi = 10
+                    risk_score = 0
+                    decision_quality = "final_step"
+
+                    try:
+                       save_decision_to_sheet({
+                           "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                           "Session_ID": session_id,
+                           "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                           "Title": "Execution Complete",
+                           "Description": "All steps completed",
+                           "Module": "Execution Engine",
+                           "Expected_ROI": expected_roi,
+                           "Risk_Score": risk_score,
+                           "Confidence_Level": confidence,
+                           "Decision_Quality": decision_quality,
+                           "Reversible_Flag": True,
+                           "Decision_Owner": "Atlas",
+                           "Tags": "final",
+                           "Decision_Type": "execution",
+                           "Outcome_Status": "success",
+                           "Lesson_Learned": "Execution completed"
+                       })
+                    except:
+                        pass
+
+                    try:
+                       save_session_to_sheet({
+                           "Session_ID": session_id,
+                           "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                           "Status": "CLOSED",
+                           "Tasks_Worked": len(completed_steps),
+                           "Notes": "Auto closed"
+                       })
+                    except:
+                        pass
+
+                    return jsonify({
+                        "status": "success",
+                        "decision": "complete",
+                        "Decision_Quality": decision_quality,
+                        "Score": score,
+                        "debug": {
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": [],
+                            "failed_steps": [],
+                            "recent_updates": step_updates[-5:]
+                        }
+                    })
                 # FINAL STEP — NO INTELLIGENCE
 
                 score = 1
