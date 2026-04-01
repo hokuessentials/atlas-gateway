@@ -424,14 +424,20 @@ def atlas_action():
 
         if not parsed_state.get("session_started"):
 
-            if isinstance(active_raw, list) and len(active_raw) >= 2:
-                headers = active_raw[0]
-                values = None
+            try:
+                save_session_to_sheet({
+                    "Session_ID": session_id,
+                    "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Session_Type": "execution",
+                    "Active_Module": "Execution Engine",
+                    "Active_Phase": "Phase 3.5",
+                    "Status": "ACTIVE"
+                })
 
-            for row in reversed(active_raw[1:]):
-                if any(str(cell).strip() != "" for cell in row):
-                    values = row
-                    break
+                parsed_state["session_started"] = True
+
+            except:
+                pass
 
             if values:
                 for i in range(min(len(headers), len(values))):
@@ -526,6 +532,23 @@ def atlas_action():
                         "status": "success",
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
+                try:
+                   requests.post(
+                       APPS_SCRIPT_URL,
+                       json={
+                           "action": "update_active_state",
+                           "payload": {
+                               "session_id": session_id,
+                               "current_step": current_step,
+                               "completed_steps": completed_steps,
+                               "execution_plan": execution_plan,
+                               "step_updates": step_updates
+                            }
+                        },
+                    timeout=3
+                    )
+                except:
+                    pass
 
                     completed_steps.append(current_step)
                     
