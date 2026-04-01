@@ -425,7 +425,7 @@ def atlas_action():
             return []
 
         parsed_state = load_state_from_sheet() or {}
-        session_id = parsed_state.get("session_id")
+        session_id = parsed_state.get("session_id") or input_data.get("session_id")
 
         if not session_id:
             session_id = "S-" + str(int(time.time()))
@@ -580,7 +580,7 @@ def atlas_action():
                     # SAVE STATE IMMEDIATELY
                     try:
                        save_decision_to_sheet({
-                           "Decision_ID": str(int(time.time())),
+                           "Decision_ID": "D-" + str(int(time.time() * 1000)),
                            "Session_ID": session_id,
                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                            "Title": current_step,
@@ -925,7 +925,7 @@ def atlas_action():
                     # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
                     try:
                         save_decision_to_sheet({
-                            "Decision_ID": str(int(time.time())),
+                            "Decision_ID": "D-" + str(int(time.time() * 1000)),
                             "Session_ID": session_id,
                             "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "Title": "Execution Step",
@@ -1045,15 +1045,15 @@ def atlas_action():
                     save_session_to_sheet({
                         "Session_ID": session_id,
                         "Start_Time": "",
-                        "End_Time": "",
+                        "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "Session_Type": "execution",
                         "Active_Module": "Execution Engine",
                         "Active_Phase": "Phase 3.5",
                         "Tasks_Worked": len(completed_steps),
                         "Issues_Found": 0,
-                        "Status": "ACTIVE",
+                        "Status": "CLOSED",
                         "Snapshot_ID": "",
-                        "Notes": "Auto session update"
+                        "Notes": "Auto closed"
                     })
                 except:
                     pass
