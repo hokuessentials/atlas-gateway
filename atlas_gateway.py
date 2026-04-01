@@ -424,24 +424,9 @@ def atlas_action():
 
         if not parsed_state.get("session_started"):
 
-            try:
-                save_session_to_sheet({
-                    "Session_ID": session_id,
-                    "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "Session_Type": "execution",
-                    "Active_Module": "Execution Engine",
-                    "Active_Phase": "Phase 3.5",
-                    "Status": "ACTIVE"
-                })
-
-                parsed_state["session_started"] = True
-
-            except:
-                pass
-
-        if isinstance(active_raw, list) and len(active_raw) >= 2:
-            headers = active_raw[0]
-            values = None
+            if isinstance(active_raw, list) and len(active_raw) >= 2:
+                headers = active_raw[0]
+                values = None
 
             for row in reversed(active_raw[1:]):
                 if any(str(cell).strip() != "" for cell in row):
@@ -824,74 +809,6 @@ def atlas_action():
                     s for s in execution_plan
                     if s not in completed_steps and s != current_step
                 ]
-
-                if not pending_steps:
-                    score = score if score else 1
-                    confidence = round(score, 2)
-                    expected_roi = round(score * 10, 2)
-                    risk_score = round(1 - score, 2)
-                    decision_quality = "final_step"
-
-                    # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
-                    try:
-                        if True:
-                            save_decision_to_sheet({
-                                "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                                "Session_ID": session_id,
-                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "Title": "Execution Step",
-                                "Description": "Auto decision by Atlas",
-                                "Module": "Execution Engine",
-                                "Expected_ROI": expected_roi,
-                                "Risk_Score": risk_score,
-                                "Confidence_Level": confidence,
-                                "Decision_Quality": decision_quality,
-                                "Reversible_Flag": True,
-                                "Decision_Owner": "Atlas",
-                                "Tags": "auto",
-                                "Decision_Type": "execution",
-                                "Outcome_Status": "success",
-                                "Lesson_Learned": "Initial execution completed"
-                            })
-                    except:
-                        pass
-
-                    try:
-                        save_session_to_sheet({
-                            "Session_ID": session_id,
-                            "Start_Time": "",
-                            "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "Session_Type": "execution",
-                            "Active_Module": "Execution Engine",
-                            "Active_Phase": "Phase 3.5",
-                            "Tasks_Worked": len(completed_steps),
-                            "Issues_Found": 0,
-                            "Status": "CLOSED",
-                            "Snapshot_ID": "",
-                            "Notes": "Auto closed"
-                        })
-                    
-                    except:
-                        pass
-
-                    return jsonify({
-                        "status": "success",
-                        "decision": "complete",
-                        "Decision_Quality": decision_quality,
-                        "Score": score,
-
-                        "debug": {
-                            "current_step": current_step,
-                            "completed_steps": completed_steps,
-                            "pending_steps": pending_steps,
-                            "failed_steps": [],
-                            "recent_updates": step_updates[-5:]
-                        }
-                    })
-                    pending_steps = [
-                        s for s in execution_plan
-                        if s not in completed_steps and s != current_step
-                    ]
 
                 final_response = {
                     "status": "success",
