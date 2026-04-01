@@ -449,12 +449,16 @@ def atlas_action():
             try:
                 save_session_to_sheet({
                     "Session_ID": session_id,
-                    "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Start_Time": "",
+                    "End_Time": "",
                     "Session_Type": "execution",
                     "Active_Module": "Execution Engine",
                     "Active_Phase": "Phase 3.5",
+                    "Tasks_Worked": len(completed_steps),
+                    "Issues_Found": 0,
                     "Status": "ACTIVE",
-                    "Notes": "Auto started"
+                    "Snapshot_ID": "",
+                    "Notes": "Auto session update"
                 })
 
                 parsed_state["session_started"] = True
@@ -944,10 +948,18 @@ def atlas_action():
                     try:
                         save_session_to_sheet({
                             "Session_ID": session_id,
-                            "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "Status": "CLOSED",
-                            "Notes": "Auto closed"
+                            "Start_Time": "",
+                            "End_Time": "",
+                            "Session_Type": "execution",
+                            "Active_Module": "Execution Engine",
+                            "Active_Phase": "Phase 3.5",
+                            "Tasks_Worked": len(completed_steps),
+                            "Issues_Found": 0,
+                            "Status": "ACTIVE",
+                            "Snapshot_ID": "",
+                            "Notes": "Auto session update"
                         })
+                    
                     except:
                         pass
 
@@ -1030,15 +1042,18 @@ def atlas_action():
                     pass   
 
                 try:
-                   save_session_to_sheet({
-                       "Session_ID": session_id,
-                       "Session_Type": "execution",
-                       "Active_Module": "Execution Engine",
-                       "Active_Phase": "Phase 3.5",
-                       "Tasks_Worked": len(completed_steps),
-                       "Issues_Found": 0,
-                       "Status": "ACTIVE",
-                       "Notes": "Auto session update"
+                    save_session_to_sheet({
+                        "Session_ID": session_id,
+                        "Start_Time": "",
+                        "End_Time": "",
+                        "Session_Type": "execution",
+                        "Active_Module": "Execution Engine",
+                        "Active_Phase": "Phase 3.5",
+                        "Tasks_Worked": len(completed_steps),
+                        "Issues_Found": 0,
+                        "Status": "ACTIVE",
+                        "Snapshot_ID": "",
+                        "Notes": "Auto session update"
                     })
                 except:
                     pass
