@@ -576,9 +576,10 @@ def atlas_action():
                            "Title": current_step,
                            "Description": "Step executed",
                            "Module": "Execution Engine",
-                           "Expected_ROI": 10,
-                           "Risk_Score": 0.3,
-                           "Confidence_Level": 0.6,
+                           "Expected_ROI": expected_roi,
+                           "Risk_Score": risk_score,
+                           "Confidence_Level": confidence,
+                           "Decision_Quality": decision_quality,
                            "Reversible_Flag": True,
                            "Decision_Owner": "Atlas",
                            "Tags": "execution",
@@ -626,58 +627,6 @@ def atlas_action():
                                 "current_step": current_step,
                                 "completed_steps": completed_steps,
                                 "pending_steps": pending_steps
-                            }
-                        })
-                    
-                if not pending_steps:
-                    # ✅ ADD THIS BLOCK HERE (FIRST LINE INSIDE IF)
-                    if step_updates and any(
-                        u.get("step") == current_step and u.get("status") == "success"
-                        for u in step_updates
-                    ):
-                        # 🔥 ADD THIS (CRITICAL FIX)
-                        try:
-                            save_decision_to_sheet({
-                                "Decision_ID": str(int(time.time())),
-                                "Session_ID": session_id,
-                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "Title": "Execution Step",
-                                "Description": "Auto decision by Atlas",
-                                "Module": "Execution Engine",
-                                "Expected_ROI": 10,
-                                "Risk_Score": 0.3,
-                                "Confidence_Level": 0.6,
-                                "Reversible_Flag": True,
-                                "Decision_Owner": "Atlas",
-                                "Tags": "auto",
-                                "Decision_Type": "execution",
-                                "Outcome_Status": "pending",
-                                "Lesson_Learned": ""
-                            })
-                        except:
-                            pass
-
-                        try:
-                            save_session_to_sheet({
-                                "Session_ID": session_id,
-                                "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "Status": "CLOSED",
-                                "Notes": "Auto closed"
-                            })
-                        except:
-                            pass
-
-                        return jsonify({
-                            "status": "success",
-                            "decision": "complete",
-                            "Decision_Quality": "final_step",
-                            "Score": 1,
-                            "debug": {
-                                "current_step": current_step,
-                                "completed_steps": completed_steps,
-                                "pending_steps": pending_steps,
-                                "failed_steps": [],
-                                "recent_updates": step_updates[-5:]
                             }
                         })
 
@@ -746,19 +695,26 @@ def atlas_action():
                             )
                         except:
                             pass
+                        
+                        score = 1
+                        confidence = round(score, 2)
+                        expected_roi = round(score * 10, 2)
+                        risk_score = round(1 - score, 2)
+                        decision_quality = "execution"
 
                         # SAVE ENGINE DECISION
                         try:
                             save_decision_to_sheet({
                                 "Decision_ID": str(int(time.time())),
-                                "Session_ID": parsed_state.get("session_id"),
+                                "Session_ID": session_id,
                                 "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                                 "Title": "Execution Step",
                                 "Description": "Auto decision by Atlas",
                                 "Module": "Execution Engine",
-                                "Expected_ROI": 10,
-                                "Risk_Score": 0.3,
-                                "Confidence_Level": 0.6,
+                                "Expected_ROI": expected_roi,
+                                "Risk_Score": risk_score,
+                                "Confidence_Level": confidence,
+                                "Decision_Quality": decision_quality,
                                 "Reversible_Flag": True,
                                 "Decision_Owner": "Atlas",
                                 "Tags": "auto",
@@ -949,7 +905,13 @@ def atlas_action():
                 updated_pending = [
                     s for s in execution_plan if s not in updated_completed
                 ]
-
+                    
+                score = 1
+                confidence = round(score, 2)
+                expected_roi = round(score * 10, 2)
+                risk_score = round(1 - score, 2)
+                decision_quality = "execution"
+                
                 # SAVE EXECUTION
                 try:
                     save_decision_to_sheet({
@@ -959,9 +921,10 @@ def atlas_action():
                         "Title": "Execution Step",
                         "Description": "Auto decision by Atlas",
                         "Module": "Execution Engine",
-                        "Expected_ROI": 10,
-                        "Risk_Score": 0.3,
-                        "Confidence_Level": 0.6,
+                        "Expected_ROI": expected_roi,
+                        "Risk_Score": risk_score,
+                        "Confidence_Level": confidence,
+                        "Decision_Quality": decision_quality,
                         "Reversible_Flag": True,
                         "Decision_Owner": "Atlas",
                         "Tags": "auto",
@@ -986,6 +949,11 @@ def atlas_action():
                 ]
 
                 if not pending_steps:
+                    score = 1
+                    confidence = round(score, 2)
+                    expected_roi = round(score * 10, 2)
+                    risk_score = round(1 - score, 2)
+                    decision_quality = "execution"
 
                     # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
                     try:
@@ -996,9 +964,10 @@ def atlas_action():
                             "Title": "Execution Step",
                             "Description": "Auto decision by Atlas",
                             "Module": "Execution Engine",
-                            "Expected_ROI": 10,
-                            "Risk_Score": 0.3,
-                            "Confidence_Level": 0.6,
+                            "Expected_ROI": expected_roi,
+                            "Risk_Score": risk_score,
+                            "Confidence_Level": confidence,
+                            "Decision_Quality": decision_quality,
                             "Reversible_Flag": True,
                             "Decision_Owner": "Atlas",
                             "Tags": "auto",
