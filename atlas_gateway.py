@@ -546,10 +546,10 @@ def atlas_action():
         if input_data.get("execute"):
 
             loop_count = 0
-            max_loops = 5  # safety limit
+            max_loops = 2  # safety limit
 
             start_time = time.time() 
-
+            MAX_RUNTIME = 15 # seconds
             final_response = None
 
             while loop_count < max_loops:
@@ -579,28 +579,29 @@ def atlas_action():
 
                     # SAVE STATE IMMEDIATELY
                     try:
-                       save_decision_to_sheet({
-                           "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                           "Session_ID": session_id,
-                           "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                           "Title": current_step,
-                           "Description": "Step executed",
-                           "Module": "Execution Engine",
-                           "Expected_ROI": expected_roi,
-                           "Risk_Score": risk_score,
-                           "Confidence_Level": confidence,
-                           "Decision_Quality": decision_quality,
-                           "Reversible_Flag": True,
-                           "Decision_Owner": "Atlas",
-                           "Tags": "execution",
-                           "Decision_Type": "execution",
-                           "Outcome_Status": "success",
-                           "Lesson_Learned": "Initial execution completed"
-                       })
+                        if loop_count == 1:
+                            save_decision_to_sheet({
+                                "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                                "Session_ID": session_id,
+                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                "Title": current_step,
+                                "Description": "Step executed",
+                                "Module": "Execution Engine",
+                                "Expected_ROI": expected_roi,
+                                "Risk_Score": risk_score,
+                                "Confidence_Level": confidence,
+                                "Decision_Quality": decision_quality,
+                                "Reversible_Flag": True,
+                                "Decision_Owner": "Atlas",
+                                "Tags": "execution",
+                                "Decision_Type": "execution",
+                                "Outcome_Status": "success",
+                                "Lesson_Learned": "Initial execution completed"
+                            })
                     except:
                         pass
 
-                if time.time() - start_time > 20:
+                if time.time() - start_time > MAX_RUNTIME:
                 
                     return jsonify({
                         "status": "timeout_safe_exit",
@@ -918,24 +919,25 @@ def atlas_action():
 
                     # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
                     try:
-                        save_decision_to_sheet({
-                            "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                            "Session_ID": session_id,
-                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "Title": "Execution Step",
-                            "Description": "Auto decision by Atlas",
-                            "Module": "Execution Engine",
-                            "Expected_ROI": expected_roi,
-                            "Risk_Score": risk_score,
-                            "Confidence_Level": confidence,
-                            "Decision_Quality": decision_quality,
-                            "Reversible_Flag": True,
-                            "Decision_Owner": "Atlas",
-                            "Tags": "auto",
-                            "Decision_Type": "execution",
-                            "Outcome_Status": "success",
-                            "Lesson_Learned": "Initial execution completed"
-                        })
+                        if loop_count == 1:
+                            save_decision_to_sheet({
+                                "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                                "Session_ID": session_id,
+                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                "Title": "Execution Step",
+                                "Description": "Auto decision by Atlas",
+                                "Module": "Execution Engine",
+                                "Expected_ROI": expected_roi,
+                                "Risk_Score": risk_score,
+                                "Confidence_Level": confidence,
+                                "Decision_Quality": decision_quality,
+                                "Reversible_Flag": True,
+                                "Decision_Owner": "Atlas",
+                                "Tags": "auto",
+                                "Decision_Type": "execution",
+                                "Outcome_Status": "success",
+                                "Lesson_Learned": "Initial execution completed"
+                            })
                     except:
                         pass
 
