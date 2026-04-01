@@ -973,6 +973,24 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     })
+                # 🔥 AUTO CLOSE SESSION IF LAST STEP REACHED
+                if current_step == "Finalize supplier":
+                    try:
+                        save_session_to_sheet({
+                            "Session_ID": session_id,
+                            "Start_Time": "",
+                            "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "Session_Type": "execution",
+                            "Active_Module": "Execution Engine",
+                            "Active_Phase": "Phase 3.5",
+                            "Tasks_Worked": len(completed_steps),
+                            "Issues_Found": 0,
+                            "Status": "CLOSED",
+                            "Snapshot_ID": "",
+                            "Notes": "Auto closed"
+                        })
+                    except:
+                        pass
 
                 final_response = {
                     "status": "success",
