@@ -624,106 +624,68 @@ def atlas_action():
                         })
 
                     try:
-                        session = load_session_from_sheet() or {}
+                        # FINAL STEP — NO INTELLIGENCE
 
-                        session["active_state"] = {
-                            "Session_ID": session_id,
-                            "current_step": current_step,
-                            "completed_steps": completed_steps,
-                            "step_updates": step_updates,
-                            "execution_plan": execution_plan
-                        }
+                        score = 1
+                        confidence = 1
+                        expected_roi = 10
+                        risk_score = 0
+                        decision_quality = "final_step"
 
-                        result = generate_intelligent_action(session)
-
-                        step_decision = result.get("step_decision", {})
-
-                        score = step_decision.get("decision_score", 0)
-                        decision_quality = step_decision.get("decision_quality", "execution")
-
-                        confidence = round(score, 2)
-                        expected_roi = round(score * 10, 2)
-                        risk_score = round(1 - score, 2)
-
-                        step_decision = result.get("step_decision", {})
-                        execution_action = step_decision.get("execution_action")
-
-                        decision = step_decision.get("decision")
-                        score = step_decision.get("decision_score", 0)
-
-                        reason = step_decision.get("reason", "").lower()
-
-                        is_real_failure = (
-                            decision in ["blocked"] or
-                            (decision == "hold" and "error" in reason)
-                        )
-                        # =========================
-                        # 🔁 TRACK STEP RESULT
-                        # =========================
-
-                        if is_real_failure:
-                            step_updates.append({
-                                "step": current_step if current_step else "invalid_step",
-                                "status": "failed",
-                                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                            })
-                        else:
-                            step_updates.append({
-                                "step": current_step if current_step else "invalid_step",
-                                "status": "success",
-                                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                            })
-
-                            # ✅ mark completed ONLY on success
-                            if current_step and current_step.strip() != "":
-                                if current_step not in completed_steps:
-                                    completed_steps.append(current_step)
-                         
-                        # 🔥 SAVE STATE AFTER ENGINE UPDATE
+                        # 🔥 SAVE FINAL DECISION
                         try:
-                            requests.post(
-                                APPS_SCRIPT_URL,
-                                json={
-                                    "action": "update_active_state",
-                                    "payload": {
-                                        "session_id": session_id,
-                                        "current_step": current_step,
-                                        "completed_steps": completed_steps,
-                                        "execution_plan": execution_plan,
-                                        "step_updates": step_updates
-                                    }
-                                },
-                                timeout=3
-                            )
+                           save_decision_to_sheet({
+                               "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                               "Session_ID": session_id,
+                               "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                               "Title": "Execution Complete",
+                               "Description": "All steps completed",
+                               "Module": "Execution Engine",
+                               "Expected_ROI": expected_roi,
+                               "Risk_Score": risk_score,
+                               "Confidence_Level": confidence,
+                               "Decision_Quality": decision_quality,
+                               "Reversible_Flag": True,
+                               "Decision_Owner": "Atlas",
+                               "Tags": "final",
+                               "Decision_Type": "execution",
+                               "Outcome_Status": "success",
+                               "Lesson_Learned": "Execution completed"
+                           })
                         except:
                             pass
 
-                        # 🧠 CONTROL FLOW
-                        if execution_action == "execute":
-                            execution_plan = result.get("execution_plan", [])
-                            pending_steps = execution_plan
-                            continue   # 🔁 LOOP CONTINUES
-
-                        elif execution_action in ["hold", "continue"]:
-                        # 🔁 do NOT exit — allow retry/switch logic to run
+                        # 🔥 CLOSE SESSION
+                        try:
+                           save_session_to_sheet({
+                               "Session_ID": session_id,
+                               "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                               "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                               "Session_Type": "execution",
+                               "Active_Module": "Execution Engine",
+                               "Active_Phase": "Phase 3.5",
+                               "Tasks_Worked": len(completed_steps),
+                               "Issues_Found": 0,
+                               "Status": "CLOSED",
+                               "Snapshot_ID": "",
+                               "Notes": "Auto closed"
+                           })
+                        except:
                             pass
 
-                        else:
-                            return jsonify({
-                                "status": "success",
-                                "decision": "complete",
-                                "Decision_Quality": "final_step",
-                                "Score": 1,
-                                "debug": {
-                                    "current_step": current_step,
-                                    "completed_steps": completed_steps,
-                                    "pending_steps": pending_steps,
-                                    "failed_steps": [],
-                                    "recent_updates": step_updates[-5:]
-                                }
-                            })
-
-                    except Exception as e:
+                        return jsonify({
+                            "status": "success",
+                            "decision": "complete",
+                            "Decision_Quality": decision_quality,
+                            "Score": score,
+                            "debug": {
+                                "current_step": current_step,
+                                "completed_steps": completed_steps,
+                                "pending_steps": [],
+                                "failed_steps": [],
+                                "recent_updates": step_updates[-5:]
+                            }
+                        })
                         return jsonify({
                             "status": "success",
                             "decision": "complete",
