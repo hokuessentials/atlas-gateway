@@ -1033,24 +1033,7 @@ def atlas_action():
                         "decision": final_response.get("decision", "proceed")
                     })
                 except:
-                    pass   
-
-                try:
-                    save_session_to_sheet({
-                        "Session_ID": session_id,
-                        "Start_Time": "",
-                        "End_Time": "",
-                        "Session_Type": "execution",
-                        "Active_Module": "Execution Engine",
-                        "Active_Phase": "Phase 3.5",
-                        "Tasks_Worked": len(completed_steps),
-                        "Issues_Found": 0,
-                        "Status": "ACTIVE",
-                        "Snapshot_ID": "",
-                        "Notes": "Auto session update"
-                    })
-                except:
-                    pass
+                    pass 
 
             return jsonify(final_response or {
                 "status": "success",
