@@ -428,15 +428,10 @@ def atlas_action():
                 save_session_to_sheet({
                     "Session_ID": session_id,
                     "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "End_Time": "",
                     "Session_Type": "execution",
                     "Active_Module": "Execution Engine",
                     "Active_Phase": "Phase 3.5",
-                    "Tasks_Worked": 0,
-                    "Issues_Found": 0,
-                    "Status": "ACTIVE",
-                    "Snapshot_ID": "",
-                    "Notes": "Auto session update"
+                    "Status": "ACTIVE"
                 })
 
                 parsed_state["session_started"] = True
@@ -549,7 +544,7 @@ def atlas_action():
 
                     completed_steps.append(current_step)
                     
-                    score = 0.6
+                    score = 0.7 if len(completed_steps) > 1 else 0.5
                     confidence = round(score, 2)
                     expected_roi = round(score * 10, 2)
                     risk_score = round(1 - score, 2)
@@ -622,152 +617,117 @@ def atlas_action():
                                 "pending_steps": pending_steps
                             }
                         })
+                # FINAL STEP — NO INTELLIGENCE
 
+                score = 1
+                confidence = 1
+                expected_roi = 10
+                risk_score = 0
+                decision_quality = "final_step"
+
+                # 🔥 SAVE FINAL DECISION
+                try:
+                    save_decision_to_sheet({
+                        "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                        "Session_ID": session_id,
+                        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "Title": "Execution Complete",
+                        "Description": "All steps completed",
+                        "Module": "Execution Engine",
+                        "Expected_ROI": expected_roi,
+                        "Risk_Score": risk_score,
+                        "Confidence_Level": confidence,
+                        "Decision_Quality": decision_quality,
+                        "Reversible_Flag": True,
+                        "Decision_Owner": "Atlas",
+                        "Tags": "final",
+                        "Decision_Type": "execution",
+                        "Outcome_Status": "success",
+                        "Lesson_Learned": "Execution completed"
+                    })
+                except:
+                    pass
+
+                return jsonify({
+                    "status": "success",
+                    "decision": "complete",
+                    "Decision_Quality": decision_quality,
+                    "Score": score,
+                    "debug": {
+                        "current_step": current_step,
+                         "completed_steps": completed_steps,
+                        "pending_steps": [],
+                        "failed_steps": [],
+                        "recent_updates": step_updates[-5:]
+                    }
+                })
+
+            # =========================
+            # 🔁 RETRY + SWITCH LOGIC
+            # =========================
+
+            failure_count_map = {}
+
+            for update in step_updates:
+                if isinstance(update, dict):
+                    step = update.get("step")
+                    status = update.get("status")
+
+                    if status == "failed":
+                        failure_count_map[step] = failure_count_map.get(step, 0) + 1
+
+            MAX_RETRY = 2
+
+            failed_steps = [
+                step for step, count in failure_count_map.items()
+                if count >= MAX_RETRY
+            ]
+
+            pending_steps = [
+                s for s in execution_plan
+                if s not in completed_steps and s != current_step
+            ]
+
+            available_steps = [
+                s for s in pending_steps
+                if s not in failed_steps
+            ]
+
+            # 🚨 fallback (avoid dead loop)
+
+            if not available_steps:
+
+                # check if reset already happened
+                reset_done = any(
+                    isinstance(u, dict) and u.get("status") == "reset"
+                    for u in step_updates
+                )
+
+                if not reset_done:
+                    step_updates.append({
+                        "step": "system",
+                        "status": "reset",
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                    })
+
+                    # 🔥 SAVE STATE BEFORE RETURN
                     try:
-                        # FINAL STEP — NO INTELLIGENCE
-
-                        score = 1
-                        confidence = 1
-                        expected_roi = 10
-                        risk_score = 0
-                        decision_quality = "final_step"
-
-                        # 🔥 SAVE FINAL DECISION
-                        try:
-                           save_decision_to_sheet({
-                               "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                               "Session_ID": session_id,
-                               "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                               "Title": "Execution Complete",
-                               "Description": "All steps completed",
-                               "Module": "Execution Engine",
-                               "Expected_ROI": expected_roi,
-                               "Risk_Score": risk_score,
-                               "Confidence_Level": confidence,
-                               "Decision_Quality": decision_quality,
-                               "Reversible_Flag": True,
-                               "Decision_Owner": "Atlas",
-                               "Tags": "final",
-                               "Decision_Type": "execution",
-                               "Outcome_Status": "success",
-                               "Lesson_Learned": "Execution completed"
-                           })
-                        except:
-                            pass
-
-                        # 🔥 CLOSE SESSION
-                        try:
-                           save_session_to_sheet({
-                               "Session_ID": session_id,
-                               "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                               "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                               "Session_Type": "execution",
-                               "Active_Module": "Execution Engine",
-                               "Active_Phase": "Phase 3.5",
-                               "Tasks_Worked": len(completed_steps),
-                               "Issues_Found": 0,
-                               "Status": "CLOSED",
-                               "Snapshot_ID": "",
-                               "Notes": "Auto closed"
-                           })
-                        except:
-                            pass
-
-                        return jsonify({
-                            "status": "success",
-                            "decision": "complete",
-                            "Decision_Quality": decision_quality,
-                            "Score": score,
-                            "debug": {
-                                "current_step": current_step,
-                                "completed_steps": completed_steps,
-                                "pending_steps": [],
-                                "failed_steps": [],
-                                "recent_updates": step_updates[-5:]
-                            }
-                        })
-                        return jsonify({
-                            "status": "success",
-                            "decision": "complete",
-                            "Decision_Quality": "final_step",
-                            "Score": 1,
-                            "message": str(e),
-
-                            "debug": {
-                                "current_step": current_step if 'current_step' in locals() else None,
-                                "completed_steps": completed_steps if 'completed_steps' in locals() else [],
-                                "pending_steps": pending_steps if 'pending_steps' in locals() else [],
-                                "failed_steps": [],
-                                "recent_updates": step_updates[-5:] if 'step_updates' in locals() else []
-                            }
-                        })
-
-                # =========================
-                # 🔁 RETRY + SWITCH LOGIC
-                # =========================
-
-                failure_count_map = {}
-
-                for update in step_updates:
-                    if isinstance(update, dict):
-                        step = update.get("step")
-                        status = update.get("status")
-
-                        if status == "failed":
-                            failure_count_map[step] = failure_count_map.get(step, 0) + 1
-
-                MAX_RETRY = 2
-
-                failed_steps = [
-                    step for step, count in failure_count_map.items()
-                    if count >= MAX_RETRY
-                ]
-
-                pending_steps = [
-                    s for s in execution_plan
-                    if s not in completed_steps and s != current_step
-                ]
-
-                available_steps = [
-                    s for s in pending_steps
-                    if s not in failed_steps
-                ]
-
-                # 🚨 fallback (avoid dead loop)
-
-                if not available_steps:
-
-                    # check if reset already happened
-                    reset_done = any(
-                        isinstance(u, dict) and u.get("status") == "reset"
-                        for u in step_updates
-                    )
-
-                    if not reset_done:
-                        step_updates.append({
-                            "step": "system",
-                            "status": "reset",
-                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                        })
-
-                        # 🔥 SAVE STATE BEFORE RETURN
-                        try:
-                            requests.post(
-                                APPS_SCRIPT_URL,
-                                json={
-                                    "action": "update_active_state",
-                                    "payload": {
-                                        "session_id": session_id,
-                                        "current_step": current_step,
-                                        "completed_steps": completed_steps,
-                                        "execution_plan": execution_plan,
-                                        "step_updates": step_updates
-                                    }
-                                },
-                                timeout=3
-                            )
-                        except:
-                            pass
+                        requests.post(
+                            APPS_SCRIPT_URL,
+                            json={
+                                "action": "update_active_state",
+                                "payload": {
+                                    "session_id": session_id,
+                                    "current_step": current_step,
+                                    "completed_steps": completed_steps,
+                                    "execution_plan": execution_plan,
+                                    "step_updates": step_updates
+                                }
+                            },
+                            timeout=3
+                        )
+                    except:
+                        pass
 
                         return jsonify({
                             "status": "retrying",
