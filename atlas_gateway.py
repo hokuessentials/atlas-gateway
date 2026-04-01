@@ -542,7 +542,7 @@ def atlas_action():
         if input_data.get("execute"):
 
             loop_count = 0
-            max_loops = 1  # safety limit
+            max_loops = 5  # safety limit
 
             start_time = time.time() 
 
@@ -1019,11 +1019,18 @@ def atlas_action():
                     except:
                         pass
 
+                    score = 1
+                    decision_quality = "final_step"
+
+                    confidence = round(score, 2)
+                    expected_roi = round(score * 10, 2)
+                    risk_score = round(1 - score, 2)
                     return jsonify({
                         "status": "success",
                         "decision": "complete",
-                        "Decision_Quality": "final_step",
-                        "Score": 1,
+                        "Decision_Quality": decision_quality,
+                        "Score": score,
+
                         "debug": {
                             "current_step": current_step,
                             "completed_steps": completed_steps,
