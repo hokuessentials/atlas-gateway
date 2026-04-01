@@ -532,25 +532,25 @@ def atlas_action():
                         "status": "success",
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
-                try:
-                   requests.post(
-                       APPS_SCRIPT_URL,
-                       json={
-                           "action": "update_active_state",
-                           "payload": {
-                               "session_id": session_id,
-                               "current_step": current_step,
-                               "completed_steps": completed_steps,
-                               "execution_plan": execution_plan,
-                               "step_updates": step_updates
-                            }
-                        },
-                    timeout=3
-                    )
-                except:
-                    pass
 
                     completed_steps.append(current_step)
+                    try:
+                        requests.post(
+                            APPS_SCRIPT_URL,
+                            json={
+                                "action": "update_active_state",
+                                "payload": {
+                                    "session_id": session_id,
+                                    "current_step": current_step,
+                                    "completed_steps": completed_steps,
+                                    "execution_plan": execution_plan,
+                                    "step_updates": step_updates
+                               }
+                           },
+                        timeout=3
+                        )
+                    except:
+                        pass
                     
                     score = 0.7 if len(completed_steps) > 1 else 0.5
                     confidence = round(score, 2)
