@@ -41,7 +41,7 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFl
 def save_state_to_sheet(active_state):
     try:
         payload = {
-            "action": "save_state",
+            "action": "update_active_state"
             "data": active_state
         }
 
@@ -438,10 +438,6 @@ def atlas_action():
 
             except:
                 pass
-
-            if values:
-                for i in range(min(len(headers), len(values))):
-                    parsed_state[headers[i]] = values[i]
 
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         completed_steps = list(dict.fromkeys([
