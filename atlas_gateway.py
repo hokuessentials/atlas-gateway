@@ -41,7 +41,7 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFl
 def save_state_to_sheet(active_state):
     try:
         payload = {
-            "action": "update_active_state"
+            "action": "update_active_state",
             "data": active_state
         }
 
