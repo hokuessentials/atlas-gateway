@@ -273,28 +273,6 @@ def load_session_from_sheet():
     return session_data
 
 import threading
-
-def save_session_to_sheet_async(session_data):
-
-    def task():
-        try:
-            payload = {
-                "action": "save_session",
-                "data": session_data
-            }
-
-            requests.post(
-                APPS_SCRIPT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=3
-            )
-
-        except Exception as e:
-            print("❌ SESSION SAVE ERROR:", e)
-
-    threading.Thread(target=task).start()
-
 def update_decision_outcome(decision_id, outcome, lesson):
 
     payload = {
@@ -449,7 +427,7 @@ def atlas_action():
             try:
                 save_session_to_sheet({
                     "Session_ID": session_id,
-                    "Start_Time": "",
+                    "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                     "End_Time": "",
                     "Session_Type": "execution",
                     "Active_Module": "Execution Engine",
@@ -579,7 +557,7 @@ def atlas_action():
 
                     # SAVE STATE IMMEDIATELY
                     try:
-                        if loop_count == 1:
+                        if True:
                             save_decision_to_sheet({
                                 "Decision_ID": "D-" + str(int(time.time() * 1000)),
                                 "Session_ID": session_id,
@@ -625,7 +603,11 @@ def atlas_action():
                         "status": "warning",
                         "decision": "blocked"
                     })
-
+                
+                pending_steps = [
+                    s for s in execution_plan
+                    if s not in completed_steps and s != current_step
+                ]
                 # =========================
                 # COMPLETE → ENGINE
                 # =========================
@@ -919,7 +901,7 @@ def atlas_action():
 
                     # 🔥 LOG FINAL DECISION (ADD THIS FIRST)
                     try:
-                        if loop_count == 1:
+                        if True:
                             save_decision_to_sheet({
                                 "Decision_ID": "D-" + str(int(time.time() * 1000)),
                                 "Session_ID": session_id,
