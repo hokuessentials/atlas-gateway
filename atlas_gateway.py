@@ -410,10 +410,8 @@ def atlas_action():
 
         if not session_id:
             session_id = "S-" + str(int(time.time()))
-
-        if not session_id:
-            session_id = "S-" + str(int(time.time()))
             parsed_state["session_id"] = session_id
+
             # requests.post(...)
             save_state_to_sheet({
                 "session_id": session_id
@@ -504,6 +502,8 @@ def atlas_action():
                         "Session_Type": "execution",
                         "Active_Module": "Execution Engine",
                         "Active_Phase": "Phase 3.5",
+                        "Tasks_Worked": 1,
+                        "Issues_Found": 0,
                         "Status": "ACTIVE",
                         "Notes": "Auto session update"
                     })
@@ -533,6 +533,10 @@ def atlas_action():
                         "execution_plan": json.dumps(execution_plan),
                         "step_updates": json.dumps(step_updates)
                     })
+                    # 🔥 MOVE TO NEXT STEP IMMEDIATELY
+                    remaining = [s for s in execution_plan if s not in completed_steps]
+                    if remaining:
+                        current_step = remaining[0]
 
                     score = 0.7 if len(completed_steps) > 1 else 0.5
                     confidence = round(score, 2)
