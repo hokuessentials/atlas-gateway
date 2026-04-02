@@ -702,8 +702,6 @@ def atlas_action():
             # =========================
 
             raw_candidates = available_steps if available_steps else pending_steps
-            # ❌ REMOVE CURRENT STEP FROM SELECTION
-            raw_candidates = [s for s in raw_candidates if s != current_step]
 
             # 🧠 APPLY DEPENDENCY FILTER
             candidates = [
@@ -721,14 +719,14 @@ def atlas_action():
             else:
                 try:
                     # 🧠 get better step using intelligence layer
-                    better_step = select_better_step(
-                        current_step=current_step,
-                        candidates=candidates,
-                        completed_steps=completed_steps,
-                        step_updates=step_updates
-                    )
+                    # 🔥 STRICT SEQUENTIAL FLOW (NO AI OVERRIDE)
 
-                    next_step = better_step if (better_step and str(better_step).strip() != "") else candidates[0]
+                    remaining = [s for s in execution_plan if s not in completed_steps]
+
+                    if remaining:
+                        next_step = remaining[0]
+                    else:
+                        next_step = None
 
                 except Exception as e:
                     print("⚠️ STEP SELECTION ERROR:", e)
