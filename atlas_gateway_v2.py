@@ -517,8 +517,6 @@ def atlas_action():
                     if s.strip().lower() not in normalized_completed
                 ]
                 next_step = remaining[0] if remaining else None
-
-                previous_step = current_step
                 
                 # 3. MOVE TO NEXT
                 if next_step:
@@ -717,7 +715,7 @@ def atlas_action():
                     "module": "Execution Engine",
                     "phase": "Phase 3.5",
                     "task": "Control Layer Build",
-                    "status": "complete" if final_response["decision"] == "complete" else "active",
+                    "status": "complete" if not pending_steps else "active",
                     "current_step": previous_step,
                     "next_step": current_step,
                     "owner": "Atlas",
