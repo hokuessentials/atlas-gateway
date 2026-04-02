@@ -532,26 +532,25 @@ def atlas_action():
                     })
 
                     completed_steps.append(current_step)
-                    # requests.post(...)
-                    try:
-                        requests.post(
-                            APPS_SCRIPT_URL,
-                            json={
-                                "action": "update_active_state",
-                                "payload": {
-                                    "session_id": session_id,
-                                    "current_step": current_step,
-                                    "completed_steps": json.dumps(completed_steps),
-                                    "execution_plan": json.dumps(execution_plan),
-                                    "step_updates": json.dumps(step_updates)
-                               }
-                           },
-                        headers={"Content-Type": "application/json"},
-                        timeout=10,
-                        allow_redirects=True
-                        )
-                    except:
-                        pass
+                  # requests.post(...)
+                  #     requests.post(
+                  #        APPS_SCRIPT_URL,
+                  #        json={
+                  #            "action": "update_active_state",
+                  #         "payload": {
+                  #            "session_id": session_id,
+                  #            "current_step": current_step,
+                  #            "completed_steps": json.dumps(completed_steps),
+                  #            "execution_plan": json.dumps(execution_plan),
+                  #            "step_updates": json.dumps(step_updates)
+                  #            }
+                  #         },
+                  #        headers={"Content-Type": "application/json"},
+                  #        timeout=10,
+                  #        allow_redirects=True
+                  #     )
+                  #  except:
+                  #  pass
                     
                     score = 0.7 if len(completed_steps) > 1 else 0.5
                     confidence = round(score, 2)
@@ -731,26 +730,26 @@ def atlas_action():
                     })
 
                     # 🔥 SAVE STATE BEFORE RETURN
-                    # requests.post(...)
-                    try:
-                        requests.post(
-                            APPS_SCRIPT_URL,
-                            json={
-                                "action": "update_active_state",
-                                "payload": {
-                                    "session_id": session_id,
-                                    "current_step": current_step,
-                                    "completed_steps": json.dumps(completed_steps),
-                                    "execution_plan": json.dumps(execution_plan),
-                                    "step_updates": json.dumps(step_updates)
-                                }
-                            },
-                            headers={"Content-Type": "application/json"},
-                            timeout=10,
-                            allow_redirects=True
-                        )
-                    except:
-                        pass
+                #    # requests.post(...)
+                #    try:
+                #        requests.post(
+                #            APPS_SCRIPT_URL,
+                #            json={
+                #                "action": "update_active_state",
+                #                "payload": {
+                #                    "session_id": session_id,
+                #                    "current_step": current_step,
+                #                    "completed_steps": json.dumps(completed_steps),
+                #                    "execution_plan": json.dumps(execution_plan),
+                #                    "step_updates": json.dumps(step_updates)
+                #                }
+                #            },
+                #            headers={"Content-Type": "application/json"},
+                #            timeout=10,
+                #            allow_redirects=True
+                #        )
+                #    except:
+                #        pass
 
                     return jsonify({
                         "status": "retrying",
@@ -906,7 +905,7 @@ def atlas_action():
                     "execution_plan": json.dumps(execution_plan),
                     "step_updates": json.dumps(step_updates)
                 })
-                
+
             return jsonify(final_response or {
                 "status": "success",
                 "decision": "loop_finished"
