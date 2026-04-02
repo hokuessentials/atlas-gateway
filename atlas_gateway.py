@@ -415,21 +415,10 @@ def atlas_action():
             session_id = "S-" + str(int(time.time()))
             parsed_state["session_id"] = session_id
             # requests.post(...)
-            try:
-                requests.post(
-                    APPS_SCRIPT_URL,
-                    json={
-                        "action": "update_active_state",
-                        "payload": {
-                            "session_id": session_id
-                        }
-                    },
-                    headers={"Content-Type": "application/json"},
-                    timeout=3,
-                    allow_redirects=True
-                )
-            except:
-               pass
+            save_state_to_sheet({
+                "session_id": session_id
+            })
+            
 
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         completed_steps = list(dict.fromkeys([
@@ -677,27 +666,6 @@ def atlas_action():
                     })
 
                     # 🔥 SAVE STATE BEFORE RETURN
-                    # requests.post(...)
-                    try:
-                        requests.post(
-                            APPS_SCRIPT_URL,
-                            json={
-                               "action": "update_active_state",
-                                "payload": {
-                                    "session_id": session_id,
-                                    "current_step": current_step,
-                                    "completed_steps": json.dumps(completed_steps),
-                                   "execution_plan": json.dumps(execution_plan),
-                                   "step_updates": json.dumps(step_updates)
-                               }
-                            },
-                            headers={"Content-Type": "application/json"},
-                            timeout=3,
-                            allow_redirects=True
-                        )
-                    except:
-                        pass
-
                     return jsonify({
                         "status": "retrying",
                         "reason": "All steps failed once, retrying",
