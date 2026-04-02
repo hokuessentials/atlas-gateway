@@ -54,7 +54,12 @@ def save_state_to_sheet(active_state):
         try:
             requests.post(
                 APPS_SCRIPT_URL,
-                json=payload,
+                json={
+                    "action": "update_active_state",
+                    "payload": {
+                    "session_id": session_id
+                    }
+                },
                 headers={"Content-Type": "application/json"},
                 timeout=10,
                 allow_redirects=True
@@ -120,8 +125,6 @@ def save_decision_to_sheet(decision_data):
                 allow_redirects=True
             )
 
-        print("🔥 DECISION SAVE:", resp.text)
-
     except Exception as e:
         print("❌ DECISION SAVE ERROR:", e)       
 
@@ -149,11 +152,18 @@ def load_state_from_sheet():
 
         state = data.get("active_state", {})
 
-        if isinstance(state, str):
+        # 🔥 FIX: convert sheet array → dict
+        if isinstance(state, list):
             try:
-                state = json.loads(state)
+                headers = state[0]
+                values = state[-1]
+                state = dict(zip(headers, values))
             except:
                 state = {}
+
+        # 🔥 safety
+        if not isinstance(state, dict):
+            state = {}
 
         return state
 
@@ -367,8 +377,6 @@ def save_session_to_sheet(session):
                 allow_redirects=True
             )
 
-        print("🔥 SESSION SAVE:", resp.text)
-
     except Exception as e:
         print("❌ SESSION SAVE ERROR:", e)
         
@@ -533,7 +541,9 @@ def atlas_action():
                                     "step_updates": step_updates
                                }
                            },
-                        timeout=10
+                        headers={"Content-Type": "application/json"},
+                        timeout=10,
+                        allow_redirects=True
                         )
                     except:
                         pass
@@ -729,7 +739,9 @@ def atlas_action():
                                     "step_updates": step_updates
                                 }
                             },
-                            timeout=10
+                            headers={"Content-Type": "application/json"},
+                            timeout=10,
+                            allow_redirects=True
                         )
                     except:
                         pass
