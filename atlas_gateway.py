@@ -519,25 +519,6 @@ def atlas_action():
                     })
 
                     completed_steps.append(current_step)
-                  # requests.post(...)
-                  #     requests.post(
-                  #        APPS_SCRIPT_URL,
-                  #        json={
-                  #            "action": "update_active_state",
-                  #         "payload": {
-                  #            "session_id": session_id,
-                  #            "current_step": current_step,
-                  #            "completed_steps": json.dumps(completed_steps),
-                  #            "execution_plan": json.dumps(execution_plan),
-                  #            "step_updates": json.dumps(step_updates)
-                  #            }
-                  #         },
-                  #        headers={"Content-Type": "application/json"},
-                  #        timeout=3,
-                  #        allow_redirects=True
-                  #     )
-                  #  except:
-                  #  pass
                     
                     score = 0.7 if len(completed_steps) > 1 else 0.5
                     confidence = round(score, 2)
@@ -580,6 +561,7 @@ def atlas_action():
                             "pending_steps": pending_steps
                         }
                     })
+                
                 # =========================
                 # FAILURE GUARD
                 # =========================
@@ -822,6 +804,28 @@ def atlas_action():
                     s for s in execution_plan
                     if s not in completed_steps and s != current_step
                 ]
+                # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
+                try:
+                    save_decision_to_sheet({
+                        "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                        "Session_ID": session_id,
+                        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "Title": previous_step,
+                        "Description": "Step executed",
+                        "Module": "Execution Engine",
+                        "Expected_ROI": 5,
+                        "Risk_Score": 0.5,
+                        "Confidence_Level": 0.5,
+                        "Decision_Quality": "execution",
+                        "Reversible_Flag": True,
+                        "Decision_Owner": "Atlas",
+                        "Tags": "execution",
+                        "Decision_Type": "execution",
+                        "Outcome_Status": "success",
+                        "Lesson_Learned": "Step executed"
+                    })
+                except:
+                    pass
 
                 final_response = {
                     "status": "success",
@@ -855,6 +859,20 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     }
+                # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
+                try:
+                    save_session_to_sheet({
+                       "Session_ID": session_id,
+                       "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                       "Session_Type": "execution",
+                       "Active_Module": "Execution Engine",
+                       "Active_Phase": "Phase 3.5",
+                       "Tasks_Worked": len(completed_steps),
+                       "Status": "ACTIVE",
+                       "Notes": "Auto session update"
+                    })
+                except:
+                    pass
 
                 # 🔥 UPDATE MASTER TRACKER (CORRECT)
                 try:
