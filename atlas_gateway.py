@@ -405,7 +405,9 @@ def atlas_action():
 
         if isinstance(parsed_state, list):
             parsed_state = {}
-
+        if not session_id:
+            session_id = "S-" + str(int(time.time()))
+            
         session_id = parsed_state.get("session_id") or input_data.get("session_id")
 
         if not session_id:
@@ -504,6 +506,21 @@ def atlas_action():
             while loop_count < max_loops:
                 loop_count += 1
 
+            # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
+                try:
+                   save_session_to_sheet({
+                       "Session_ID": session_id,
+                       "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                       "Session_Type": "execution",
+                       "Active_Module": "Execution Engine",
+                       "Active_Phase": "Phase 3.5",
+                       "Tasks_Worked": len(completed_steps),
+                       "Status": "ACTIVE",
+                       "Notes": "Auto session update"
+                    })
+                except:
+                    pass
+
                 # =========================
                 # 🔥 FORCE EXECUTION OF CURRENT STEP
                 # =========================
@@ -525,30 +542,6 @@ def atlas_action():
                     expected_roi = round(score * 10, 2)
                     risk_score = round(1 - score, 2)
                     decision_quality = "execution"
-
-                    # SAVE STATE IMMEDIATELY
-                    try:
-                        if True:
-                            save_decision_to_sheet({
-                                "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                                "Session_ID": session_id,
-                                "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "Title": current_step,
-                                "Description": "Step executed",
-                                "Module": "Execution Engine",
-                                "Expected_ROI": expected_roi,
-                                "Risk_Score": risk_score,
-                                "Confidence_Level": confidence,
-                                "Decision_Quality": decision_quality,
-                                "Reversible_Flag": True,
-                                "Decision_Owner": "Atlas",
-                                "Tags": "execution",
-                                "Decision_Type": "execution",
-                                "Outcome_Status": "success",
-                                "Lesson_Learned": "Initial execution completed"
-                            })
-                    except:
-                        pass
 
                 if time.time() - start_time > MAX_RUNTIME:
                 
@@ -804,6 +797,23 @@ def atlas_action():
                     s for s in execution_plan
                     if s not in completed_steps and s != current_step
                 ]
+
+                final_response = {
+                    "status": "success",
+                    "decision": "proceed",
+                    "executed_step": previous_step,
+                    "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
+
+                    # 🔥 DEBUG BLOCK (ADD HERE)
+                    "debug": {
+                        "current_step": current_step,
+                        "selected_step": next_step,
+                        "completed_steps": completed_steps,
+                        "pending_steps": pending_steps,
+                        "failed_steps": failed_steps,
+                        "recent_updates": step_updates[-5:]
+                    }
+                }
                 # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
                 try:
                     save_decision_to_sheet({
@@ -826,24 +836,6 @@ def atlas_action():
                     })
                 except:
                     pass
-
-                final_response = {
-                    "status": "success",
-                    "decision": "proceed",
-                    "executed_step": previous_step,
-                    "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
-
-                    # 🔥 DEBUG BLOCK (ADD HERE)
-                    "debug": {
-                        "current_step": current_step,
-                        "selected_step": next_step,
-                        "completed_steps": completed_steps,
-                        "pending_steps": pending_steps,
-                        "failed_steps": failed_steps,
-                        "recent_updates": step_updates[-5:]
-                    }
-                }
-            
                 # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
                 if not final_response:
                     final_response = {
@@ -858,21 +850,7 @@ def atlas_action():
                             "failed_steps": [],
                             "recent_updates": step_updates[-5:]
                         }
-                    }
-                # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
-                try:
-                    save_session_to_sheet({
-                       "Session_ID": session_id,
-                       "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                       "Session_Type": "execution",
-                       "Active_Module": "Execution Engine",
-                       "Active_Phase": "Phase 3.5",
-                       "Tasks_Worked": len(completed_steps),
-                       "Status": "ACTIVE",
-                       "Notes": "Auto session update"
-                    })
-                except:
-                    pass
+                    } 
 
                 # 🔥 UPDATE MASTER TRACKER (CORRECT)
                 try:
