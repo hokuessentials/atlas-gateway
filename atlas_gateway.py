@@ -435,7 +435,10 @@ def atlas_action():
                     "Active_Phase": "Phase 3.5",
                     "Status": "ACTIVE"
                 })
-
+                save_session_to_sheet({
+                "Session_ID": session_id,
+                "Status": "ACTIVE"
+                })
                 parsed_state["session_started"] = True
 
             except:
