@@ -42,7 +42,7 @@ def save_state_to_sheet(active_state):
     try:
         payload = {
             "action": "update_active_state",
-            "data": active_state
+            "payload": active_state
         }
 
         print("🔥 SAVING STATE:", payload)
@@ -52,11 +52,12 @@ def save_state_to_sheet(active_state):
         }
 
         try:
-            resp = requests.post(
+            requests.post(
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=10
+                timeout=10,
+                allow_redirects=True
             )
         except Exception as e:
             print("⚠️ API CALL FAILED:", e)
@@ -72,11 +73,12 @@ def log_execution_to_sheet(data):
         }
 
         requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps(payload),
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
+                APPS_SCRIPT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+                allow_redirects=True
+            )
 
     except Exception as e:
         print("❌ LOG ERROR:", e)
@@ -89,11 +91,12 @@ def update_tracker(data):
         }
 
         requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps(payload),
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
+                APPS_SCRIPT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+                allow_redirects=True
+            )
 
     except Exception as e:
         print("❌ TRACKER ERROR:", e)
@@ -109,12 +112,13 @@ def save_decision_to_sheet(decision_data):
             "Content-Type": "application/json"
         }
 
-        resp = requests.post(
-            APPS_SCRIPT_URL,
-            json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
+        requests.post(
+                APPS_SCRIPT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+                allow_redirects=True
+            )
 
         print("🔥 DECISION SAVE:", resp.text)
 
@@ -123,7 +127,7 @@ def save_decision_to_sheet(decision_data):
 
 def load_state_from_sheet():
     try:
-        url = APPS_SCRIPT_URL + "?action=get_state"
+        url = APPS_SCRIPT_URL + "?action=read_active_state"
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
@@ -274,11 +278,12 @@ def update_decision_outcome(decision_id, outcome, lesson):
 
     try:
         requests.post(
-            APPS_SCRIPT_URL,
-            json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
+                APPS_SCRIPT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+                allow_redirects=True
+            )
     except Exception as e:
         print("❌ Update decision error:", e)
 
@@ -354,13 +359,13 @@ def save_session_to_sheet(session):
             "Content-Type": "application/json"
         }
 
-        resp = requests.post(
-            APPS_SCRIPT_URL,
-            json=payload,
-            headers=headers,
-            timeout=10,
-            allow_redirects=True
-        )
+        requests.post(
+                APPS_SCRIPT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+                allow_redirects=True
+            )
 
         print("🔥 SESSION SAVE:", resp.text)
 
@@ -398,15 +403,12 @@ def atlas_action():
             parsed_state["session_id"] = session_id
             try:
                requests.post(
-                   APPS_SCRIPT_URL,
-                   json={
-                       "action": "update_active_state",
-                       "payload": {
-                           "session_id": session_id
-                        }
-                    },
-                    timeout=10
-                )
+                APPS_SCRIPT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+                allow_redirects=True
+            )
             except:
                pass
 
