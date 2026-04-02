@@ -722,91 +722,58 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     })
-                    
+
             # =========================
-            # 🧠 INTELLIGENT STEP SELECTION
+            # 🔥 CLEAN STEP FLOW (V2 BASE)
             # =========================
 
-            raw_candidates = available_steps if available_steps else pending_steps
+            previous_step = current_step
 
-            # fallback safety
-            if not candidates:
-                    next_step = current_step   # ✅ SAFE FALLBACK
-            else:
-                try:
-                    # 🧠 get better step using intelligence layer
-                    # 🔥 STRICT SEQUENTIAL FLOW (NO AI OVERRIDE)
+            next_step = suggest_next_step(execution_plan, completed_steps)
 
-                    remaining = [s for s in execution_plan if s not in completed_steps]
+            if next_step:
+                current_step = next_step
 
-                    if remaining:
-                        next_step = remaining[0]
-                    else:
-                        next_step = None
+            pending_steps = [
+                s for s in execution_plan
+                if s not in completed_steps and s != current_step
+            ]
 
-                except Exception as e:
-                    print("⚠️ STEP SELECTION ERROR:", e)
-                    next_step = candidates[0]
-
-
-                # ❌ DO NOT mark completed here
-                updated_completed = list(completed_steps)
-
-                updated_pending = [
-                    s for s in execution_plan if s not in updated_completed
-                ]
-
-                # 🔁 UPDATE STATE FOR NEXT LOOP
-                pending_steps = updated_pending
-                previous_step = current_step
-
-                if next_step:
-                    current_step = next_step
-
-                # 🔥 RECOMPUTE pending AFTER updating current_step
-                pending_steps = [
-                    s for s in execution_plan
-                    if s not in completed_steps and s != current_step
-                ]
-
-                final_response = {
-                    "status": "success",
-                    "decision": "proceed",
-                    "executed_step": previous_step,
-                    "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
-
-                    # 🔥 DEBUG BLOCK (ADD HERE)
-                    "debug": {
-                        "current_step": current_step,
-                        "selected_step": next_step,
-                        "completed_steps": completed_steps,
-                        "pending_steps": pending_steps,
-                        "failed_steps": failed_steps,
-                        "recent_updates": step_updates[-5:]
-                    }
+            final_response = {
+                "status": "success",
+                "decision": "proceed",
+                "executed_step": previous_step,
+                "next_step": current_step,
+                "debug": {
+                    "current_step": current_step,
+                    "completed_steps": completed_steps,
+                    "pending_steps": pending_steps,
+                    "failed_steps": [],
+                    "recent_updates": step_updates[-5:]
                 }
-                # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
-                try:
-                    save_decision_to_sheet({
-                        "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                        "Session_ID": session_id,
-                        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "Title": previous_step,
-                        "Description": "Step executed",
-                        "Module": "Execution Engine",
-                        "Expected_ROI": 5,
-                        "Risk_Score": 0.5,
-                        "Confidence_Level": 0.5,
-                        "Decision_Quality": "execution",
-                        "Reversible_Flag": True,
-                        "Decision_Owner": "Atlas",
-                        "Tags": "execution",
-                        "Decision_Type": "execution",
-                        "Outcome_Status": "success",
-                        "Lesson_Learned": "Step executed"
-                    })
-                except:
-                    pass
+            }
+            # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
+            try:
+                save_decision_to_sheet({
+                    "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                    "Session_ID": session_id,
+                    "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Title": previous_step,
+                    "Description": "Step executed",
+                    "Module": "Execution Engine",
+                    "Expected_ROI": 5,
+                    "Risk_Score": 0.5,
+                    "Confidence_Level": 0.5,
+                    "Decision_Quality": "execution",
+                    "Reversible_Flag": True,
+                    "Decision_Owner": "Atlas",
+                    "Tags": "execution",
+                    "Decision_Type": "execution",
+                    "Outcome_Status": "success",
+                    "Lesson_Learned": "Step executed"
+                })
+            except:
+                pass
                 # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
                 if not final_response:
                     final_response = {
