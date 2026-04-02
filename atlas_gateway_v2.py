@@ -479,13 +479,28 @@ def atlas_action():
                     previous_step = current_step  # ✅ capture correct step
 
                     print("⚡ EXECUTING STEP:", current_step)
+                    
+                    # ✅ TRACK EXECUTION
+                    step_updates.append({
+                        "step": current_step,
+                        "status": "success",
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                    })
 
+                    # ✅ ADD TO COMPLETED (NORMALIZED)
+                    completed_steps.append(current_step.strip())
+
+                    # ✅ SAVE STATE
+                    save_state_to_sheet({
+                        "session_id": session_id,
+                        "current_step": current_step,
+                        "completed_steps": json.dumps(completed_steps),
+                        "execution_plan": json.dumps(execution_plan),
+                        "step_updates": json.dumps(step_updates)
+                    })
                 # =========================
                 # 🔥 NOW DECIDE NEXT STEP
                 # =========================
-
-                if next_step:
-                    current_step = next_step
 
                 pending_steps = [
                     s for s in execution_plan
