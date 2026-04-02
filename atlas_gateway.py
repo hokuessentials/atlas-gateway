@@ -50,7 +50,7 @@ def save_state_to_sheet(active_state):
         headers = {
             "Content-Type": "application/json"
         }
-
+        # requests.post(...)
         try:
             requests.post(
                 APPS_SCRIPT_URL,
@@ -74,7 +74,7 @@ def log_execution_to_sheet(data):
             "action": "log_execution",
             "data": data
         }
-
+        # requests.post(...)
         requests.post(
                 APPS_SCRIPT_URL,
                 json=payload,
@@ -92,7 +92,7 @@ def update_tracker(data):
             "action": "update_tracker",
             "data": data
         }
-
+        # requests.post(...)
         requests.post(
                 APPS_SCRIPT_URL,
                 json=payload,
@@ -114,7 +114,7 @@ def save_decision_to_sheet(decision_data):
         headers = {
             "Content-Type": "application/json"
         }
-
+        # requests.post(...)
         requests.post(
                 APPS_SCRIPT_URL,
                 json=payload,
@@ -283,7 +283,7 @@ def update_decision_outcome(decision_id, outcome, lesson):
             "Lesson_Learned": lesson
         }
     }
-
+    # requests.post(...)
     try:
         requests.post(
                 APPS_SCRIPT_URL,
@@ -366,7 +366,7 @@ def save_session_to_sheet(session):
         headers = {
             "Content-Type": "application/json"
         }
-
+        # requests.post(...)
         requests.post(
                 APPS_SCRIPT_URL,
                 json=payload,
@@ -407,6 +407,7 @@ def atlas_action():
         if not session_id:
             session_id = "S-" + str(int(time.time()))
             parsed_state["session_id"] = session_id
+            # requests.post(...)
             try:
                 requests.post(
                     APPS_SCRIPT_URL,
@@ -531,6 +532,7 @@ def atlas_action():
                     })
 
                     completed_steps.append(current_step)
+                    # requests.post(...)
                     try:
                         requests.post(
                             APPS_SCRIPT_URL,
@@ -539,9 +541,9 @@ def atlas_action():
                                 "payload": {
                                     "session_id": session_id,
                                     "current_step": current_step,
-                                    "completed_steps": completed_steps,
-                                    "execution_plan": execution_plan,
-                                    "step_updates": step_updates
+                                    "completed_steps": json.dumps(completed_steps),
+                                    "execution_plan": json.dumps(execution_plan),
+                                    "step_updates": json.dumps(step_updates)
                                }
                            },
                         headers={"Content-Type": "application/json"},
@@ -729,6 +731,7 @@ def atlas_action():
                     })
 
                     # 🔥 SAVE STATE BEFORE RETURN
+                    # requests.post(...)
                     try:
                         requests.post(
                             APPS_SCRIPT_URL,
@@ -737,9 +740,9 @@ def atlas_action():
                                 "payload": {
                                     "session_id": session_id,
                                     "current_step": current_step,
-                                    "completed_steps": completed_steps,
-                                    "execution_plan": execution_plan,
-                                    "step_updates": step_updates
+                                    "completed_steps": json.dumps(completed_steps),
+                                    "execution_plan": json.dumps(execution_plan),
+                                    "step_updates": json.dumps(step_updates)
                                 }
                             },
                             headers={"Content-Type": "application/json"},
