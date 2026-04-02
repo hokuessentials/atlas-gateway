@@ -486,7 +486,8 @@ def atlas_action():
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
-                    completed_steps.append(current_step)
+                    if current_step.strip().lower() not in [s.strip().lower() for s in completed_steps]:
+                        completed_steps.append(current_step.strip())
 
                     save_state_to_sheet({
                         "session_id": session_id,
@@ -532,7 +533,8 @@ def atlas_action():
                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                 })
 
-                completed_steps.append(current_step)
+                if current_step.strip().lower() not in [s.strip().lower() for s in completed_steps]:
+                    completed_steps.append(current_step.strip())
 
                 save_state_to_sheet({
                     "session_id": session_id,
@@ -542,7 +544,14 @@ def atlas_action():
                     "step_updates": json.dumps(step_updates)
                 })
 
-                remaining = [s for s in execution_plan if s not in completed_steps]
+                # 🔥 NORMALIZE STEPS (CRITICAL FIX)
+
+                normalized_completed = [s.strip().lower() for s in completed_steps]
+
+                remaining = [
+                    s for s in execution_plan
+                    if s.strip().lower() not in normalized_completed
+                ]
                 next_step = remaining[0] if remaining else None
 
                 previous_step = current_step
