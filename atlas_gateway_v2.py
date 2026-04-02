@@ -480,30 +480,9 @@ def atlas_action():
 
                     print("⚡ EXECUTING STEP:", current_step)
 
-                    step_updates.append({
-                        "step": current_step,
-                        "status": "success",
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                    })
-
-                    if current_step.strip().lower() not in [s.strip().lower() for s in completed_steps]:
-                        completed_steps.append(current_step.strip())
-
-                    save_state_to_sheet({
-                        "session_id": session_id,
-                        "current_step": current_step,
-                        "completed_steps": json.dumps(completed_steps),
-                        "execution_plan": json.dumps(execution_plan),
-                        "step_updates": json.dumps(step_updates)
-                    })
-
                 # =========================
                 # 🔥 NOW DECIDE NEXT STEP
                 # =========================
-
-                remaining = [s for s in execution_plan if s not in completed_steps]
-
-                next_step = remaining[0] if remaining else None
 
                 if next_step:
                     current_step = next_step
