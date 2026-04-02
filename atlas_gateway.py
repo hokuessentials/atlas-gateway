@@ -537,6 +537,22 @@ def atlas_action():
                     })
 
                     completed_steps.append(current_step)
+                    import json
+
+                    requests.post(
+                        APPS_SCRIPT_URL,
+                        json={
+                            "action": "update_active_state",
+                            "payload": {
+                                "session_id": session_id,
+                                "current_step": current_step,
+                                "completed_steps": json.dumps(completed_steps),
+                                "step_updates": json.dumps(step_updates),
+                                "execution_plan": json.dumps(execution_plan)
+                            }
+                        },
+                        timeout=3
+                    )
 
                     save_state_to_sheet({
                         "session_id": session_id,
