@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import json
 import time
+import os
 
 import state_engine
 from session_engine import evaluate_session_health
@@ -769,4 +770,5 @@ def suggest_next_step(execution_plan, completed_steps):
 # =========================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
