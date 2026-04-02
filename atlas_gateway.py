@@ -899,7 +899,14 @@ def atlas_action():
                     })
                 except:
                     pass 
-
+                save_state_to_sheet({
+                    "session_id": session_id,
+                    "current_step": current_step,
+                    "completed_steps": json.dumps(completed_steps),
+                    "execution_plan": json.dumps(execution_plan),
+                    "step_updates": json.dumps(step_updates)
+                })
+                
             return jsonify(final_response or {
                 "status": "success",
                 "decision": "loop_finished"
