@@ -52,9 +52,6 @@ def save_state_to_sheet(active_state):
     except Exception as e:
         print("❌ STATE SAVE ERROR:", e)
 
-    except Exception as e:
-        print("❌ STATE SAVE ERROR:", e)
-
 def log_execution_to_sheet(data):
     try:
         requests.post(
@@ -478,60 +475,65 @@ def atlas_action():
                 # =========================
 
                 if current_step and current_step not in completed_steps:
-
                     print("⚡ EXECUTING STEP:", current_step)
 
-                    step_updates.append({
-                        "step": current_step,
-                        "status": "success",
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                    })
+                # =========================
+                # 🔥 CLEAN STEP FLOW (V2 BASE)
+                # =========================
 
-                    completed_steps.append(current_step)
+                previous_step = current_step
 
-                    save_state_to_sheet({
-                        "session_id": session_id,
+                next_step = suggest_next_step(execution_plan, completed_steps)
+
+                if next_step:
+                    current_step = next_step
+
+                pending_steps = [
+                    s for s in execution_plan
+                    if s not in completed_steps and s != current_step
+                ]
+
+                final_response = {
+                    "status": "success",
+                    "decision": "proceed",
+                    "executed_step": previous_step,
+                    "next_step": current_step,
+                    "debug": {
                         "current_step": current_step,
-                        "completed_steps": json.dumps(completed_steps),
-                        "execution_plan": json.dumps(execution_plan),
-                        "step_updates": json.dumps(step_updates)
-                    })
+                        "completed_steps": completed_steps,
+                        "pending_steps": pending_steps,
+                        "failed_steps": [],
+                        "recent_updates": step_updates[-5:]
+                    }
+                }    
 
-                    remaining = [s for s in execution_plan if s not in completed_steps]
+                step_updates.append({
+                    "step": current_step,
+                    "status": "success",
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                })
 
-                    if not remaining:
-                        # 🔥 FORCE FINAL CLOSE HERE (CRITICAL FIX)
-                        try:
-                            save_session_to_sheet({
-                                "Session_ID": session_id,
-                                "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "Status": "CLOSED",
-                                "Notes": "Auto closed"
-                            })
-                        except:
-                            pass
+                completed_steps.append(current_step)
 
-                        return jsonify({
-                            "status": "success",
-                            "decision": "complete",
-                            "Decision_Quality": "final_step",
-                            "Score": 1,
-                            "debug": {
-                                "current_step": current_step,
-                                "completed_steps": completed_steps,
-                                "pending_steps": [],
-                                "failed_steps": [],
-                                "recent_updates": step_updates[-5:]
-                            }
-                        })
+                save_state_to_sheet({
+                    "session_id": session_id,
+                    "current_step": current_step,
+                    "completed_steps": json.dumps(completed_steps),
+                    "execution_plan": json.dumps(execution_plan),
+                    "step_updates": json.dumps(step_updates)
+                })
 
-                    else:
-                        current_step = remaining[0]
-                        score = 0.7 if len(completed_steps) > 1 else 0.5
-                        confidence = round(score, 2)
-                        expected_roi = round(score * 10, 2)
-                        risk_score = round(1 - score, 2)
-                        decision_quality = "execution"
+                next_step = remaining[0] if remaining else None
+
+                previous_step = current_step
+
+                if next_step:
+                    current_step = next_step
+                    score = 0.7 if len(completed_steps) > 1 else 0.5
+                    confidence = round(score, 2)
+                    expected_roi = round(score * 10, 2)
+                    risk_score = round(1 - score, 2)
+                    decision_quality = "execution"
 
                 if time.time() - start_time > MAX_RUNTIME:
                 
@@ -686,35 +688,6 @@ def atlas_action():
                         }
                     })
 
-            # =========================
-            # 🔥 CLEAN STEP FLOW (V2 BASE)
-            # =========================
-
-            previous_step = current_step
-
-            next_step = suggest_next_step(execution_plan, completed_steps)
-
-            if next_step:
-                current_step = next_step
-
-            pending_steps = [
-                s for s in execution_plan
-                if s not in completed_steps and s != current_step
-            ]
-
-            final_response = {
-                "status": "success",
-                "decision": "proceed",
-                "executed_step": previous_step,
-                "next_step": current_step,
-                "debug": {
-                    "current_step": current_step,
-                    "completed_steps": completed_steps,
-                    "pending_steps": pending_steps,
-                    "failed_steps": [],
-                    "recent_updates": step_updates[-5:]
-                }
-            }
             # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
             try:
                 save_decision_to_sheet({
@@ -738,47 +711,45 @@ def atlas_action():
             except:
                 pass
 
-                # 🔥 UPDATE MASTER TRACKER (CORRECT)
-                try:
-                   update_tracker({
-                       "module": "Execution Engine",
-                       "phase": "Phase 3.5",
-                       "task": "Control Layer Build",
-                       "status": "complete" if final_response["decision"] == "complete" else "active",
-                       "current_step": previous_step,
-                       "next_step": current_step,
-                       "owner": "Atlas",
-                       "notes": "Live execution update"
-                    })
-                except:
-                    pass
-
-                # 🔥 AUTO LOG EXECUTION
-                try:
-                    log_execution_to_sheet({
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "executed_step": previous_step,
-                        "next_step": current_step,
-                        "current_step": current_step,
-                        "completed_steps": ";".join(completed_steps),
-                        "pending_steps": ";".join(pending_steps),
-                        "status": final_response.get("status", "success"),
-                        "decision": final_response.get("decision", "proceed")
-                    })
-                except:
-                    pass 
-                save_state_to_sheet({
-                    "session_id": session_id,
-                    "current_step": current_step,
-                    "completed_steps": json.dumps(completed_steps),
-                    "execution_plan": json.dumps(execution_plan),
-                    "step_updates": json.dumps(step_updates)
+            # 🔥 UPDATE MASTER TRACKER (CORRECT)
+            try:
+                update_tracker({
+                    "module": "Execution Engine",
+                    "phase": "Phase 3.5",
+                    "task": "Control Layer Build",
+                    "status": "complete" if final_response["decision"] == "complete" else "active",
+                    "current_step": previous_step,
+                    "next_step": current_step,
+                    "owner": "Atlas",
+                    "notes": "Live execution update"
                 })
+            except:
+                pass
 
-            return jsonify(final_response or {
-                "status": "success",
-                "decision": "loop_finished"
+            # 🔥 AUTO LOG EXECUTION
+            try:
+                log_execution_to_sheet({
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "executed_step": previous_step,
+                    "next_step": current_step,
+                    "current_step": current_step,
+                    "completed_steps": ";".join(completed_steps),
+                    "pending_steps": ";".join(pending_steps),
+                    "status": final_response.get("status", "success"),
+                    "decision": final_response.get("decision", "proceed")
+                })
+            except:
+                pass 
+
+            save_state_to_sheet({
+                "session_id": session_id,
+                "current_step": current_step,
+                "completed_steps": json.dumps(completed_steps),
+                "execution_plan": json.dumps(execution_plan),
+                "step_updates": json.dumps(step_updates)
             })
+
+            return jsonify(final_response)
 
         return jsonify({"status": "invalid_request"})
 
