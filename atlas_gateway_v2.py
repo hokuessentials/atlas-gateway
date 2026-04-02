@@ -514,10 +514,22 @@ def atlas_action():
                 normalized_completed = [s.strip().lower() for s in completed_steps]
 
                 remaining = [
-                    s for s in execution_plan
-                    if s.strip().lower() not in normalized_completed
+                   s for s in execution_plan
+                   if s.strip().lower() not in normalized_completed
                 ]
-                next_step = remaining[0] if remaining else None
+
+                if remaining:
+                    scored_steps = [
+                        (step, score_step(step, completed_steps, step_updates))
+                        for step in remaining
+                    ]
+
+                # 🔥 SORT BY BEST SCORE
+                scored_steps.sort(key=lambda x: x[1], reverse=True)
+
+                next_step = scored_steps[0][0]
+            else:
+                next_step = None
                 
                 # 3. MOVE TO NEXT
                 if next_step:
@@ -767,8 +779,37 @@ def suggest_next_step(execution_plan, completed_steps):
 
     # 🔥 FOR NOW — SAME AS ORDER (SAFE)
     return remaining[0]
-# =========================
 
+def score_step(step, completed_steps, step_updates):
+
+    step_lower = step.strip().lower()
+
+    score = 0
+
+    # 🔥 BASE PRIORITY (manual intelligence for now)
+    if "finalize" in step_lower:
+        score += 5
+    elif "negotiate" in step_lower:
+        score += 4
+    elif "check" in step_lower:
+        score += 3
+    elif "evaluate" in step_lower:
+        score += 2
+
+    # 🔥 PENALTY if already tried multiple times
+    retry_count = sum(
+        1 for u in step_updates
+        if isinstance(u, dict) and u.get("step", "").strip().lower() == step_lower
+    )
+
+    score -= retry_count * 1.5
+
+    # 🔥 BONUS if not completed
+    if step not in completed_steps:
+        score += 2
+
+    return score
+# =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
