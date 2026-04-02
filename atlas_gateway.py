@@ -56,9 +56,7 @@ def save_state_to_sheet(active_state):
                 APPS_SCRIPT_URL,
                 json={
                     "action": "update_active_state",
-                    "payload": {
-                    "session_id": session_id
-                    }
+                    "payload": active_state
                 },
                 headers={"Content-Type": "application/json"},
                 timeout=10,
@@ -410,13 +408,18 @@ def atlas_action():
             session_id = "S-" + str(int(time.time()))
             parsed_state["session_id"] = session_id
             try:
-               requests.post(
-                APPS_SCRIPT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=10,
-                allow_redirects=True
-            )
+                requests.post(
+                    APPS_SCRIPT_URL,
+                    json={
+                        "action": "update_active_state",
+                        "payload": {
+                            "session_id": session_id
+                        }
+                    },
+                    headers={"Content-Type": "application/json"},
+                    timeout=10,
+                    allow_redirects=True
+                )
             except:
                pass
 
