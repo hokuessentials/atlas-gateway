@@ -471,19 +471,38 @@ def atlas_action():
                     pass
 
                 # =========================
-                # 🔥 FORCE EXECUTION OF CURRENT STEP
+                # 🔥 EXECUTE FIRST (CORRECT FLOW)
                 # =========================
 
                 if current_step and current_step not in completed_steps:
+
+                    previous_step = current_step  # ✅ capture correct step
+
                     print("⚡ EXECUTING STEP:", current_step)
 
+                    step_updates.append({
+                        "step": current_step,
+                        "status": "success",
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                    })
+
+                    completed_steps.append(current_step)
+
+                    save_state_to_sheet({
+                        "session_id": session_id,
+                        "current_step": current_step,
+                        "completed_steps": json.dumps(completed_steps),
+                        "execution_plan": json.dumps(execution_plan),
+                        "step_updates": json.dumps(step_updates)
+                    })
+
                 # =========================
-                # 🔥 CLEAN STEP FLOW (V2 BASE)
+                # 🔥 NOW DECIDE NEXT STEP
                 # =========================
 
-                previous_step = current_step
+                remaining = [s for s in execution_plan if s not in completed_steps]
 
-                next_step = suggest_next_step(execution_plan, completed_steps)
+                next_step = remaining[0] if remaining else None
 
                 if next_step:
                     current_step = next_step
@@ -523,6 +542,7 @@ def atlas_action():
                     "step_updates": json.dumps(step_updates)
                 })
 
+                remaining = [s for s in execution_plan if s not in completed_steps]
                 next_step = remaining[0] if remaining else None
 
                 previous_step = current_step
