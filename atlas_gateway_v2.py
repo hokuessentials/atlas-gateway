@@ -513,24 +513,36 @@ def atlas_action():
                 # 🔥 NORMALIZE STEPS (CRITICAL FIX)
                 normalized_completed = [s.strip().lower() for s in completed_steps]
 
-                remaining = [
-                   s for s in execution_plan
-                   if s.strip().lower() not in normalized_completed
-                   and s.strip().lower() != current_step.strip().lower()
+                # =========================
+                # 🧠 PHASE 4 — INTELLIGENT STEP SELECTION
+                # =========================
+
+                candidates = [
+                    s for s in execution_plan
+                    if s.strip().lower() not in [c.strip().lower() for c in completed_steps]
                 ]
 
-                if remaining:
-                    scored_steps = [
-                        (step, score_step(step, completed_steps, step_updates))
-                        for step in remaining
-                    ]
+                # 🚫 REMOVE CURRENT STEP
+                candidates = [
+                    s for s in candidates
+                    if s.strip().lower() != current_step.strip().lower()
+                ]
 
-                # 🔥 SORT BY BEST SCORE
-                scored_steps.sort(key=lambda x: x[1], reverse=True)
+                if candidates:
 
-                next_step = scored_steps[0][0]
-            else:
-                next_step = None
+                    selected_step = select_better_step(
+                        current_step,
+                        candidates,
+                        step_updates,
+                        completed_steps
+                    )
+
+                    print("🧠 SELECTED STEP:", selected_step)
+
+                    current_step = selected_step
+
+                else:
+                    current_step = None
                 
                 # 3. MOVE TO NEXT
                 if next_step:
@@ -845,7 +857,6 @@ def score_step(step, completed_steps, step_updates):
             score -= 5  # avoid repeating last step
 
     return score
-print("🧠 SCORED STEPS:", scored_steps)
 
 # =========================
 if __name__ == "__main__":
