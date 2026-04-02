@@ -40,89 +40,60 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFl
 
 def save_state_to_sheet(active_state):
     try:
-        payload = {
-            "action": "update_active_state",
-            "payload": active_state
-        }
-
-        print("🔥 SAVING STATE:", payload)
-
-        headers = {
-            "Content-Type": "application/json"
-        }
-        # requests.post(...)
-        try:
-            requests.post(
-                APPS_SCRIPT_URL,
-                json={
-                    "action": "update_active_state",
-                    "payload": active_state
-                },
-                headers={"Content-Type": "application/json"},
-                timeout=3,
-                allow_redirects=True
-            )
-        except Exception as e:
-            print("⚠️ API CALL FAILED:", e)
+        requests.post(
+            APPS_SCRIPT_URL,
+            json={
+                "action": "update_active_state",
+                "payload": active_state
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
+    except Exception as e:
+        print("❌ STATE SAVE ERROR:", e)
 
     except Exception as e:
         print("❌ STATE SAVE ERROR:", e)
 
 def log_execution_to_sheet(data):
     try:
-        payload = {
-            "action": "log_execution",
-            "data": data
-        }
-        # requests.post(...)
         requests.post(
-                APPS_SCRIPT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=3,
-                allow_redirects=True
-            )
-
+            APPS_SCRIPT_URL,
+            json={
+                "action": "log_execution",
+                "data": data
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
     except Exception as e:
         print("❌ LOG ERROR:", e)
 
 def update_tracker(data):
     try:
-        payload = {
-            "action": "update_tracker",
-            "data": data
-        }
-        # requests.post(...)
         requests.post(
-                APPS_SCRIPT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=3,
-                allow_redirects=True
-            )
-
+            APPS_SCRIPT_URL,
+            json={
+                "action": "update_tracker",
+                "data": data
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
     except Exception as e:
         print("❌ TRACKER ERROR:", e)
 
 def save_decision_to_sheet(decision_data):
     try:
-        payload = {
-            "action": "log_decision",
-            "data": decision_data
-        }
-
-        headers = {
-            "Content-Type": "application/json"
-        }
-        # requests.post(...)
         requests.post(
-                APPS_SCRIPT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=3,
-                allow_redirects=True
-            )
-
+            APPS_SCRIPT_URL,
+            json={
+                "action": "log_decision",
+                "data": decision_data
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
     except Exception as e:
         print("❌ DECISION SAVE ERROR:", e)       
 
@@ -358,23 +329,15 @@ def complete_task():
 # =========================
 def save_session_to_sheet(session):
     try:
-        payload = {
-            "action": "save_session",
-            "data": session
-        }
-
-        headers = {
-            "Content-Type": "application/json"
-        }
-        # requests.post(...)
         requests.post(
-                APPS_SCRIPT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=3,
-                allow_redirects=True
-            )
-
+            APPS_SCRIPT_URL,
+            json={
+                "action": "save_session",
+                "data": session
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
     except Exception as e:
         print("❌ SESSION SAVE ERROR:", e)
         
@@ -774,21 +737,6 @@ def atlas_action():
                 })
             except:
                 pass
-                # ✅ ENSURE FINAL RESPONSE ALWAYS EXISTS
-                if not final_response:
-                    final_response = {
-                        "status": "success",
-                        "decision": "proceed",
-                        "executed_step": previous_step,
-                        "next_step": current_step if next_step else (pending_steps[0] if pending_steps else None),
-                        "debug": {
-                            "current_step": current_step,
-                            "completed_steps": completed_steps,
-                            "pending_steps": pending_steps,
-                            "failed_steps": [],
-                            "recent_updates": step_updates[-5:]
-                        }
-                    } 
 
                 # 🔥 UPDATE MASTER TRACKER (CORRECT)
                 try:
