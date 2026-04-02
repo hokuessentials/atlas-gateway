@@ -515,7 +515,6 @@ def atlas_action():
                         "Session_Type": "execution",
                         "Active_Module": "Execution Engine",
                         "Active_Phase": "Phase 3.5",
-                        "Tasks_Worked": len(completed_steps),
                         "Status": "ACTIVE",
                         "Notes": "Auto session update"
                     })
@@ -537,22 +536,6 @@ def atlas_action():
                     })
 
                     completed_steps.append(current_step)
-                    import json
-
-                    requests.post(
-                        APPS_SCRIPT_URL,
-                        json={
-                            "action": "update_active_state",
-                            "payload": {
-                                "session_id": session_id,
-                                "current_step": current_step,
-                                "completed_steps": json.dumps(completed_steps),
-                                "step_updates": json.dumps(step_updates),
-                                "execution_plan": json.dumps(execution_plan)
-                            }
-                        },
-                        timeout=3
-                    )
 
                     save_state_to_sheet({
                         "session_id": session_id,
@@ -626,7 +609,6 @@ def atlas_action():
                            "Session_ID": session_id,
                            "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                            "Status": "CLOSED",
-                           "Tasks_Worked": len(completed_steps),
                            "Notes": "Auto closed"
                        })
                     except:
