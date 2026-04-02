@@ -537,7 +537,15 @@ def atlas_action():
                     })
 
                     completed_steps.append(current_step)
-                    
+
+                    save_state_to_sheet({
+                        "session_id": session_id,
+                        "current_step": current_step,
+                        "completed_steps": json.dumps(completed_steps),
+                        "execution_plan": json.dumps(execution_plan),
+                        "step_updates": json.dumps(step_updates)
+                    })
+
                     score = 0.7 if len(completed_steps) > 1 else 0.5
                     confidence = round(score, 2)
                     expected_roi = round(score * 10, 2)
@@ -596,28 +604,6 @@ def atlas_action():
                     expected_roi = 10
                     risk_score = 0
                     decision_quality = "final_step"
-
-                    try:
-                       save_decision_to_sheet({
-                           "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                           "Session_ID": session_id,
-                           "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                           "Title": "Execution Complete",
-                           "Description": "All steps completed",
-                           "Module": "Execution Engine",
-                           "Expected_ROI": expected_roi,
-                           "Risk_Score": risk_score,
-                           "Confidence_Level": confidence,
-                           "Decision_Quality": decision_quality,
-                           "Reversible_Flag": True,
-                           "Decision_Owner": "Atlas",
-                           "Tags": "final",
-                           "Decision_Type": "execution",
-                           "Outcome_Status": "success",
-                           "Lesson_Learned": "Execution completed"
-                       })
-                    except:
-                        pass
 
                     try:
                        save_session_to_sheet({
@@ -860,8 +846,8 @@ def atlas_action():
                        "phase": "Phase 3.5",
                        "task": "Control Layer Build",
                        "status": "complete" if final_response["decision"] == "complete" else "active",
-                       "current_step": current_step,
-                       "next_step": final_response.get("next_step"),
+                       "current_step": previous_step,
+                       "next_step": current_step,
                        "owner": "Atlas",
                        "notes": "Live execution update"
                     })
