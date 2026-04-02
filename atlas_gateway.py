@@ -405,10 +405,11 @@ def atlas_action():
 
         if isinstance(parsed_state, list):
             parsed_state = {}
+
+        session_id = parsed_state.get("session_id") or input_data.get("session_id")
+
         if not session_id:
             session_id = "S-" + str(int(time.time()))
-            
-        session_id = parsed_state.get("session_id") or input_data.get("session_id")
 
         if not session_id:
             session_id = "S-" + str(int(time.time()))
@@ -506,17 +507,17 @@ def atlas_action():
             while loop_count < max_loops:
                 loop_count += 1
 
-            # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
+                # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
                 try:
-                   save_session_to_sheet({
-                       "Session_ID": session_id,
-                       "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                       "Session_Type": "execution",
-                       "Active_Module": "Execution Engine",
-                       "Active_Phase": "Phase 3.5",
-                       "Tasks_Worked": len(completed_steps),
-                       "Status": "ACTIVE",
-                       "Notes": "Auto session update"
+                    save_session_to_sheet({
+                        "Session_ID": session_id,
+                        "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "Session_Type": "execution",
+                        "Active_Module": "Execution Engine",
+                        "Active_Phase": "Phase 3.5",
+                        "Tasks_Worked": len(completed_steps),
+                        "Status": "ACTIVE",
+                        "Notes": "Auto session update"
                     })
                 except:
                     pass
