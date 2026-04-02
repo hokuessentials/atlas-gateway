@@ -873,7 +873,15 @@ def atlas_action():
             "status": "error",
             "message": str(e)
         })
+def suggest_next_step(execution_plan, completed_steps):
 
+    remaining = [s for s in execution_plan if s not in completed_steps]
+
+    if not remaining:
+        return None
+
+    # 🔥 FOR NOW — SAME AS ORDER (SAFE)
+    return remaining[0]
 # =========================
 
 if __name__ == "__main__":
