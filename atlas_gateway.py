@@ -59,7 +59,7 @@ def save_state_to_sheet(active_state):
                     "payload": active_state
                 },
                 headers={"Content-Type": "application/json"},
-                timeout=10,
+                timeout=3,
                 allow_redirects=True
             )
         except Exception as e:
@@ -79,7 +79,7 @@ def log_execution_to_sheet(data):
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=10,
+                timeout=3,
                 allow_redirects=True
             )
 
@@ -97,7 +97,7 @@ def update_tracker(data):
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=10,
+                timeout=3,
                 allow_redirects=True
             )
 
@@ -119,7 +119,7 @@ def save_decision_to_sheet(decision_data):
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=10,
+                timeout=3,
                 allow_redirects=True
             )
 
@@ -132,7 +132,7 @@ def load_state_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=10,
+            timeout=3,
             allow_redirects=True
         )
 
@@ -178,7 +178,7 @@ def read_full_system_memory():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=10,
+            timeout=3,
         )
         
         if not resp or resp.status_code != 200:
@@ -218,7 +218,7 @@ def load_session_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=10,
+            timeout=3,
             allow_redirects=True
         )
 
@@ -289,7 +289,7 @@ def update_decision_outcome(decision_id, outcome, lesson):
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=10,
+                timeout=3,
                 allow_redirects=True
             )
     except Exception as e:
@@ -371,7 +371,7 @@ def save_session_to_sheet(session):
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=10,
+                timeout=3,
                 allow_redirects=True
             )
 
@@ -402,6 +402,10 @@ def atlas_action():
             return []
 
         parsed_state = load_state_from_sheet() or {}
+
+        if isinstance(parsed_state, list):
+            parsed_state = {}
+
         session_id = parsed_state.get("session_id") or input_data.get("session_id")
 
         if not session_id:
@@ -418,31 +422,11 @@ def atlas_action():
                         }
                     },
                     headers={"Content-Type": "application/json"},
-                    timeout=10,
+                    timeout=3,
                     allow_redirects=True
                 )
             except:
                pass
-
-        if not parsed_state.get("session_started"):
-
-            try:
-                save_session_to_sheet({
-                    "Session_ID": session_id,
-                    "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "Session_Type": "execution",
-                    "Active_Module": "Execution Engine",
-                    "Active_Phase": "Phase 3.5",
-                    "Status": "ACTIVE"
-                })
-                save_session_to_sheet({
-                "Session_ID": session_id,
-                "Status": "ACTIVE"
-                })
-                parsed_state["session_started"] = True
-
-            except:
-                pass
 
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         completed_steps = list(dict.fromkeys([
@@ -511,7 +495,7 @@ def atlas_action():
         if input_data.get("execute"):
 
             loop_count = 0
-            max_loops = 4  # safety limit
+            max_loops = 1  # safety limit
 
             start_time = time.time() 
             MAX_RUNTIME = 15 # seconds
@@ -549,7 +533,7 @@ def atlas_action():
                   #            }
                   #         },
                   #        headers={"Content-Type": "application/json"},
-                  #        timeout=10,
+                  #        timeout=3,
                   #        allow_redirects=True
                   #     )
                   #  except:
@@ -733,26 +717,26 @@ def atlas_action():
                     })
 
                     # 🔥 SAVE STATE BEFORE RETURN
-                #    # requests.post(...)
-                #    try:
-                #        requests.post(
-                #            APPS_SCRIPT_URL,
-                #            json={
-                #                "action": "update_active_state",
-                #                "payload": {
-                #                    "session_id": session_id,
-                #                    "current_step": current_step,
-                #                    "completed_steps": json.dumps(completed_steps),
-                #                    "execution_plan": json.dumps(execution_plan),
-                #                    "step_updates": json.dumps(step_updates)
-                #                }
-                #            },
-                #            headers={"Content-Type": "application/json"},
-                #            timeout=10,
-                #            allow_redirects=True
-                #        )
-                #    except:
-                #        pass
+                    # requests.post(...)
+                    try:
+                        requests.post(
+                            APPS_SCRIPT_URL,
+                            json={
+                               "action": "update_active_state",
+                                "payload": {
+                                    "session_id": session_id,
+                                    "current_step": current_step,
+                                    "completed_steps": json.dumps(completed_steps),
+                                   "execution_plan": json.dumps(execution_plan),
+                                   "step_updates": json.dumps(step_updates)
+                               }
+                            },
+                            headers={"Content-Type": "application/json"},
+                            timeout=3,
+                            allow_redirects=True
+                        )
+                    except:
+                        pass
 
                     return jsonify({
                         "status": "retrying",
