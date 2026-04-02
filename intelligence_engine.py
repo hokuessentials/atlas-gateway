@@ -477,6 +477,30 @@ def generate_intelligent_action(session_data):
     completed_steps = active_state.get("completed_steps", [])
 
     # =========================
+    # 🧠 PHASE 4 — STEP INTELLIGENCE (FIX)
+    # =========================
+
+    candidates = get_candidate_steps(adjusted_plan, completed_steps)
+
+    allowed_candidates = filter_allowed_candidates(
+        candidates,
+        step_updates,
+        completed_steps
+    )
+
+    if allowed_candidates:
+        selected_step = select_better_step(
+            execution_state.get("current_step"),
+            allowed_candidates,
+            step_updates,
+            completed_steps
+        )
+
+        print("🧠 FINAL SELECTED STEP:", selected_step)
+
+        execution_state["current_step"] = selected_step
+
+    # =========================
     # 🔥 MEMORY-FIRST STATE
     # =========================
 
