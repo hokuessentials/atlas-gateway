@@ -502,7 +502,7 @@ def atlas_action():
                         "Session_Type": "execution",
                         "Active_Module": "Execution Engine",
                         "Active_Phase": "Phase 3.5",
-                        "Tasks_Worked": 1,
+                        "Tasks_Worked": len(completed_steps),
                         "Issues_Found": 0,
                         "Status": "ACTIVE",
                         "Notes": "Auto session update"
@@ -533,16 +533,42 @@ def atlas_action():
                         "execution_plan": json.dumps(execution_plan),
                         "step_updates": json.dumps(step_updates)
                     })
-                    # 🔥 MOVE TO NEXT STEP IMMEDIATELY
-                    remaining = [s for s in execution_plan if s not in completed_steps]
-                    if remaining:
-                        current_step = remaining[0]
 
-                    score = 0.7 if len(completed_steps) > 1 else 0.5
-                    confidence = round(score, 2)
-                    expected_roi = round(score * 10, 2)
-                    risk_score = round(1 - score, 2)
-                    decision_quality = "execution"
+                    remaining = [s for s in execution_plan if s not in completed_steps]
+
+                    if not remaining:
+                        # 🔥 FORCE FINAL CLOSE HERE (CRITICAL FIX)
+                        try:
+                            save_session_to_sheet({
+                                "Session_ID": session_id,
+                                "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                                "Status": "CLOSED",
+                                "Notes": "Auto closed"
+                            })
+                        except:
+                            pass
+
+                        return jsonify({
+                            "status": "success",
+                            "decision": "complete",
+                            "Decision_Quality": "final_step",
+                            "Score": 1,
+                            "debug": {
+                                "current_step": current_step,
+                                "completed_steps": completed_steps,
+                                "pending_steps": [],
+                                "failed_steps": [],
+                                "recent_updates": step_updates[-5:]
+                            }
+                        })
+
+                    else:
+                        current_step = remaining[0]
+                        score = 0.7 if len(completed_steps) > 1 else 0.5
+                        confidence = round(score, 2)
+                        expected_roi = round(score * 10, 2)
+                        risk_score = round(1 - score, 2)
+                        decision_quality = "execution"
 
                 if time.time() - start_time > MAX_RUNTIME:
                 
