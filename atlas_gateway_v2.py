@@ -516,6 +516,7 @@ def atlas_action():
                 remaining = [
                    s for s in execution_plan
                    if s.strip().lower() not in normalized_completed
+                   and s.strip().lower() != current_step.strip().lower()
                 ]
 
                 if remaining:
@@ -809,6 +810,43 @@ def score_step(step, completed_steps, step_updates):
         score += 2
 
     return score
+def score_step(step, completed_steps, step_updates):
+
+    step_lower = step.strip().lower()
+    score = 0
+
+    # 🔥 1. BASE PRIORITY (STRONGER)
+    if "finalize" in step_lower:
+        score += 10
+    elif "negotiate" in step_lower:
+        score += 8
+    elif "check sample" in step_lower:
+        score += 7
+    elif "check supplier" in step_lower:
+        score += 6
+    elif "evaluate" in step_lower:
+        score += 5
+
+    # 🔥 2. RETRY PENALTY (STRONG)
+    retry_count = sum(
+        1 for u in step_updates
+        if isinstance(u, dict) and u.get("step", "").strip().lower() == step_lower
+    )
+    score -= retry_count * 3
+
+    # 🔥 3. COMPLETION SAFETY
+    if step.strip().lower() in [s.strip().lower() for s in completed_steps]:
+        score -= 100  # never pick completed
+
+    # 🔥 4. RECENCY PENALTY (CRITICAL FIX)
+    if step_updates:
+        last_step = step_updates[-1].get("step", "").strip().lower()
+        if step_lower == last_step:
+            score -= 5  # avoid repeating last step
+
+    return score
+print("🧠 SCORED STEPS:", scored_steps)
+
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
