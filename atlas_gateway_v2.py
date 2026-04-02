@@ -473,7 +473,8 @@ def atlas_action():
                 # =========================
                 # 🔥 EXECUTE FIRST (CORRECT FLOW)
                 # =========================
-
+                
+                # 1. EXECUTE
                 if current_step and current_step not in completed_steps:
 
                     previous_step = current_step  # ✅ capture correct step
@@ -505,41 +506,10 @@ def atlas_action():
                 pending_steps = [
                     s for s in execution_plan
                     if s not in completed_steps and s != current_step
-                ]
-
-                final_response = {
-                    "status": "success",
-                    "decision": "proceed",
-                    "executed_step": previous_step,
-                    "next_step": current_step,
-                    "debug": {
-                        "current_step": current_step,
-                        "completed_steps": completed_steps,
-                        "pending_steps": pending_steps,
-                        "failed_steps": [],
-                        "recent_updates": step_updates[-5:]
-                    }
-                }    
-
-                step_updates.append({
-                    "step": current_step,
-                    "status": "success",
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                })
-
-                if current_step.strip().lower() not in [s.strip().lower() for s in completed_steps]:
-                    completed_steps.append(current_step.strip())
-
-                save_state_to_sheet({
-                    "session_id": session_id,
-                    "current_step": current_step,
-                    "completed_steps": json.dumps(completed_steps),
-                    "execution_plan": json.dumps(execution_plan),
-                    "step_updates": json.dumps(step_updates)
-                })
-
+                ]   
+                
+                # 2. FIND NEXT STEP (ONLY NORMALIZED VERSION)
                 # 🔥 NORMALIZE STEPS (CRITICAL FIX)
-
                 normalized_completed = [s.strip().lower() for s in completed_steps]
 
                 remaining = [
@@ -549,14 +519,21 @@ def atlas_action():
                 next_step = remaining[0] if remaining else None
 
                 previous_step = current_step
-
+                
+                # 3. MOVE TO NEXT
                 if next_step:
                     current_step = next_step
-                    score = 0.7 if len(completed_steps) > 1 else 0.5
-                    confidence = round(score, 2)
-                    expected_roi = round(score * 10, 2)
-                    risk_score = round(1 - score, 2)
-                    decision_quality = "execution"
+                
+                # 4. NOW BUILD RESPONSE
+                final_response = {
+                "executed_step": previous_step,
+                "next_step": current_step
+                }    
+                score = 0.7 if len(completed_steps) > 1 else 0.5
+                confidence = round(score, 2)
+                expected_roi = round(score * 10, 2)
+                risk_score = round(1 - score, 2)
+                decision_quality = "execution"
 
                 if time.time() - start_time > MAX_RUNTIME:
                 
