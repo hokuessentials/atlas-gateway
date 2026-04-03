@@ -420,6 +420,10 @@ def atlas_action():
 
         step_updates = safe_json_parse(parsed_state.get("step_updates", []))
 
+        # ✅ SAFETY LOCK (DO NOT REMOVE)
+        if not isinstance(step_updates, list):
+            step_updates = []
+
         pending_steps = [
             s for s in execution_plan
             if s not in completed_steps and s != current_step
@@ -532,18 +536,20 @@ def atlas_action():
                         step_updates,
                         completed_steps
                     )
+                    # ✅ FAIL-SAFE (SAFE CONTINUE)
+                    if not next_step_candidate:
+                        next_step_candidate = current_step
+
                     previous_step = current_step
                     next_step_candidate = selected_step
 
                     memory = build_step_memory(step_updates)
 
-                    print("🧠 MEMORY:", memory)
-                    print("🧠 SCORES:")
-
                     for c in candidates:
                         print(c, "→", score_step(c, completed_steps, step_updates))
-
-                    print("✅ SELECTED:", selected_step)
+                    print("STEP:", previous_step)
+                    print("NEXT:", current_step)
+                    print("SCORE:", decision_score)
                     print("🧠 FINAL SELECTED STEP:", selected_step)
 
                 # =========================
@@ -589,8 +595,12 @@ def atlas_action():
 
                 if current_step and current_step not in completed_steps:
 
-                    print("⚡ EXECUTING STEP:", current_step)
+                    previous_step = current_step
+                    next_step = next_step_candidate
 
+                    # =========================
+                    # ⚡ EXECUTE
+                    # =========================
                     step_updates.append({
                         "step": previous_step,
                         "status": "success",
@@ -599,6 +609,20 @@ def atlas_action():
 
                     completed_steps.append(previous_step.strip())
 
+                    # =========================
+                    # 🔄 MOVE STEP
+                    # =========================
+                    current_step = next_step
+
+                    # =========================
+                    # 🧾 LOG (CLEAN)
+                    # =========================
+                    print("STEP:", previous_step)
+                    print("NEXT:", current_step)
+
+                    # =========================
+                    # 💾 SAVE (ONLY ONE MAIN SAVE)
+                    # =========================
                     save_state_to_sheet({
                         "session_id": session_id,
                         "current_step": current_step,
@@ -606,11 +630,26 @@ def atlas_action():
                         "execution_plan": json.dumps(execution_plan),
                         "step_updates": json.dumps(step_updates)
                     })
-                    current_step = next_step_candidate
+
                     pending_steps = [
                         s for s in execution_plan
                         if s not in completed_steps and s != current_step
                     ]
+
+                    final_response = {
+                        "status": "success",
+                        "executed_step": previous_step,
+                        "next_step": current_step,
+                        "decision": decision,
+                        "Decision_Quality": decision_quality,
+                        "Score": decision_score,
+                        "debug": {
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": pending_steps,
+                            "recent_updates": step_updates[-5:]
+                        }
+                    }
 
                     # 4. NOW BUILD RESPONSE
                     final_response = {
