@@ -1,104 +1,64 @@
 def decide_step_action(current_step, step_updates):
 
-    step_lower = current_step.strip().lower() if current_step else ""
+    # =========================
+    # 🧠 BUILD MEMORY
+    # =========================
+    total = len(step_updates)
+
+    success_count = sum(
+        1 for s in step_updates if s.get("status") == "success"
+    )
+
+    failure_count = sum(
+        1 for s in step_updates if s.get("status") == "failed"
+    )
+
+    retry_count = sum(
+        1 for s in step_updates
+        if s.get("step", "").strip().lower() == current_step.strip().lower()
+    )
+
+    success_rate = success_count / total if total > 0 else 0
+    failure_rate = failure_count / total if total > 0 else 0
 
     # =========================
-    # 🧠 MEMORY ANALYSIS
+    # 🎯 DECISION SCORE
     # =========================
+    score = 0
 
-    total = 0
-    success = 0
-    fail = 0
+    score += success_rate * 5
+    score -= failure_rate * 7
+    score -= retry_count * 2
 
-    for u in step_updates:
-        if not isinstance(u, dict):
-            continue
-
-        if u.get("step", "").strip().lower() == step_lower:
-            total += 1
-
-            if u.get("status") == "success":
-                success += 1
-            elif u.get("status") == "failed":
-                fail += 1
-
-    success_rate = success / total if total > 0 else 0
-    failure_rate = fail / total if total > 0 else 0
-
-    retry_count = total
-
-    # =========================
-    # ⚙️ STRATEGY MODE (SAFE)
-    # =========================
-
-    STRATEGY = "SAFE"   # 🔥 your selected mode
-
-    if STRATEGY == "SAFE":
-        risk_weight = 1.5
-        retry_limit = 2
-    elif STRATEGY == "BALANCED":
-        risk_weight = 1.0
-        retry_limit = 3
-    else:  # AGGRESSIVE
-        risk_weight = 0.5
-        retry_limit = 5
+    # normalize
+    decision_score = max(0, min(1, (score + 5) / 10))
 
     # =========================
     # 🧠 DECISION LOGIC
     # =========================
-
-    if failure_rate > 0.6 and retry_count >= retry_limit:
+    if failure_rate > 0.5:
         decision = "hold"
         execution_action = "hold"
         reason = "High failure rate detected"
-
-    elif failure_rate > 0.3:
-        decision = "retry"
-        execution_action = "continue"
-        reason = "Moderate failure → retrying"
-
     else:
         decision = "proceed"
         execution_action = "execute"
-        reason = "Healthy execution"
+        reason = "Healthy execution flow"
 
     # =========================
-    # 📊 DYNAMIC SCORING
+    # 📊 METRICS
     # =========================
-
-    score = (
-        (success_rate * 5)
-        - (failure_rate * 7 * risk_weight)
-        - (retry_count * 0.5)
-    )
-
-    # normalize score
-    score = max(0, min(1, score / 5))
-
-    # =========================
-    # 🎯 QUALITY LABEL
-    # =========================
-
-    if score > 0.75:
-        quality = "high_confidence"
-    elif score > 0.4:
-        quality = "medium_confidence"
-    else:
-        quality = "low_confidence"
-
-    # =========================
-    # 🧠 FINAL OUTPUT
-    # =========================
+    metrics = {
+        "success_rate": round(success_rate, 2),
+        "failure_rate": round(failure_rate, 2),
+        "retry_count": retry_count
+    }
 
     return {
         "decision": decision,
         "execution_action": execution_action,
-        "decision_score": round(score, 2),
-        "decision_quality": quality,
+        "decision_score": round(decision_score, 2),
+        "decision_quality": "execution",
         "reason": reason,
-        "metrics": {
-            "success_rate": round(success_rate, 2),
-            "failure_rate": round(failure_rate, 2),
-            "retry_count": retry_count
-        }
+        "metrics": metrics
     }
