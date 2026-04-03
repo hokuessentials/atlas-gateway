@@ -567,8 +567,18 @@ def atlas_action():
                     current_step = selected_step
 
                 else:
-                    print("⚠️ No candidates left")
-                    current_step = None
+                    print("⚠️ No candidates left → forcing remaining step")
+
+                    # 🔥 FORCE PICK LAST REMAINING STEP
+                    remaining = [
+                        s for s in normalized_plan
+                        if s.strip().lower() not in normalized_completed
+                    ]
+
+                    if remaining:
+                        current_step = remaining[0]
+                    else:
+                        current_step = None
                 
                 # 4. NOW BUILD RESPONSE
                 final_response = {
