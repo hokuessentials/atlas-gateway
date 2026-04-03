@@ -5,6 +5,8 @@ import time
 import os
 import state_engine
 from step_decision_engine import decide_step_action
+from intelligence_engine import select_better_step
+from intelligence_engine import generate_intelligent_action
 from session_engine import evaluate_session_health
 
 def read_active_state_from_sheet():
