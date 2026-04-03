@@ -1,7 +1,10 @@
 def apply_risk_penalty(title, risk_value):
 
     # base penalty from sheet
-    penalty = float(risk_value)
+    try:
+        penalty = float(risk_value)
+    except:
+        penalty = 0
 
     t = title.lower()
 
