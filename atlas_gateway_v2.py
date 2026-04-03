@@ -545,7 +545,6 @@ def atlas_action():
 
                     print("STEP:", previous_step)
                     print("NEXT:", current_step)
-                    print("SCORE:", decision_score)
                     
 
                 # =========================
@@ -652,12 +651,6 @@ def atlas_action():
                         1 for s in step_updates
                         if isinstance(s, dict) and s.get("status") == "failed"
                     )
-
-                    if failure_count >= 5:
-                        return jsonify({
-                            "status": "warning",
-                            "decision": "blocked"
-                        })
                 
                 # =========================
                 # FAILURE GUARD
