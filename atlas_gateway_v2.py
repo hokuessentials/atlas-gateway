@@ -533,6 +533,8 @@ def atlas_action():
                         completed_steps
                     )
                     previous_step = current_step
+                    next_step_candidate = selected_step
+
                     memory = build_step_memory(step_updates)
 
                     print("🧠 MEMORY:", memory)
@@ -543,9 +545,8 @@ def atlas_action():
 
                     print("✅ SELECTED:", selected_step)
                     print("🧠 FINAL SELECTED STEP:", selected_step)
-
-                    current_step = selected_step
-
+                    
+                    current_step = next_step_candidate
                 # =========================
                 # 🧠 DECISION BEFORE EXECUTION
                 # =========================
@@ -592,12 +593,12 @@ def atlas_action():
                     print("⚡ EXECUTING STEP:", current_step)
 
                     step_updates.append({
-                        "step": current_step,
+                        "step": previous_step,
                         "status": "success",
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
-                    completed_steps.append(current_step.strip())
+                    completed_steps.append(previous_step.strip())
 
                     save_state_to_sheet({
                         "session_id": session_id,
