@@ -517,9 +517,25 @@ def atlas_action():
                 # 🧠 PHASE 4 — INTELLIGENT STEP SELECTION
                 # =========================
 
+                # =========================
+                # 🧠 CLEAN NORMALIZATION (CRITICAL FIX)
+                # =========================
+
+                normalized_completed = [
+                    s.strip().lower() for s in completed_steps
+                ]
+
+                normalized_plan = [
+                    s.strip() for s in execution_plan if s and str(s).strip()
+                ]
+
+                # =========================
+                # 🧠 FILTER CANDIDATES
+                # =========================
+
                 candidates = [
-                    s for s in execution_plan
-                    if s.strip().lower() not in [c.strip().lower() for c in completed_steps]
+                    s for s in normalized_plan
+                    if s.strip().lower() not in normalized_completed
                 ]
 
                 # 🚫 REMOVE CURRENT STEP
