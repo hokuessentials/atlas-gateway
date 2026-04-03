@@ -980,7 +980,27 @@ def score_step(step, completed_steps, step_updates):
     )
 
     score -= retry_count * 3
+    
+        # =========================
+    # 🧠 PHASE 4.3 — ADAPTIVE LEARNING
+    # =========================
 
+    # 🔴 STRONG FAILURE PENALTY
+    if failure_rate > 0.5:
+        score -= 10
+
+    # 🔴 REPEATED FAILURE BLOCK
+    if retry_count >= 2:
+        score -= 15
+
+    # 🟢 SUCCESS BOOST
+    if success_rate > 0.7:
+        score += 8
+
+    # 🟢 CONSISTENCY BOOST
+    if success_rate > 0 and failure_rate == 0:
+        score += 5
+        
     # =========================
     # 🚫 COMPLETION SAFETY
     # =========================
