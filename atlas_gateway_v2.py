@@ -562,6 +562,10 @@ def atlas_action():
                 result = generate_intelligent_action(session_data)
 
                 step_decision = result.get("step_decision", {})
+                decision = step_decision.get("decision")
+                execution_action = step_decision.get("execution_action")
+                decision_score = step_decision.get("decision_score", 0)
+                decision_quality = step_decision.get("decision_quality", "execution")
 
                 if execution_action == "hold":
                     return jsonify({
