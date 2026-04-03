@@ -600,7 +600,11 @@ def atlas_action():
                         "execution_plan": json.dumps(execution_plan),
                         "step_updates": json.dumps(step_updates)
                     })
-                
+                    pending_steps = [
+                        s for s in execution_plan
+                        if s not in completed_steps and s != current_step
+                    ]
+
                     # 4. NOW BUILD RESPONSE
                     final_response = {
                         "executed_step": previous_step,
@@ -610,23 +614,7 @@ def atlas_action():
                         "Score": decision_score,
                         "reason": step_decision.get("reason"),
                         "metrics": step_decision.get("metrics")
-                    }
-                    return jsonify({
-                        "status": "success",
-                        "decision": decision,
-                        "Decision_Quality": decision_quality,
-                        "Score": decision_score,
-                        "reason": step_decision.get("reason"),
-                        "metrics": step_decision.get("metrics"),
-                        "executed_step": previous_step,
-                        "next_step": current_step,
-                        "debug": {
-                            "current_step": current_step,
-                            "completed_steps": completed_steps,
-                            "pending_steps": pending_steps,
-                            "recent_updates": step_updates[-5:]
-                        }
-                    })    
+                    }    
                 
                 if time.time() - start_time > MAX_RUNTIME:
                 
@@ -652,12 +640,12 @@ def atlas_action():
                 # COMPLETE → ENGINE
                 # =========================
                 if not pending_steps:
-                
+                    
                     current_step = None
-                    # 🔥 RE-CALCULATE FINAL DECISION
+                    # FINAL COMPLETION  
                     step_decision = decide_step_action("finalize", step_updates)
                     decision_score = step_decision.get("decision_score", 1)
-                    
+
                     if time.time() - start_time > 20:
                         return jsonify({
                             "status": "timeout_safe_exit",
