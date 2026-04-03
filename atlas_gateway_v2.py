@@ -561,7 +561,8 @@ def atlas_action():
                         step_updates,
                         completed_steps
                     )
-
+                    
+                    print("🧠 MEMORY:", build_step_memory(step_updates))
                     print("🧠 FINAL SELECTED STEP:", selected_step)
 
                     current_step = selected_step
@@ -854,12 +855,70 @@ def score_step(step, completed_steps, step_updates):
         score += 2
 
     return score
+# =========================
+# 🧠 PHASE 4.2 — STEP MEMORY ENGINE
+# =========================
+
+def build_step_memory(step_updates):
+
+    memory = {}
+
+    for u in step_updates:
+        if not isinstance(u, dict):
+            continue
+
+        step = u.get("step", "").strip()
+        status = u.get("status", "").strip().lower()
+
+        if not step:
+            continue
+
+        if step not in memory:
+            memory[step] = {
+                "success": 0,
+                "fail": 0,
+                "total": 0
+            }
+
+        memory[step]["total"] += 1
+
+        if status == "success":
+            memory[step]["success"] += 1
+        elif status == "failed":
+            memory[step]["fail"] += 1
+
+    # calculate rates
+    for step in memory:
+        total = memory[step]["total"]
+
+        if total > 0:
+            memory[step]["success_rate"] = memory[step]["success"] / total
+            memory[step]["failure_rate"] = memory[step]["fail"] / total
+        else:
+            memory[step]["success_rate"] = 0
+            memory[step]["failure_rate"] = 0
+
+    return memory
+
 def score_step(step, completed_steps, step_updates):
 
     step_lower = step.strip().lower()
     score = 0
 
-    # 🔥 1. BASE PRIORITY (STRONGER)
+    # =========================
+    # 🧠 LOAD MEMORY
+    # =========================
+
+    memory = build_step_memory(step_updates)
+    step_mem = memory.get(step, {})
+
+    success_rate = step_mem.get("success_rate", 0)
+    failure_rate = step_mem.get("failure_rate", 0)
+
+    # =========================
+    # 🔥 BASE PRIORITY
+    # =========================
+
     if "finalize" in step_lower:
         score += 10
     elif "negotiate" in step_lower:
@@ -871,22 +930,39 @@ def score_step(step, completed_steps, step_updates):
     elif "evaluate" in step_lower:
         score += 5
 
-    # 🔥 2. RETRY PENALTY (STRONG)
+    # =========================
+    # 🔥 MEMORY IMPACT (NEW)
+    # =========================
+
+    score += success_rate * 5
+    score -= failure_rate * 7
+
+    # =========================
+    # 🔥 RETRY PENALTY
+    # =========================
+
     retry_count = sum(
         1 for u in step_updates
         if isinstance(u, dict) and u.get("step", "").strip().lower() == step_lower
     )
+
     score -= retry_count * 3
 
-    # 🔥 3. COMPLETION SAFETY
-    if step.strip().lower() in [s.strip().lower() for s in completed_steps]:
-        score -= 100  # never pick completed
+    # =========================
+    # 🔥 COMPLETION SAFETY
+    # =========================
 
-    # 🔥 4. RECENCY PENALTY (CRITICAL FIX)
+    if step_lower in [s.strip().lower() for s in completed_steps]:
+        score -= 100
+
+    # =========================
+    # 🔥 RECENT STEP PENALTY
+    # =========================
+
     if step_updates:
         last_step = step_updates[-1].get("step", "").strip().lower()
         if step_lower == last_step:
-            score -= 5  # avoid repeating last step
+            score -= 5
 
     return score
 
