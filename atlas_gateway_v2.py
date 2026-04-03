@@ -517,10 +517,6 @@ def atlas_action():
                 # 🧠 PHASE 4 — INTELLIGENT STEP SELECTION
                 # =========================
 
-                # =========================
-                # 🧠 CLEAN NORMALIZATION (CRITICAL FIX)
-                # =========================
-
                 normalized_completed = [
                     s.strip().lower() for s in completed_steps
                 ]
@@ -544,6 +540,19 @@ def atlas_action():
                     if s.strip().lower() != current_step.strip().lower()
                 ]
 
+                # 🚫 REMOVE LAST EXECUTED STEP (CRITICAL FIX)
+                if step_updates:
+                    last_step = step_updates[-1].get("step", "").strip().lower()
+
+                    candidates = [
+                        s for s in candidates
+                        if s.strip().lower() != last_step
+                    ]
+
+                # =========================
+                # 🧠 SELECT BEST STEP
+                # =========================
+
                 if candidates:
 
                     selected_step = select_better_step(
@@ -553,16 +562,13 @@ def atlas_action():
                         completed_steps
                     )
 
-                    print("🧠 SELECTED STEP:", selected_step)
+                    print("🧠 FINAL SELECTED STEP:", selected_step)
 
                     current_step = selected_step
 
                 else:
+                    print("⚠️ No candidates left")
                     current_step = None
-                
-                # 3. MOVE TO NEXT
-                if next_step:
-                    current_step = next_step
                 
                 # 4. NOW BUILD RESPONSE
                 final_response = {
