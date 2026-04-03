@@ -565,6 +565,8 @@ def atlas_action():
                         "decision": decision,
                         "Decision_Quality": decision_quality,
                         "Score": decision_score,
+                        "reason": step_decision.get("reason"),
+                        "metrics": step_decision.get("metrics"),
                         "debug": {
                             "current_step": current_step,
                             "completed_steps": completed_steps,
@@ -601,8 +603,13 @@ def atlas_action():
                 
                 # 4. NOW BUILD RESPONSE
                 final_response = {
-                "executed_step": previous_step,
-                "next_step": current_step
+                    "executed_step": previous_step,
+                    "next_step": current_step,
+                    "decision": decision,
+                    "Decision_Quality": decision_quality,
+                    "Score": decision_score,
+                    "reason": step_decision.get("reason"),
+                    "metrics": step_decision.get("metrics")
                 }    
                 score = 0.7 if len(completed_steps) > 1 else 0.5
                 confidence = round(score, 2)
