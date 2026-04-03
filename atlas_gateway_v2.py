@@ -453,6 +453,7 @@ def atlas_action():
             max_loops = 1  # safety limit
 
             start_time = time.time() 
+            failure_count = 0  # ✅ SAFE INIT
             MAX_RUNTIME = 15 # seconds
             final_response = None
 
@@ -542,10 +543,6 @@ def atlas_action():
                     # ✅ FAIL-SAFE (SAFE CONTINUE)
                     if not next_step_candidate:
                         next_step_candidate = current_step
-
-                    print("STEP:", previous_step)
-                    print("NEXT:", current_step)
-                    
 
                 # =========================
                 # 🧠 DECISION BEFORE EXECUTION
