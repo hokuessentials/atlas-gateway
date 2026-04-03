@@ -1,6 +1,6 @@
 def apply_priority_boost(title):
 
-    t = title.lower()
+    t = str(title).lower() if title else ""
 
     boost = 0
 
@@ -20,5 +20,6 @@ def apply_priority_boost(title):
     # LOW VALUE TASKS
     if "test" in t or "random" in t:
         boost -= 1.5
-
+    boost = max(min(boost, 3), -2)
+    
     return boost
