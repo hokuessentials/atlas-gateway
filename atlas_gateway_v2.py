@@ -593,7 +593,7 @@ def atlas_action():
 
                     step_updates.append({
                         "step": previous_step,
-                        "status": "success",
+                        "status": "failed",
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
@@ -1000,7 +1000,7 @@ def score_step(step, completed_steps, step_updates):
     # 🟢 CONSISTENCY BOOST
     if success_rate > 0 and failure_rate == 0:
         score += 5
-        
+
     # =========================
     # 🚫 COMPLETION SAFETY
     # =========================
