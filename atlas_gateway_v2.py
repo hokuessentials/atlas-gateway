@@ -826,7 +826,22 @@ def atlas_action():
                 "step_updates": json.dumps(step_updates)
             })
 
-            return jsonify(final_response)
+            return jsonify({
+                "status": "success",
+                "decision": decision,
+                "Decision_Quality": decision_quality,
+                "Score": decision_score,
+                "reason": step_decision.get("reason"),
+                "metrics": step_decision.get("metrics"),
+                "executed_step": previous_step,
+                "next_step": current_step,
+                "debug": {
+                    "current_step": current_step,
+                    "completed_steps": completed_steps,
+                    "pending_steps": pending_steps,
+                    "recent_updates": step_updates[-5:]
+                }
+            })
 
         return jsonify({"status": "invalid_request"})
 
