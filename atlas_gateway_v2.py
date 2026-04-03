@@ -634,7 +634,9 @@ def atlas_action():
                 # COMPLETE → ENGINE
                 # =========================
                 if not pending_steps:
-
+                
+                    current_step = None
+                    
                     if time.time() - start_time > 20:
                         return jsonify({
                             "status": "timeout_safe_exit",
