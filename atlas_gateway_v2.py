@@ -654,7 +654,10 @@ def atlas_action():
                 if not pending_steps:
                 
                     current_step = None
-
+                    # 🔥 RE-CALCULATE FINAL DECISION
+                    step_decision = decide_step_action("finalize", step_updates)
+                    decision_score = step_decision.get("decision_score", 1)
+                    
                     if time.time() - start_time > 20:
                         return jsonify({
                             "status": "timeout_safe_exit",
