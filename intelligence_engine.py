@@ -316,6 +316,32 @@ def select_better_step(current_step, candidates, step_updates, completed_steps):
 
         print("🧠 STEP SCORES:", scores)
         print("🏆 SELECTED:", best_step)
+        
+        # =========================
+        # 🧠 PHASE 4.4 — DECISION EVOLUTION MEMORY
+        # =========================
+
+        try:
+            decision_history = []
+
+            for update in step_updates[-5:]:  # last 5 actions
+                decision_history.append({
+                    "step": update.get("step"),
+                    "status": update.get("status")
+                })
+
+            # Count success vs failure
+            success_count = sum(1 for d in decision_history if d["status"] == "success")
+            failure_count = sum(1 for d in decision_history if d["status"] == "failed")
+
+            # Adaptive bias
+            if failure_count > success_count:
+                # penalize aggressive moves
+                if best_step and "Negotiate" in best_step:
+                    best_step = current_step  # fallback to safer step
+
+        except Exception as e:
+            print("Decision evolution error:", e)
 
         return best_step if best_step else candidates[0]
 
