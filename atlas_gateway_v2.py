@@ -574,9 +574,8 @@ def atlas_action():
                     print("🧠 FINAL SELECTED STEP:", selected_step)
 
                     current_step = selected_step
-                    
                 # =========================
-                # 🧠 PHASE 4.4 — DECISION ENGINE
+                # 🧠 DECISION BEFORE EXECUTION
                 # =========================
 
                 step_decision = decide_step_action(current_step, step_updates)
@@ -588,8 +587,6 @@ def atlas_action():
                 decision_score = step_decision.get("decision_score", 0)
                 decision_quality = step_decision.get("decision_quality", "execution")
 
-                # 🔥 CONTROL EXECUTION BASED ON DECISION
-
                 if execution_action == "hold":
                     return jsonify({
                         "status": "hold",
@@ -597,12 +594,20 @@ def atlas_action():
                         "Decision_Quality": decision_quality,
                         "Score": decision_score,
                         "debug": {
-                        "current_step": current_step,
-                        "completed_steps": completed_steps,
-                        "pending_steps": pending_steps,
-                        "recent_updates": step_updates[-5:]
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": pending_steps,
+                            "recent_updates": step_updates[-5:]
                         }
                     })
+
+                    # =========================
+                    # 🧠 PHASE 4.4 — DECISION ENGINE
+                    # =========================
+
+                    step_decision = decide_step_action(current_step, step_updates)
+
+                    print("🧠 DECISION:", step_decision)
 
                 else:
                     print("⚠️ No candidates left → forcing remaining step")
