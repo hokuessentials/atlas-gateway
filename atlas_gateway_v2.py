@@ -636,13 +636,13 @@ def atlas_action():
                 if not pending_steps:
                 
                     current_step = None
-                    
+
                     if time.time() - start_time > 20:
                         return jsonify({
                             "status": "timeout_safe_exit",
                             "decision": "partial",
                             "debug": {
-                                "current_step": current_step,
+                                "current_step": None,
                                 "completed_steps": completed_steps,
                                 "pending_steps": pending_steps
                             }
