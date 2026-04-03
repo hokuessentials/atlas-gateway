@@ -601,36 +601,42 @@ def atlas_action():
                         "step_updates": json.dumps(step_updates)
                     })
                 
-                # 4. NOW BUILD RESPONSE
-                final_response = {
-                    "executed_step": previous_step,
-                    "next_step": current_step,
-                    "decision": decision,
-                    "Decision_Quality": decision_quality,
-                    "Score": decision_score,
-                    "reason": step_decision.get("reason"),
-                    "metrics": step_decision.get("metrics")
-                }    
-                
-                if time.time() - start_time > MAX_RUNTIME:
-                
+                    # 4. NOW BUILD RESPONSE
+                    final_response = {
+                        "executed_step": previous_step,
+                        "next_step": current_step,
+                        "decision": decision,
+                        "Decision_Quality": decision_quality,
+                        "Score": decision_score,
+                        "reason": step_decision.get("reason"),
+                        "metrics": step_decision.get("metrics")
+                    }
                     return jsonify({
-                        "status": "timeout_safe_exit",
-                        "decision": "partial",
+                        "status": "success",
+                        "decision": decision,
+                        "Decision_Quality": decision_quality,
+                        "Score": decision_score,
+                        "reason": step_decision.get("reason"),
+                        "metrics": step_decision.get("metrics"),
+                        "executed_step": previous_step,
+                        "next_step": current_step,
                         "debug": {
                             "current_step": current_step,
                             "completed_steps": completed_steps,
-                            "pending_steps": pending_steps
+                            "pending_steps": pending_steps,
+                            "recent_updates": step_updates[-5:]
                         }
-                    })
+                    })    
+                
+                if time.time() - start_time > MAX_RUNTIME:
                 
                 # =========================
                 # FAILURE GUARD
                 # =========================
-                failure_count = sum(
-                    1 for s in step_updates
-                    if isinstance(s, dict) and s.get("status") == "failed"
-                )
+                    failure_count = sum(
+                        1 for s in step_updates
+                        if isinstance(s, dict) and s.get("status") == "failed"
+                    )
 
                 if failure_count >= 5:
                     return jsonify({
@@ -660,34 +666,34 @@ def atlas_action():
                             }
                         })
 
-                    # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
-                    decision_quality = "final_step"
+                # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
+                decision_quality = "final_step"
 
-                    try:
-                       save_session_to_sheet({
-                           "Session_ID": session_id,
-                           "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                           "Status": "CLOSED",
-                           "Notes": "Auto closed"
-                       })
-                    except:
-                        pass
-
-                    return jsonify({
-                        "status": "success",
-                        "decision": "complete",
-                        "Decision_Quality": decision_quality,
-                        "Score": decision_score,  # 🔥 use dynamic score
-                        "reason": step_decision.get("reason"),
-                        "metrics": step_decision.get("metrics"),
-                        "debug": {
-                            "current_step": current_step,
-                            "completed_steps": completed_steps,
-                            "pending_steps": [],
-                            "failed_steps": [],
-                            "recent_updates": step_updates[-5:]
-                        }
+                try:
+                    save_session_to_sheet({
+                        "Session_ID": session_id,
+                        "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "Status": "CLOSED",
+                        "Notes": "Auto closed"
                     })
+                except:
+                    pass
+
+                return jsonify({
+                    "status": "success",
+                    "decision": "complete",
+                    "Decision_Quality": decision_quality,
+                    "Score": decision_score,  # 🔥 use dynamic score
+                    "reason": step_decision.get("reason"),
+                    "metrics": step_decision.get("metrics"),
+                    "debug": {
+                        "current_step": current_step,
+                        "completed_steps": completed_steps,
+                        "pending_steps": [],
+                        "failed_steps": [],
+                        "recent_updates": step_updates[-5:]
+                    }
+                })
 
             # =========================
             # 🔁 RETRY + SWITCH LOGIC
