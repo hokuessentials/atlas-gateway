@@ -15,4 +15,6 @@ def apply_risk_penalty(title, risk_value):
     if "deal" in t:
         penalty *= 1.1
 
+    penalty = min(penalty, 1)
+
     return penalty
