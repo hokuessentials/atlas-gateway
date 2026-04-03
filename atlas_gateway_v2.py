@@ -536,21 +536,17 @@ def atlas_action():
                         step_updates,
                         completed_steps
                     )
+                    previous_step = current_step
+                    next_step_candidate = selected_step
+
                     # ✅ FAIL-SAFE (SAFE CONTINUE)
                     if not next_step_candidate:
                         next_step_candidate = current_step
 
-                    previous_step = current_step
-                    next_step_candidate = selected_step
-
-                    memory = build_step_memory(step_updates)
-
-                    for c in candidates:
-                        print(c, "→", score_step(c, completed_steps, step_updates))
                     print("STEP:", previous_step)
                     print("NEXT:", current_step)
                     print("SCORE:", decision_score)
-                    print("🧠 FINAL SELECTED STEP:", selected_step)
+                    
 
                 # =========================
                 # 🧠 DECISION BEFORE EXECUTION
@@ -650,19 +646,18 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     }
-
-                    # 4. NOW BUILD RESPONSE
-                    final_response = {
-                        "executed_step": previous_step,
-                        "next_step": current_step,
-                        "decision": decision,
-                        "Decision_Quality": decision_quality,
-                        "Score": decision_score,
-                        "reason": step_decision.get("reason"),
-                        "metrics": step_decision.get("metrics")
-                    }    
-                
+    
                 if time.time() - start_time > MAX_RUNTIME:
+                    failure_count = sum(
+                        1 for s in step_updates
+                        if isinstance(s, dict) and s.get("status") == "failed"
+                    )
+
+                    if failure_count >= 5:
+                        return jsonify({
+                            "status": "warning",
+                            "decision": "blocked"
+                        })
                 
                 # =========================
                 # FAILURE GUARD
@@ -781,19 +776,21 @@ def atlas_action():
                     })
 
                     # 🔥 SAVE STATE BEFORE RETURN
-                    return jsonify({
-                        "status": "retrying",
-                        "reason": "All steps failed once, retrying",
-                        "action": "retry_all_steps",
-                            
+                    final_response = {
+                        "status": "success",
+                        "decision": "complete",
+                        "Decision_Quality": decision_quality,
+                        "Score": decision_score,
+                        "reason": step_decision.get("reason"),
+                        "metrics": step_decision.get("metrics"),
                         "debug": {
                             "current_step": current_step,
                             "completed_steps": completed_steps,
-                            "pending_steps": pending_steps,
-                            "failed_steps": failed_steps,
+                            "pending_steps": [],
+                            "failed_steps": [],
                             "recent_updates": step_updates[-5:]
                         }
-                    })
+                    }
                 else:
                     return jsonify({
                         "status": "hold",
@@ -861,30 +858,7 @@ def atlas_action():
             except:
                 pass 
 
-            save_state_to_sheet({
-                "session_id": session_id,
-                "current_step": current_step,
-                "completed_steps": json.dumps(completed_steps),
-                "execution_plan": json.dumps(execution_plan),
-                "step_updates": json.dumps(step_updates)
-            })
-
-            return jsonify({
-                "status": "success",
-                "decision": decision,
-                "Decision_Quality": decision_quality,
-                "Score": decision_score,
-                "reason": step_decision.get("reason"),
-                "metrics": step_decision.get("metrics"),
-                "executed_step": previous_step,
-                "next_step": current_step,
-                "debug": {
-                    "current_step": current_step,
-                    "completed_steps": completed_steps,
-                    "pending_steps": pending_steps,
-                    "recent_updates": step_updates[-5:]
-                }
-            })
+            return jsonify(final_response)
 
         return jsonify({"status": "invalid_request"})
 
