@@ -593,7 +593,7 @@ def atlas_action():
 
                     step_updates.append({
                         "step": previous_step,
-                        "status": "failed",
+                        "status": "success",
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
