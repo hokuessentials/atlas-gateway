@@ -13,9 +13,14 @@ def compute_decision_scores(session_data):
     outcomes = session_data.get("outcome_list", [])[-5:]
 
     scored = []
-    failure_count = build_failure_memory(decisions, outcomes)
+    try:
+        failure_count = build_failure_memory(decisions, outcomes)
+    except:
+        failure_count = {}
 
-    for i in range(len(decisions)):
+    min_len = min(len(decisions), len(roi_list), len(risk_list), len(conf_list))
+
+    for i in range(min_len):
 
         title = str(decisions[i])
 
