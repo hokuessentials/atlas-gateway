@@ -646,19 +646,22 @@ def atlas_action():
                         }
                     }
     
-                if time.time() - start_time > MAX_RUNTIME:
-                    failure_count = sum(
-                        1 for s in step_updates
-                        if isinstance(s, dict) and s.get("status") == "failed"
-                    )
                 
-                # =========================
-                # FAILURE GUARD
-                # =========================
+                    # =========================
+                    # ⏱ TIME + FAILURE GUARD (FIXED)
+                    # =========================
+
                     failure_count = sum(
                         1 for s in step_updates
                         if isinstance(s, dict) and s.get("status") == "failed"
                     )
+
+                    if time.time() - start_time > MAX_RUNTIME:
+                        if failure_count >= 5:
+                            return jsonify({
+                                "status": "warning",
+                                "decision": "blocked"
+                            })
 
                 if failure_count >= 5:
                     return jsonify({
