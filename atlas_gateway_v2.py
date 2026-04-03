@@ -532,7 +532,7 @@ def atlas_action():
                         step_updates,
                         completed_steps
                     )
-
+                    previous_step = current_step
                     memory = build_step_memory(step_updates)
 
                     print("🧠 MEMORY:", memory)
@@ -588,8 +588,6 @@ def atlas_action():
                 # =========================
 
                 if current_step and current_step not in completed_steps:
-
-                    previous_step = current_step
 
                     print("⚡ EXECUTING STEP:", current_step)
 
