@@ -611,12 +611,7 @@ def atlas_action():
                     "reason": step_decision.get("reason"),
                     "metrics": step_decision.get("metrics")
                 }    
-                score = 0.7 if len(completed_steps) > 1 else 0.5
-                confidence = round(score, 2)
-                expected_roi = round(score * 10, 2)
-                risk_score = round(1 - score, 2)
-                decision_quality = "execution"
-
+                
                 if time.time() - start_time > MAX_RUNTIME:
                 
                     return jsonify({
@@ -666,10 +661,6 @@ def atlas_action():
                         })
 
                     # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
-                    score = 1
-                    confidence = 1
-                    expected_roi = 10
-                    risk_score = 0
                     decision_quality = "final_step"
 
                     try:
