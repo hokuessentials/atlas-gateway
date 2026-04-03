@@ -545,8 +545,7 @@ def atlas_action():
 
                     print("✅ SELECTED:", selected_step)
                     print("🧠 FINAL SELECTED STEP:", selected_step)
-                    
-                    current_step = next_step_candidate
+
                 # =========================
                 # 🧠 DECISION BEFORE EXECUTION
                 # =========================
@@ -607,6 +606,7 @@ def atlas_action():
                         "execution_plan": json.dumps(execution_plan),
                         "step_updates": json.dumps(step_updates)
                     })
+                    current_step = next_step_candidate
                     pending_steps = [
                         s for s in execution_plan
                         if s not in completed_steps and s != current_step
