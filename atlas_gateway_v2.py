@@ -472,35 +472,6 @@ def atlas_action():
                     pass
 
                 # =========================
-                # 🔥 EXECUTE FIRST (CORRECT FLOW)
-                # =========================
-                
-                # 1. EXECUTE
-                if current_step and current_step not in completed_steps:
-
-                    previous_step = current_step  # ✅ capture correct step
-
-                    print("⚡ EXECUTING STEP:", current_step)
-                    
-                    # ✅ TRACK EXECUTION
-                    step_updates.append({
-                        "step": current_step,
-                        "status": "success",
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                    })
-
-                    # ✅ ADD TO COMPLETED (NORMALIZED)
-                    completed_steps.append(current_step.strip())
-
-                    # ✅ SAVE STATE
-                    save_state_to_sheet({
-                        "session_id": session_id,
-                        "current_step": current_step,
-                        "completed_steps": json.dumps(completed_steps),
-                        "execution_plan": json.dumps(execution_plan),
-                        "step_updates": json.dumps(step_updates)
-                    })
-                # =========================
                 # 🔥 NOW DECIDE NEXT STEP
                 # =========================
 
@@ -574,6 +545,7 @@ def atlas_action():
                     print("🧠 FINAL SELECTED STEP:", selected_step)
 
                     current_step = selected_step
+
                 # =========================
                 # 🧠 DECISION BEFORE EXECUTION
                 # =========================
@@ -600,28 +572,32 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     })
+                
+                # =========================
+                # ⚡ EXECUTE AFTER DECISION
+                # =========================
 
-                    # =========================
-                    # 🧠 PHASE 4.4 — DECISION ENGINE
-                    # =========================
+                if current_step and current_step not in completed_steps:
 
-                    step_decision = decide_step_action(current_step, step_updates)
+                    previous_step = current_step
 
-                    print("🧠 DECISION:", step_decision)
+                    print("⚡ EXECUTING STEP:", current_step)
 
-                else:
-                    print("⚠️ No candidates left → forcing remaining step")
+                    step_updates.append({
+                        "step": current_step,
+                        "status": "success",
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                    })
 
-                    # 🔥 FORCE PICK LAST REMAINING STEP
-                    remaining = [
-                        s for s in normalized_plan
-                        if s.strip().lower() not in normalized_completed
-                    ]
+                    completed_steps.append(current_step.strip())
 
-                    if remaining:
-                        current_step = remaining[0]
-                    else:
-                        current_step = None
+                    save_state_to_sheet({
+                        "session_id": session_id,
+                        "current_step": current_step,
+                        "completed_steps": json.dumps(completed_steps),
+                        "execution_plan": json.dumps(execution_plan),
+                        "step_updates": json.dumps(step_updates)
+                    })
                 
                 # 4. NOW BUILD RESPONSE
                 final_response = {
