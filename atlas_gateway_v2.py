@@ -561,8 +561,16 @@ def atlas_action():
                         step_updates,
                         completed_steps
                     )
-                    
-                    print("🧠 MEMORY:", build_step_memory(step_updates))
+
+                    memory = build_step_memory(step_updates)
+
+                    print("🧠 MEMORY:", memory)
+                    print("🧠 SCORES:")
+
+                    for c in candidates:
+                        print(c, "→", score_step(c, completed_steps, step_updates))
+
+                    print("✅ SELECTED:", selected_step)
                     print("🧠 FINAL SELECTED STEP:", selected_step)
 
                     current_step = selected_step
@@ -826,35 +834,6 @@ def suggest_next_step(execution_plan, completed_steps):
     # 🔥 FOR NOW — SAME AS ORDER (SAFE)
     return remaining[0]
 
-def score_step(step, completed_steps, step_updates):
-
-    step_lower = step.strip().lower()
-
-    score = 0
-
-    # 🔥 BASE PRIORITY (manual intelligence for now)
-    if "finalize" in step_lower:
-        score += 5
-    elif "negotiate" in step_lower:
-        score += 4
-    elif "check" in step_lower:
-        score += 3
-    elif "evaluate" in step_lower:
-        score += 2
-
-    # 🔥 PENALTY if already tried multiple times
-    retry_count = sum(
-        1 for u in step_updates
-        if isinstance(u, dict) and u.get("step", "").strip().lower() == step_lower
-    )
-
-    score -= retry_count * 1.5
-
-    # 🔥 BONUS if not completed
-    if step not in completed_steps:
-        score += 2
-
-    return score
 # =========================
 # 🧠 PHASE 4.2 — STEP MEMORY ENGINE
 # =========================
@@ -906,7 +885,7 @@ def score_step(step, completed_steps, step_updates):
     score = 0
 
     # =========================
-    # 🧠 LOAD MEMORY
+    # 🧠 MEMORY (PHASE 4.2)
     # =========================
 
     memory = build_step_memory(step_updates)
@@ -916,47 +895,70 @@ def score_step(step, completed_steps, step_updates):
     failure_rate = step_mem.get("failure_rate", 0)
 
     # =========================
-    # 🔥 BASE PRIORITY
+    # 💰 ROI ENGINE (NEW)
     # =========================
 
     if "finalize" in step_lower:
-        score += 10
+        roi = 10
     elif "negotiate" in step_lower:
-        score += 8
+        roi = 8
     elif "check sample" in step_lower:
-        score += 7
+        roi = 7
     elif "check supplier" in step_lower:
-        score += 6
+        roi = 6
     elif "evaluate" in step_lower:
-        score += 5
+        roi = 5
+    else:
+        roi = 4
 
     # =========================
-    # 🔥 MEMORY IMPACT (NEW)
+    # ⚠️ RISK ENGINE (NEW)
     # =========================
 
-    score += success_rate * 5
-    score -= failure_rate * 7
+    if "negotiate" in step_lower:
+        risk = 0.6
+    elif "finalize" in step_lower:
+        risk = 0.4
+    else:
+        risk = 0.2
 
     # =========================
-    # 🔥 RETRY PENALTY
+    # 🎯 CONFIDENCE ENGINE (NEW)
+    # =========================
+
+    confidence = success_rate if success_rate > 0 else 0.5
+
+    # =========================
+    # 🔥 SCORE FORMULA (CORE BRAIN)
+    # =========================
+
+    score += (roi * 1.2)
+    score += (confidence * 5)
+    score -= (risk * 6)
+    score += (success_rate * 5)
+    score -= (failure_rate * 7)
+
+    # =========================
+    # 🔁 RETRY PENALTY
     # =========================
 
     retry_count = sum(
         1 for u in step_updates
-        if isinstance(u, dict) and u.get("step", "").strip().lower() == step_lower
+        if isinstance(u, dict)
+        and u.get("step", "").strip().lower() == step_lower
     )
 
     score -= retry_count * 3
 
     # =========================
-    # 🔥 COMPLETION SAFETY
+    # 🚫 COMPLETION SAFETY
     # =========================
 
     if step_lower in [s.strip().lower() for s in completed_steps]:
         score -= 100
 
     # =========================
-    # 🔥 RECENT STEP PENALTY
+    # 🚫 RECENT STEP BLOCK
     # =========================
 
     if step_updates:
