@@ -686,7 +686,9 @@ def atlas_action():
                         "status": "success",
                         "decision": "complete",
                         "Decision_Quality": decision_quality,
-                        "Score": score,
+                        "Score": decision_score,  # 🔥 use dynamic score
+                        "reason": step_decision.get("reason"),
+                        "metrics": step_decision.get("metrics"),
                         "debug": {
                             "current_step": current_step,
                             "completed_steps": completed_steps,
