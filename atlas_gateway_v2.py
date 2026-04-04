@@ -271,7 +271,7 @@ def load_session_from_sheet():
             if not title or not module:
                 continue
 
-            session_data["session_id"] = r.get("Session_ID")
+            session_data["session_id"] = r.get("session_id")
             session_data["decisions"].append(title)
 
             session_data["module_count"][module] = \
@@ -528,7 +528,7 @@ def atlas_action():
                 # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
                 try:
                     save_session_to_sheet({
-                        "session_id": SAFE_SESSION_ID,
+                        "session_id": session_id,
                         "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "session_type": "execution",
                         "active_module": "Execution Engine",
@@ -805,7 +805,7 @@ def atlas_action():
 
                 try:
                     save_session_to_sheet({
-                        "session_id": SAFE_SESSION_ID,
+                        "session_id": session_id,
                         "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "status": "CLOSED",
                         "notes": "Auto closed"
