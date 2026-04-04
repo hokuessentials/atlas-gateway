@@ -812,7 +812,7 @@ def atlas_action():
                     log_decision_to_sheet({
                         "session_id": safe_session_id,
                         "executed_step": previous_step,
-                        "decision_score": decision_score,
+                        "decision_score": decision_score or 0.5,
                         "status": "success",
                         "lesson_learned": "auto_logged"
                     })
@@ -961,7 +961,7 @@ def atlas_action():
                 log_decision_to_sheet({
                     "session_id": session_id,
                     "executed_step": previous_step,
-                    "decision_score": decision_score,
+                    "decision_score": decision_score or 0.5,
                     "status": "success",
                     "lesson_learned": "auto_logged"
                 })
