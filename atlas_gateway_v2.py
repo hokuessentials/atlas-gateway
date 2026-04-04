@@ -419,7 +419,7 @@ def atlas_action():
 
         session_id = parsed_state.get("session_id")
 
-        if not session_id:
+        if not session_id or str(session_id).strip() == "":
             session_id = "S-" + str(int(time.time()))
             
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
@@ -654,8 +654,29 @@ def atlas_action():
                     })
 
                     completed_steps.append(previous_step.strip())
-                    
 
+                    safe_session_id = session_id if session_id else "S-FALLBACK"
+
+                    log_execution_to_sheet({
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "session_id": safe_session_id,
+                        "step_index": len(completed_steps),
+                        "executed_step": previous_step or "UNKNOWN",
+                        "next_step": current_step or "UNKNOWN",
+                        "status": "success",
+                        "decision": decision if decision else "proceed",
+                        "decision_score": float(decision_score) if decision_score else 0.5,
+                        "decision_quality": decision_quality if decision_quality else "execution"
+                    })
+
+                    log_decision_to_sheet({
+                        "session_id": safe_session_id,
+                        "executed_step": previous_step or "UNKNOWN",
+                        "decision_score": float(decision_score) if decision_score else 0.5,
+                        "status": "success",
+                        "lesson_learned": "auto_logged"
+                    })
+                    
                     # =========================
                     # 🔄 MOVE STEP
                     # =========================
@@ -928,36 +949,6 @@ def atlas_action():
                 })
             except:
                 pass
-
-            # 🔥 AUTO LOG EXECUTION
-            try:
-                if not session_id:
-                    session_id = "S-FALLBACK"
-
-                log_execution_to_sheet({
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "session_id": safe_session_id or "S-FALLBACK",
-                    "step_index": len(completed_steps) if completed_steps else 0,
-                    "executed_step": previous_step or "UNKNOWN",
-                    "next_step": current_step or "UNKNOWN",
-                    "status": "success",
-                    "decision": decision if decision else "proceed",
-                    "decision_score": float(decision_score) if decision_score else 0.5,
-                    "decision_quality": decision_quality if decision_quality else "execution"
-                })
-                log_decision_to_sheet({
-                    "session_id": safe_session_id or "S-FALLBACK",
-                    "executed_step": previous_step or "UNKNOWN",
-                    "decision_score": float(decision_score) if decision_score else 0.5,
-                    "status": "success",
-                    "lesson_learned": "auto_logged"
-                })
-            except:
-                pass 
-
-            return jsonify(final_response)
-
-        return jsonify({"status": "invalid_request"})
 
     except Exception as e:
         print("❌ FATAL ERROR:", e)
