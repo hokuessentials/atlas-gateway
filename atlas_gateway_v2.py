@@ -529,7 +529,7 @@ def atlas_action():
             final_response = None
 
             while loop_count < max_loops:
-                if time.time() - start_time > 5:
+                if time.time() - start_time > 15:
                     print("⚠️ TIME LIMIT HIT — BREAKING LOOP")
                     break
                 loop_count += 1
@@ -904,7 +904,7 @@ def atlas_action():
                         "pending_steps": pending_steps
                     }
                 }
-
+            print("✅ EARLY RETURN TRIGGERED")
             return jsonify(final_response)
         
     except Exception as e:
