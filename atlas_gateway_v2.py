@@ -50,7 +50,8 @@ def save_state_to_sheet(active_state):
                 "payload": active_state
             },
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=5,
+            allow_redirects=True
         )
     except Exception as e:
         print("❌ STATE SAVE ERROR:", e)
@@ -64,7 +65,8 @@ def log_execution_to_sheet(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=5,
+            allow_redirects=True
         )
     except Exception as e:
         print("❌ LOG ERROR:", e)
@@ -78,7 +80,8 @@ def update_tracker(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=5,
+            allow_redirects=True
         )
     except Exception as e:
         print("❌ TRACKER ERROR:", e)
@@ -92,7 +95,8 @@ def save_decision_to_sheet(decision_data):
                 "data": decision_data
             },
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=5,
+            allow_redirects=True
         )
     except Exception as e:
         print("❌ DECISION SAVE ERROR:", e)       
@@ -205,7 +209,8 @@ def save_product_to_sheet(product_data):
                 "data": product_data
             },
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=5,
+            allow_redirects=True
         )
     except Exception as e:
         print("❌ PRODUCT SAVE ERROR:", e)    
@@ -301,7 +306,7 @@ def update_decision_outcome(decision_id, outcome, lesson):
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=3,
+                timeout=5,
                 allow_redirects=True
             )
     except Exception as e:
@@ -377,7 +382,8 @@ def save_session_to_sheet(session):
                 "data": session
             },
             headers={"Content-Type": "application/json"},
-            timeout=3
+            timeout=5,
+            allow_redirects=True
         )
     except Exception as e:
         print("❌ SESSION SAVE ERROR:", e)
