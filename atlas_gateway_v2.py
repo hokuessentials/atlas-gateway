@@ -638,7 +638,11 @@ def atlas_action():
                 if current_step and current_step not in completed_steps:
 
                     previous_step = current_step
-                    next_step = next_step_candidate
+                    if next_step_candidate == current_step:
+                        remaining = [s for s in execution_plan if s not in completed_steps]
+                        next_step = remaining[0] if remaining else current_step
+                    else:
+                        next_step = next_step_candidate
 
                     # =========================
                     # ⚡ EXECUTE
@@ -760,6 +764,61 @@ def atlas_action():
                     })
                 except:
                     pass
+                
+                # 🔥 ALWAYS LOG DECISION (MOVE THIS UP)
+                try:
+                    save_decision_to_sheet({
+                        "decision_id": "D-" + str(int(time.time())),
+                        "session_id": session_id,
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "step_title": previous_step,
+                        "title": decision,
+                        "description": step_decision.get("reason"),
+                        "module": "execution",
+                        "expected_roi": 0,
+                        "risk_score": 0,
+                        "confidence_level": 0.5,
+                        "decision_score": decision_score,
+                        "reversible_flag": True,
+                        "decision_owner": "Atlas",
+                        "tags": "execution",
+                        "decision_type": "execution",
+                        "outcome_status": "pending",
+                        "lesson_learned": ""
+                    })
+                except Exception as e:
+                    print("❌ DECISION LOG ERROR:", e)
+
+                # 🔥 UPDATE TRACKER
+                try:
+                    update_tracker({
+                        "module": "Execution Engine",
+                        "phase": "Phase 3.5",
+                        "task": "Control Layer Build",
+                        "status": "complete" if not pending_steps else "active",
+                        "current_step": previous_step,
+                        "next_step": current_step,
+                        "owner": "Atlas",
+                        "notes": "Live execution update"
+                    })
+                except Exception as e:
+                    print("❌ TRACKER ERROR:", e)
+
+                # 🔥 LOG EXECUTION
+                try:
+                    log_execution_to_sheet({
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "session_id": session_id,
+                        "step_index": len(completed_steps),
+                        "executed_step": previous_step,
+                        "next_step": current_step,
+                        "status": "success",
+                        "decision": decision,
+                        "decision_score": decision_score,
+                        "decision_quality": decision_quality
+                    })
+                except Exception as e:
+                    print("❌ EXECUTION LOG ERROR:", e)
 
                 return jsonify({
                     "status": "success",
