@@ -563,7 +563,7 @@ def atlas_action():
                 # =========================
                 # 🧠 SELECT BEST STEP
                 # =========================
-                
+
                 next_step_candidate = current_step
                 if candidates:
 
@@ -797,6 +797,10 @@ def atlas_action():
                         "decision_owner": "Atlas",
                         "tags": "execution",
                         "decision_type": "execution"
+
+                        # 🚨 ADD THESE (MISSING)
+                        "lesson_learned": "auto_logged",
+                        "session_id": session_id  # 🔁 FORCE AGAIN (important for mapping)
                     })
                 except Exception as e:
                     print("❌ EXECUTION LOG ERROR:", e)
@@ -935,6 +939,10 @@ def atlas_action():
                     "decision_owner": "Atlas",
                     "tags": "execution",
                     "decision_type": "execution"
+
+                    # 🚨 ADD THESE (MISSING)
+                    "lesson_learned": "auto_logged",
+                    "session_id": session_id  # 🔁 FORCE AGAIN (important for mapping)
                 })
             except:
                 pass 
