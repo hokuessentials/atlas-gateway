@@ -83,7 +83,7 @@ def update_tracker(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=15,
+            timeout=5,
             allow_redirects=True
         )
     except Exception as e:
@@ -396,7 +396,7 @@ def save_session_to_sheet(session):
                 "data": session
             },
             headers={"Content-Type": "application/json"},
-            timeout=15,
+            timeout=5,
             allow_redirects=True
         )
 
@@ -684,7 +684,6 @@ def atlas_action():
                         "decision_score": float(decision_score or 0.5),
                         "decision_quality": decision_quality or "execution",
                     })
-                    time.sleep(0.5)
                     
                     print("🔥 CALLING DECISION API")
                     log_decision_to_sheet({
@@ -694,7 +693,6 @@ def atlas_action():
                         "status": "success",
                         "lesson_learned": "auto_logged"
                     })
-                    time.sleep(0.5)
 
                     # =========================
                     # 🔄 MOVE STEP
@@ -749,7 +747,6 @@ def atlas_action():
                             "product_count": len(product_data)
                         }
                     }
-                    time.sleep(0.5)
                 
                     # =========================
                     # ⏱ TIME + FAILURE GUARD (FIXED)
@@ -811,7 +808,6 @@ def atlas_action():
                         "status": "CLOSED",
                         "notes": "Auto closed"
                     })
-                    time.sleep(0.5)
                 except Exception as e:
                     print("❌ SESSION ERROR:", e)
 
@@ -827,7 +823,6 @@ def atlas_action():
                         "owner": "Atlas",
                         "notes": "Live execution update"
                     })
-                    time.sleep(0.5)
                 except Exception as e:
                     print("❌ TRACKER ERROR:", e)
 
