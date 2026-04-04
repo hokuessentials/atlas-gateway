@@ -697,7 +697,7 @@ def atlas_action():
                         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
                     }
 
-                    save_state_to_sheet(final_state)
+                    # save_state_to_sheet(final_state)
 
                     # 🔥 LOG EXECUTION (STEP 1)
                     try:
@@ -755,7 +755,8 @@ def atlas_action():
                             "product_count": len(product_data)
                         }
                     }
-                
+                    print("✅ EARLY RETURN TRIGGERED")
+                    return jsonify(final_response)
                     # =========================
                     # ⏱ TIME + FAILURE GUARD (FIXED)
                     # =========================
