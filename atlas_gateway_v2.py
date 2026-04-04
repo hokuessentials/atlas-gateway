@@ -790,6 +790,9 @@ def atlas_action():
 
                 # 🔥 LOG EXECUTION
                 try:
+                    if not session_id:
+                        session_id = "S-FALLBACK"
+
                     log_execution_to_sheet({
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "session_id": session_id,
@@ -936,6 +939,9 @@ def atlas_action():
 
             # 🔥 AUTO LOG EXECUTION
             try:
+                if not session_id:
+                    session_id = "S-FALLBACK"
+                    
                 log_execution_to_sheet({
                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                     "session_id": session_id,
