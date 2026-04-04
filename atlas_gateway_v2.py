@@ -614,6 +614,8 @@ def atlas_action():
                 # 🧠 DECISION BEFORE EXECUTION
                 # =========================
 
+                session_data = {}
+
                 session_data["active_state"] = {
                     "current_step": current_step,
                     "completed_steps": completed_steps,
@@ -692,7 +694,7 @@ def atlas_action():
                         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
                     }
 
-                    threading.Thread(target=save_state_to_sheet, args=(final_state)).start()
+                    threading.Thread(target=save_state_to_sheet, args=(final_state,)).start()
 
                     # 🔥 LOG EXECUTION (STEP 1)
                     try:
