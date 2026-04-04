@@ -421,12 +421,6 @@ def atlas_action():
 
         if not session_id:
             session_id = "S-" + str(int(time.time()))
-
-        current_state = load_state_from_sheet()
-
-        current_state["session_id"] = session_id
-
-        save_state_to_sheet(current_state)
             
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         completed_steps = list(dict.fromkeys([
@@ -676,7 +670,9 @@ def atlas_action():
                     # =========================
                     # 💾 SAVE (ONLY ONE MAIN SAVE)
                     # =========================
-                    save_state_to_sheet({
+                    final_state = load_state_from_sheet() or {}
+
+                    final_state.update({
                         "session_id": session_id,
                         "current_step": current_step,
                         "completed_steps": json.dumps(completed_steps),
@@ -690,10 +686,17 @@ def atlas_action():
                         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
+                    save_state_to_sheet(final_state)
+
                     pending_steps = [
                         s for s in execution_plan
                         if s not in completed_steps and s != current_step
                     ]
+                    if not session_id or str(session_id).strip() == "":
+                        print("🚨 SESSION LOST — RECOVERING")
+
+                        fallback = load_state_from_sheet()
+                        session_id = fallback.get("session_id") or "S-FALLBACK"
 
                     final_response = {
                         "status": "success",
@@ -792,25 +795,24 @@ def atlas_action():
                     if not session_id:
                         session_id = "S-FALLBACK"
 
+                    safe_session_id = session_id or "S-FALLBACK"
+
                     log_execution_to_sheet({
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "session_id": session_id,
+                        "session_id": safe_session_id,
                         "step_index": len(completed_steps),
-
                         "executed_step": previous_step,
                         "next_step": current_step,
-
                         "status": "success",
                         "decision": decision or "proceed",
-
                         "decision_score": decision_score or 0.5,
                         "decision_quality": decision_quality or "execution"
                     })
 
                     log_decision_to_sheet({
-                        "session_id": session_id,
+                        "session_id": safe_session_id,
                         "executed_step": previous_step,
-                        "decision_score": decision_score,
+                        "decision_score": decision_score or 0.5,
                         "status": "success",
                         "lesson_learned": "auto_logged"
                     })
