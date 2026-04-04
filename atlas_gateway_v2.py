@@ -643,22 +643,11 @@ def atlas_action():
                 execution_action = step_decision.get("execution_action")
                 decision_score = step_decision.get("decision_score", 0)
                 decision_quality = step_decision.get("decision_quality", "execution")
-
+                print("🧠 DECISION:", decision)
+                print("🧠 EXECUTION ACTION:", execution_action)
+                
                 if execution_action == "hold":
-                    return jsonify({
-                        "status": "hold",
-                        "decision": decision,
-                        "Decision_Quality": decision_quality,
-                        "Score": decision_score,
-                        "reason": step_decision.get("reason"),
-                        "metrics": step_decision.get("metrics"),
-                        "debug": {
-                            "current_step": current_step,
-                            "completed_steps": completed_steps,
-                            "pending_steps": pending_steps,
-                            "recent_updates": step_updates[-5:]
-                        }
-                    })
+                    print("⚠️ HOLD DETECTED — CONTINUING EXECUTION")
                 
                 # =========================
                 # ⚡ EXECUTE AFTER DECISION
@@ -666,7 +655,8 @@ def atlas_action():
 
                 if current_step:
                     previous_step = current_step
-       
+                    print("🔥 ABOUT TO LOG EXECUTION")
+
                     if previous_step not in completed_steps:
                         completed_steps.append(previous_step)
 
@@ -682,7 +672,7 @@ def atlas_action():
                     # 🔥 ALWAYS LOG (OUTSIDE CONDITION)
                     if not SAFE_SESSION_ID:
                         raise Exception("SESSION ID MISSING — BLOCKING WRITE")
-                    
+                    print("🔥 CALLING EXECUTION API")
                     log_execution_to_sheet({
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "session_id": SAFE_SESSION_ID,
@@ -695,7 +685,8 @@ def atlas_action():
                         "decision_quality": decision_quality or "execution",
                     })
                     time.sleep(0.5)
-                   
+                    
+                    print("🔥 CALLING DECISION API")
                     log_decision_to_sheet({
                         "session_id": SAFE_SESSION_ID,
                         "executed_step": previous_step or "UNKNOWN",
@@ -812,6 +803,7 @@ def atlas_action():
                 
                 if not SAFE_SESSION_ID:
                     raise Exception("SESSION ID MISSING — BLOCKING WRITE")
+                print("🔥 CALLING SESSION SAVE API")
                 try:
                     save_session_to_sheet({
                         "session_id": SAFE_SESSION_ID,
@@ -951,6 +943,7 @@ def atlas_action():
 
     except Exception as e:
         print("❌ FATAL ERROR:", e)
+        print("✅ FINAL RETURN EXECUTED")
         return jsonify({
             "status": "error",
             "message": str(e)
