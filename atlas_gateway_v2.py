@@ -46,7 +46,7 @@ def save_state_to_sheet(active_state):
         requests.post(
             APPS_SCRIPT_URL,
             json={
-                "action": "save_state_to_sheet",
+                "action": "update_active_state",
                 "data": active_state
             },
             headers={"Content-Type": "application/json"},
@@ -76,7 +76,7 @@ def update_tracker(data):
         requests.post(
             APPS_SCRIPT_URL,
             json={
-                "action": "log_execution",
+                "action": "update_tracker",
                 "data": data
             },
             headers={"Content-Type": "application/json"},
@@ -202,16 +202,20 @@ def save_product_to_sheet(product_data):
 
 def log_decision_to_sheet(data):
     try:
-        requests.post(
+        response = requests.post(
             APPS_SCRIPT_URL,
             json={
-                "action": "log_execution",
+                "action": "log_decision",
                 "data": data
             },
             headers={"Content-Type": "application/json"},
             timeout=5,
             allow_redirects=True
         )
+
+        print("DECISION STATUS:", response.status_code)
+        print("DECISION RESPONSE:", response.text)
+
     except Exception as e:
         print("❌ DECISION LOG ERROR:", e)
 # =========================
