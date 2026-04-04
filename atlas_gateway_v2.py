@@ -803,22 +803,23 @@ def atlas_action():
             # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
             try:
                 save_decision_to_sheet({
-                    "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                    "Session_ID": session_id,
-                    "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "Title": previous_step,
-                    "Description": "Step executed",
-                    "Module": "Execution Engine",
-                    "Expected_ROI": 5,
-                    "Risk_Score": 0.5,
-                    "Confidence_Level": 0.5,
-                    "Decision_Quality": "execution",
-                    "Reversible_Flag": True,
-                    "Decision_Owner": "Atlas",
-                    "Tags": "execution",
-                    "Decision_Type": "execution",
-                    "Outcome_Status": "success",
-                    "Lesson_Learned": "Step executed"
+                    "decision_id": generated_id,
+                    "session_id": session_id,
+                    "timestamp": current_time,
+                    "step_title": previous_step,   # 🔥 NEW
+                    "title": decision,
+                    "description": step_decision.get("reason"),
+                    "module": "execution",
+                    "expected_roi": estimated_roi,
+                    "risk_score": estimated_risk,
+                    "confidence_level": confidence,
+                    "decision_score": decision_score,  # 🔥 NEW
+                    "reversible_flag": True,
+                    "decision_owner": "Atlas",
+                    "tags": "execution",
+                    "decision_type": "execution",
+                    "outcome_status": "pending",
+                    "Lesson_Learned": ""
                 })
             except:
                 pass
