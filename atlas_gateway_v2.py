@@ -419,8 +419,12 @@ def atlas_action():
 
         session_id = parsed_state.get("session_id")
 
+        # 🔥 HARD LOCK SESSION (NO LOSS ALLOWED)
         if not session_id or str(session_id).strip() == "":
             session_id = "S-" + str(int(time.time()))
+
+        # 🔥 NEVER CHANGE AFTER THIS POINT
+        SAFE_SESSION_ID = session_id
             
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         completed_steps = list(dict.fromkeys([
@@ -506,7 +510,7 @@ def atlas_action():
                 # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
                 try:
                     save_session_to_sheet({
-                        "Session_ID": session_id,
+                        "Session_ID": SAFE_SESSION_ID,
                         "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "Session_Type": "execution",
                         "Active_Module": "Execution Engine",
@@ -655,24 +659,24 @@ def atlas_action():
 
                     completed_steps.append(previous_step.strip())
 
-                    safe_session_id = session_id if session_id else "S-FALLBACK"
+                    SAFE_SESSION_ID = session_id if session_id else "S-FALLBACK"
 
                     log_execution_to_sheet({
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "session_id": safe_session_id,
+                        "session_id": SAFE_SESSION_ID,
                         "step_index": len(completed_steps),
                         "executed_step": previous_step or "UNKNOWN",
                         "next_step": current_step or "UNKNOWN",
                         "status": "success",
-                        "decision": decision if decision else "proceed",
-                        "decision_score": float(decision_score) if decision_score else 0.5,
-                        "decision_quality": decision_quality if decision_quality else "execution"
+                        "decision": decision or "proceed",
+                        "decision_score": float(decision_score or 0.5),
+                        "decision_quality": float(decision_score or 0.5),
                     })
 
                     log_decision_to_sheet({
-                        "session_id": safe_session_id,
+                        "session_id": SAFE_SESSION_ID,
                         "executed_step": previous_step or "UNKNOWN",
-                        "decision_score": float(decision_score) if decision_score else 0.5,
+                        "decision_score": float(decision_score or 0.5),
                         "status": "success",
                         "lesson_learned": "auto_logged"
                     })
