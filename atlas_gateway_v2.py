@@ -563,7 +563,8 @@ def atlas_action():
                 # =========================
                 # 🧠 SELECT BEST STEP
                 # =========================
-
+                
+                next_step_candidate = current_step
                 if candidates:
 
                     selected_step = select_better_step(
@@ -783,7 +784,19 @@ def atlas_action():
                         "status": "success",
                         "decision": decision,
                         "decision_score": decision_score,
-                        "decision_quality": decision_quality
+                        "decision_quality": decision_quality,
+
+                        # 🔥 ADD THESE (CRITICAL FIX)
+                        "step_title": previous_step,
+                        "title": previous_step,
+                        "description": "Step executed",
+                        "module": "Execution Engine",
+                        "expected_roi": 5,
+                        "risk_score": 0.5,
+                        "confidence_level": decision_score,
+                        "decision_owner": "Atlas",
+                        "tags": "execution",
+                        "decision_type": "execution"
                     })
                 except Exception as e:
                     print("❌ EXECUTION LOG ERROR:", e)
@@ -909,7 +922,19 @@ def atlas_action():
                     "status": "success",
                     "decision": decision,
                     "decision_score": decision_score,
-                    "decision_quality": decision_quality
+                    "decision_quality": decision_quality,
+
+                    # 🔥 ADD THESE (CRITICAL FIX)
+                    "step_title": previous_step,
+                    "title": previous_step,
+                    "description": "Step executed",
+                    "module": "Execution Engine",
+                    "expected_roi": 5,
+                    "risk_score": 0.5,
+                    "confidence_level": decision_score,
+                    "decision_owner": "Atlas",
+                    "tags": "execution",
+                    "decision_type": "execution"
                 })
             except:
                 pass 
