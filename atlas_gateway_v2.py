@@ -659,8 +659,6 @@ def atlas_action():
 
                     completed_steps.append(previous_step.strip())
 
-                    SAFE_SESSION_ID = session_id if session_id else "S-FALLBACK"
-
                     log_execution_to_sheet({
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "session_id": SAFE_SESSION_ID,
@@ -670,7 +668,7 @@ def atlas_action():
                         "status": "success",
                         "decision": decision or "proceed",
                         "decision_score": float(decision_score or 0.5),
-                        "decision_quality": float(decision_score or 0.5),
+                        "decision_quality": decision_quality or "execution",
                     })
 
                     log_decision_to_sheet({
@@ -698,7 +696,7 @@ def atlas_action():
                     final_state = load_state_from_sheet() or {}
 
                     final_state.update({
-                        "session_id": session_id,
+                        "session_id": SAFE_SESSION_ID,
                         "current_step": current_step,
                         "completed_steps": json.dumps(completed_steps),
                         "pending_steps": json.dumps(pending_steps),
@@ -792,7 +790,7 @@ def atlas_action():
 
                 try:
                     save_session_to_sheet({
-                        "Session_ID": session_id,
+                        "session_id": SAFE_SESSION_ID,
                         "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "Status": "CLOSED",
                         "Notes": "Auto closed"
