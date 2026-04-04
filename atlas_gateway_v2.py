@@ -84,22 +84,7 @@ def update_tracker(data):
             allow_redirects=True
         )
     except Exception as e:
-        print("❌ TRACKER ERROR:", e)
-
-def save_decision_to_sheet(decision_data):
-    try:
-        requests.post(
-            APPS_SCRIPT_URL,
-            json={
-                "action": "log_decision",
-                "data": decision_data
-            },
-            headers={"Content-Type": "application/json"},
-            timeout=5,
-            allow_redirects=True
-        )
-    except Exception as e:
-        print("❌ DECISION SAVE ERROR:", e)       
+        print("❌ TRACKER ERROR:", e)       
 
 def load_state_from_sheet():
     try:
@@ -589,7 +574,8 @@ def atlas_action():
                     )
                     previous_step = current_step
                     remaining = [s for s in execution_plan if s not in completed_steps]
-
+                    
+                    next_step_candidate = selected_step
                     if next_step_candidate == current_step:
                         next_step = remaining[0] if remaining else None
                     else:
@@ -660,31 +646,6 @@ def atlas_action():
 
                     completed_steps.append(previous_step.strip())
                     
-                    # =========================
-                    # 🔥 IMMEDIATE DECISION LOG (FIX)
-                    # =========================
-                    try:
-                       save_decision_to_sheet({
-                           "decision_id": "D-" + str(int(time.time())),
-                           "session_id": session_id,
-                           "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                           "step_title": previous_step,
-                           "title": decision,
-                           "description": step_decision.get("reason"),
-                           "module": "execution",
-                           "expected_roi": 0,
-                           "risk_score": 0,
-                           "confidence_level": 0.5,
-                           "decision_score": decision_score,
-                           "reversible_flag": True,
-                           "decision_owner": "Atlas",
-                           "tags": "execution",
-                           "decision_type": "execution",
-                           "outcome_status": "pending",
-                           "lesson_learned": ""
-                       })
-                    except Exception as e:
-                        print("❌ DECISION LOG ERROR:", e)
 
                     # =========================
                     # 🔄 MOVE STEP
@@ -795,30 +756,6 @@ def atlas_action():
                     })
                 except:
                     pass
-                
-                # 🔥 ALWAYS LOG DECISION (MOVE THIS UP)
-                try:
-                    save_decision_to_sheet({
-                        "decision_id": "D-" + str(int(time.time())),
-                        "session_id": session_id,
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "step_title": previous_step,
-                        "title": decision,
-                        "description": step_decision.get("reason"),
-                        "module": "execution",
-                        "expected_roi": 0,
-                        "risk_score": 0,
-                        "confidence_level": 0.5,
-                        "decision_score": decision_score,
-                        "reversible_flag": True,
-                        "decision_owner": "Atlas",
-                        "tags": "execution",
-                        "decision_type": "execution",
-                        "outcome_status": "pending",
-                        "lesson_learned": ""
-                    })
-                except Exception as e:
-                    print("❌ DECISION LOG ERROR:", e)
 
                 # 🔥 UPDATE TRACKER
                 try:
@@ -945,30 +882,6 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     })
-
-            # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
-            try:
-                save_decision_to_sheet({
-                    "decision_id": "D-" + str(int(time.time())),
-                    "session_id": session_id,
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "step_title": previous_step,
-                    "title": decision,
-                    "description": step_decision.get("reason"),
-                    "module": "execution",
-                    "expected_roi": 0,
-                    "risk_score": 0,
-                    "confidence_level": 0.5,
-                    "decision_score": decision_score,
-                    "reversible_flag": True,
-                    "decision_owner": "Atlas",
-                    "tags": "execution",
-                    "decision_type": "execution",
-                    "outcome_status": "pending",
-                    "lesson_learned": ""
-                })
-            except:
-                pass
 
             # 🔥 UPDATE MASTER TRACKER (CORRECT)
             try:
