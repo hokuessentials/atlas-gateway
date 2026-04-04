@@ -811,35 +811,6 @@ def atlas_action():
                 except Exception as e:
                     print("❌ TRACKER ERROR:", e)
 
-                # 🔥 LOG EXECUTION
-                try:
-                    if not session_id:
-                        session_id = "S-FALLBACK"
-
-                    safe_session_id = session_id or "S-FALLBACK"
-
-                    log_execution_to_sheet({
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "session_id": safe_session_id or "S-FALLBACK",
-                        "step_index": len(completed_steps) if completed_steps else 0,
-                        "executed_step": previous_step or "UNKNOWN",
-                        "next_step": current_step or "UNKNOWN",
-                        "status": "success",
-                        "decision": decision if decision else "proceed",
-                        "decision_score": float(decision_score) if decision_score else 0.5,
-                        "decision_quality": decision_quality if decision_quality else "execution"
-                    })
-
-                    log_decision_to_sheet({
-                        "session_id": safe_session_id or "S-FALLBACK",
-                        "executed_step": previous_step or "UNKNOWN",
-                        "decision_score": float(decision_score) if decision_score else 0.5,
-                        "status": "success",
-                        "lesson_learned": "auto_logged"
-                    })
-                except Exception as e:
-                    print("❌ EXECUTION LOG ERROR:", e)
-
                 return jsonify({
                     "status": "success",
                     "decision": "complete",
