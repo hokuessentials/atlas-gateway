@@ -187,7 +187,8 @@ def read_product_master():
 
         headers = data[0]
         rows = data[1:]
-
+        # 🔥 CLEAN EMPTY ROWS
+        rows = [r for r in rows if any(str(x).strip() for x in r)]
         products = [dict(zip(headers, row)) for row in rows]
 
         return products
@@ -662,8 +663,14 @@ def atlas_action():
                         "session_id": session_id,
                         "current_step": current_step,
                         "completed_steps": json.dumps(completed_steps),
+                        "pending_steps": json.dumps(pending_steps),
+                        "failed_steps": json.dumps([]),
                         "execution_plan": json.dumps(execution_plan),
-                        "step_updates": json.dumps(step_updates)
+                        "step_updates": json.dumps(step_updates),
+                        "decision": decision,
+                        "decision_score": decision_score,
+                        "status": "running",
+                        "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
                     pending_steps = [
@@ -760,7 +767,8 @@ def atlas_action():
                         "completed_steps": completed_steps,
                         "pending_steps": [],
                         "failed_steps": [],
-                        "recent_updates": step_updates[-5:]
+                        "recent_updates": step_updates[-5:],
+                        "product_count": len(product_data)
                     }
                 })
 
@@ -889,8 +897,8 @@ def atlas_action():
                     "step_index": len(completed_steps),
                     "executed_step": previous_step,
                     "next_step": current_step,
-                    "status": final_response.get("status", "success"),
-                    "decision": final_response.get("decision", "proceed"),
+                    "status": "success",
+                    "decision": decision,
                     "decision_score": decision_score,
                     "decision_quality": decision_quality
                 })
