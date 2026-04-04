@@ -373,7 +373,7 @@ def complete_task():
 # =========================
 def save_session_to_sheet(session):
     try:
-        requests.post(
+        response = requests.post(
             APPS_SCRIPT_URL,
             json={
                 "action": "save_session",
@@ -383,8 +383,12 @@ def save_session_to_sheet(session):
             timeout=5,
             allow_redirects=True
         )
+
+        print("SESSION SAVE STATUS:", response.status_code)
+        print("SESSION SAVE RESPONSE:", response.text)
+
     except Exception as e:
-        print("❌ SESSION SAVE ERROR:", e)
+        print("❌ SESSION SAVE ERROR:", str(e))
         
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
