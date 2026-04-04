@@ -417,7 +417,15 @@ def atlas_action():
         if isinstance(parsed_state, list):
             parsed_state = {}
 
-        session_id = parsed_state.get("session_id") or input_data.get("session_id")
+        session_id = parsed_state.get("session_id")
+
+        if not session_id:
+            session_id = "S-" + str(int(time.time()))
+
+        # 🔥 FORCE WRITE IMMEDIATELY
+        save_state_to_sheet({
+            "session_id": session_id
+        })
 
         if not session_id:
             session_id = "S-" + str(int(time.time()))
@@ -797,26 +805,17 @@ def atlas_action():
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "session_id": session_id,
                         "step_index": len(completed_steps),
+
                         "executed_step": previous_step,
                         "next_step": current_step,
+
                         "status": "success",
-                        "decision": decision,
-                        "decision_score": decision_score,
-                        "decision_quality": decision_quality,
+                        "decision": decision or "proceed",
 
-                        "step_title": previous_step,
-                        "title": previous_step,
-                        "description": "Step executed",
-                        "module": "Execution Engine",
-                        "expected_roi": 5,
-                        "risk_score": 0.5,
-                        "confidence_level": decision_score,
-                        "decision_owner": "Atlas",
-                        "tags": "execution",
-                        "decision_type": "execution",   # ✅ COMMA FIXED HERE
-
-                        "lesson_learned": "auto_logged"  # ✅ now valid
+                        "decision_score": decision_score or 0.5,
+                        "decision_quality": decision_quality or "execution"
                     })
+                    
                     log_decision_to_sheet({
                         "session_id": session_id,
                         "executed_step": previous_step,
@@ -941,7 +940,7 @@ def atlas_action():
             try:
                 if not session_id:
                     session_id = "S-FALLBACK"
-                    
+
                 log_execution_to_sheet({
                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                     "session_id": session_id,
