@@ -766,45 +766,7 @@ def atlas_action():
                 
                 if not SAFE_SESSION_ID:
                     raise Exception("SESSION ID MISSING — BLOCKING WRITE")
-                requests.post(
-                    APPS_SCRIPT_URL,
-                    json={
-                        "action": "full_log",
-                        "data": {
-                            "state": final_state,
-
-                            "execution": {
-                                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "session_id": SAFE_SESSION_ID,
-                                "step_index": len(completed_steps),
-                                "executed_step": previous_step,
-                                "next_step": current_step,
-                                "status": "success",
-                                "decision": decision,
-                                "decision_score": float(decision_score or 0.5),
-                                "decision_quality": decision_quality
-                            },
-
-                            "decision": {
-                                "session_id": SAFE_SESSION_ID,
-                                "executed_step": previous_step,
-                                "decision_score": float(decision_score or 0.5),
-                                "status": "success",
-                                "lesson_learned": "auto_logged"
-                            },
-
-                            "session": {
-                                "session_id": SAFE_SESSION_ID,
-                                "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                                "status": "ACTIVE",
-                                "notes": "auto_update"
-                            }
-                        }
-                    },
-                    headers={"Content-Type": "application/json"},
-                    timeout=60
-                )
-                time.sleep(1)
+                
                 return jsonify({
                     "status": "success",
                     "decision": "complete",
