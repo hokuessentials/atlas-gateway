@@ -46,8 +46,8 @@ def save_state_to_sheet(active_state):
         requests.post(
             APPS_SCRIPT_URL,
             json={
-                "action": "update_active_state",
-                "payload": active_state
+                "action": "save_state_to_sheet",
+                "data": active_state
             },
             headers={"Content-Type": "application/json"},
             timeout=5,
@@ -60,11 +60,13 @@ def log_execution_to_sheet(data):
     try:
         requests.post(
             APPS_SCRIPT_URL,
-            data=json.dumps({
+            json={
                 "action": "log_execution",
                 "data": data
-            }),
+            },
             headers={"Content-Type": "application/json"},
+            timeout=5,
+            allow_redirects=True
         )
     except Exception as e:
         print("❌ LOG ERROR:", e)
@@ -74,7 +76,7 @@ def update_tracker(data):
         requests.post(
             APPS_SCRIPT_URL,
             json={
-                "action": "update_tracker",
+                "action": "log_execution",
                 "data": data
             },
             headers={"Content-Type": "application/json"},
@@ -203,7 +205,7 @@ def log_decision_to_sheet(data):
         requests.post(
             APPS_SCRIPT_URL,
             json={
-                "action": "log_decision",
+                "action": "log_execution",
                 "data": data
             },
             headers={"Content-Type": "application/json"},
