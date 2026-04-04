@@ -95,7 +95,7 @@ def load_state_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=15,
+            timeout=3,
             allow_redirects=True
         )
 
@@ -416,9 +416,8 @@ def atlas_action():
         # =========================
         # 🔹 LOAD MEMORY
         # =========================
-        system_memory = {}
+        
         product_data = read_product_master()
-        active_raw = system_memory.get("active_state", [])
 
         def safe_json_parse(value):
             if isinstance(value, list):
@@ -694,24 +693,24 @@ def atlas_action():
                         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
                     }
 
-                    threading.Thread(target=save_state_to_sheet, args=(final_state,)).start()
+                    save_state_to_sheet(final_state)
 
                     # 🔥 LOG EXECUTION (STEP 1)
                     try:
-                        threading.Thread(target=log_execution_to_sheet, args=({
+                        log_execution_to_sheet({
                             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                             "session_id": SAFE_SESSION_ID,
                             "executed_step": previous_step,
                             "next_step": current_step,
                             "status": "success"
-                        })).start()
+                        })
                     except Exception as e:
                         print("❌ EXECUTION LOG ERROR:", e)
 
 
                     # 🔥 LOG DECISION (STEP 2)
                     try:
-                        threading.Thread(target=log_decision_to_sheet, args=({
+                        log_decision_to_sheet({
                             "Decision_ID": "D-" + str(int(time.time() * 1000)),
                             "Session_ID": SAFE_SESSION_ID,
                             "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -728,7 +727,7 @@ def atlas_action():
                             "Decision_Type": "execution",
                             "Outcome_Status": "success",
                             "Lesson_Learned": "Step executed"
-                        })).start()
+                        })
                     except Exception as e:
                         print("❌ DECISION LOG ERROR:", e)
 
