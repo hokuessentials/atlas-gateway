@@ -50,7 +50,7 @@ def save_state_to_sheet(active_state):
                 "payload": active_state
             },
             headers={"Content-Type": "application/json"},
-            timeout=60,
+            timeout=6,
             allow_redirects=True
         )
     except Exception as e:
@@ -65,7 +65,7 @@ def log_execution_to_sheet(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=60,
+            timeout=6,
             allow_redirects=True
         )
 
@@ -83,7 +83,7 @@ def update_tracker(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=60,
+            timeout=6,
             allow_redirects=True
         )
     except Exception as e:
@@ -148,7 +148,7 @@ def read_full_system_memory():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=60,
+            timeout=6,
         )
         
         if not resp or resp.status_code != 200:
@@ -173,7 +173,7 @@ def read_product_master():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=60,
+            timeout=6,
         )
 
         if not resp or resp.status_code != 200:
@@ -204,7 +204,7 @@ def save_product_to_sheet(product_data):
                 "data": product_data
             },
             headers={"Content-Type": "application/json"},
-            timeout=60,
+            timeout=6,
             allow_redirects=True
         )
     except Exception as e:
@@ -219,7 +219,7 @@ def log_decision_to_sheet(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=60,
+            timeout=6,
             allow_redirects=True
         )
 
@@ -249,7 +249,7 @@ def load_session_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=60,
+            timeout=6,
             allow_redirects=True
         )
 
@@ -320,7 +320,7 @@ def update_decision_outcome(decision_id, outcome, lesson):
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=60,
+                timeout=6,
                 allow_redirects=True
             )
     except Exception as e:
@@ -396,7 +396,7 @@ def save_session_to_sheet(session):
                 "data": session
             },
             headers={"Content-Type": "application/json"},
-            timeout=60,
+            timeout=6,
             allow_redirects=True
         )
 
@@ -692,6 +692,69 @@ def atlas_action():
                     }
 
                     save_state_to_sheet(final_state)
+                    
+                    # 🔥 EXECUTION LOG
+                    try:
+                        log_execution_to_sheet({
+                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "session_id": SAFE_SESSION_ID,
+                            "executed_step": previous_step,
+                            "next_step": current_step,
+                            "status": "success"
+                        })
+                    except Exception as e:
+                        print("❌ EXECUTION LOG ERROR:", e)
+
+
+                    # 🔥 DECISION LOG
+                    try:
+                        log_decision_to_sheet({
+                            "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                            "Session_ID": SAFE_SESSION_ID,
+                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "Title": previous_step,
+                            "Module": "Execution Engine",
+                            "Decision_Quality": decision_quality,
+                            "Outcome_Status": "success"
+                        })
+                    except Exception as e:
+                        print("❌ DECISION LOG ERROR:", e)
+
+                    # 🔥 LOG EXECUTION (STEP 1)
+                    try:
+                        log_execution_to_sheet({
+                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "session_id": SAFE_SESSION_ID,
+                            "executed_step": previous_step,
+                            "next_step": current_step,
+                            "status": "success"
+                        })
+                    except Exception as e:
+                        print("❌ EXECUTION LOG ERROR:", e)
+
+
+                    # 🔥 LOG DECISION (STEP 2)
+                    try:
+                        log_decision_to_sheet({
+                            "Decision_ID": "D-" + str(int(time.time() * 1000)),
+                            "Session_ID": SAFE_SESSION_ID,
+                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                            "Title": previous_step,
+                            "Description": "Step executed",
+                            "Module": "Execution Engine",
+                            "Expected_ROI": 5,
+                            "Risk_Score": 0.5,
+                            "Confidence_Level": 0.5,
+                            "Decision_Quality": decision_quality,
+                            "Reversible_Flag": True,
+                            "Decision_Owner": "Atlas",
+                            "Tags": "execution",
+                            "Decision_Type": "execution",
+                            "Outcome_Status": "success",
+                            "Lesson_Learned": "Step executed"
+                        })
+                    except Exception as e:
+                        print("❌ DECISION LOG ERROR:", e)
 
                     pending_steps = [
                         s for s in execution_plan
