@@ -586,7 +586,7 @@ def atlas_action():
                 # =========================
                 # 🧠 SELECT BEST STEP
                 # =========================
-
+                next_step = None
                 next_step_candidate = current_step
                 if candidates:
 
@@ -608,6 +608,10 @@ def atlas_action():
                     # ✅ FAIL-SAFE (SAFE CONTINUE)
                     if not next_step_candidate:
                         next_step_candidate = current_step
+
+                    if not next_step:
+                        remaining = [s for s in execution_plan if s not in completed_steps]
+                        next_step = remaining[0] if remaining else None
 
                 # =========================
                 # 🧠 DECISION BEFORE EXECUTION
