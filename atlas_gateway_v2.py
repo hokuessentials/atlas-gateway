@@ -545,8 +545,8 @@ def atlas_action():
                         "status": "ACTIVE",
                         "notes": "Auto session update"
                     })
-                except:
-                    pass
+                except Exception as e:
+                    print("❌ ERROR:", e)
 
                 # =========================
                 # 🔥 NOW DECIDE NEXT STEP
@@ -664,14 +664,11 @@ def atlas_action():
                 # ⚡ EXECUTE AFTER DECISION
                 # =========================
 
-                if current_step and current_step not in completed_steps:
-
+                if current_step:
                     previous_step = current_step
-                    if next_step_candidate == current_step:
-                        remaining = [s for s in execution_plan if s not in completed_steps]
-                        next_step = remaining[0] if remaining else current_step
-                    else:
-                        next_step = next_step_candidate
+       
+                    if previous_step not in completed_steps:
+                        completed_steps.append(previous_step)
 
                     # =========================
                     # ⚡ EXECUTE
@@ -682,7 +679,7 @@ def atlas_action():
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
-                    completed_steps.append(previous_step.strip())
+                    # 🔥 ALWAYS LOG (OUTSIDE CONDITION)
                     if not SAFE_SESSION_ID:
                         raise Exception("SESSION ID MISSING — BLOCKING WRITE")
                     
@@ -697,8 +694,7 @@ def atlas_action():
                         "decision_score": float(decision_score or 0.5),
                         "decision_quality": decision_quality or "execution",
                     })
-                    if not SAFE_SESSION_ID:
-                        raise Exception("SESSION ID MISSING — BLOCKING WRITE")
+                   
                     log_decision_to_sheet({
                         "session_id": SAFE_SESSION_ID,
                         "executed_step": previous_step or "UNKNOWN",
