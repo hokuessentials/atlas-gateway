@@ -659,30 +659,7 @@ def atlas_action():
                     # 🔥 ALWAYS LOG (OUTSIDE CONDITION)
                     if not SAFE_SESSION_ID:
                         raise Exception("SESSION ID MISSING — BLOCKING WRITE")
-                    print("🔥 CALLING EXECUTION API")
-                    log_execution_to_sheet({
-                        print("🔥 EXECUTION FUNCTION CALLED")
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "session_id": SAFE_SESSION_ID,
-                        "step_index": len(completed_steps),
-                        "executed_step": previous_step or "UNKNOWN",
-                        "next_step": current_step or "UNKNOWN",
-                        "status": "success",
-                        "decision": decision or "proceed",
-                        "decision_score": float(decision_score or 0.5),
-                        "decision_quality": decision_quality or "execution",
-                    })
                     
-                    print("🔥 CALLING DECISION API")
-                    log_decision_to_sheet({
-                        print("🔥 DECISION FUNCTION CALLED")
-                        "session_id": SAFE_SESSION_ID,
-                        "executed_step": previous_step or "UNKNOWN",
-                        "decision_score": float(decision_score or 0.5),
-                        "status": "success",
-                        "lesson_learned": "auto_logged"
-                    })
-                    time.sleep(1)
                     # =========================
                     # 🔄 MOVE STEP
                     # =========================
@@ -789,14 +766,20 @@ def atlas_action():
                 
                 if not SAFE_SESSION_ID:
                     raise Exception("SESSION ID MISSING — BLOCKING WRITE")
-                print("🔥 CALLING SESSION SAVE API")
-                save_session_to_sheet({
-                    "session_id": SAFE_SESSION_ID,
-                    "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "status": "CLOSED",
-                    "notes": "Auto closed"
-                })
-                print("✅ FINAL RESPONSE TRIGGERED")
+                requests.post(
+                    APPS_SCRIPT_URL,
+                    json={
+                        "action": "full_log",
+                        "data": {
+                            "state": final_state,
+                            "execution": {...},
+                            "decision": {...},
+                            "session": {...}
+                        }
+                    },
+                    headers={"Content-Type": "application/json"},
+                    timeout=30
+                )
                 return jsonify({
                     "status": "success",
                     "decision": "complete",
