@@ -198,7 +198,22 @@ def save_product_to_sheet(product_data):
             allow_redirects=True
         )
     except Exception as e:
-        print("❌ PRODUCT SAVE ERROR:", e)    
+        print("❌ PRODUCT SAVE ERROR:", e) 
+
+def log_decision_to_sheet(data):
+    try:
+        requests.post(
+            APPS_SCRIPT_URL,
+            json={
+                "action": "log_decision",
+                "data": data
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=5,
+            allow_redirects=True
+        )
+    except Exception as e:
+        print("❌ DECISION LOG ERROR:", e)
 # =========================
 # SESSION LOAD
 # =========================
@@ -799,6 +814,13 @@ def atlas_action():
 
                         "lesson_learned": "auto_logged"  # ✅ now valid
                     })
+                    log_decision_to_sheet({
+                        "session_id": session_id,
+                        "executed_step": previous_step,
+                        "decision_score": decision_score,
+                        "status": "success",
+                        "lesson_learned": "auto_logged"
+                    })
                 except Exception as e:
                     print("❌ EXECUTION LOG ERROR:", e)
 
@@ -937,6 +959,13 @@ def atlas_action():
                     "decision_type": "execution",   # ✅ COMMA FIXED HERE
 
                     "lesson_learned": "auto_logged"  # ✅ now valid
+                })
+                log_decision_to_sheet({
+                    "session_id": session_id,
+                    "executed_step": previous_step,
+                    "decision_score": decision_score,
+                    "status": "success",
+                    "lesson_learned": "auto_logged"
                 })
             except:
                 pass 
