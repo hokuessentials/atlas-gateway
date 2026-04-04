@@ -108,7 +108,14 @@ def load_state_from_sheet():
 
         data = json.loads(text)
 
-        state = data.get("active_state", {})
+        raw = data.get("data", [])
+
+        if isinstance(raw, list) and len(raw) >= 2:
+            headers = raw[0]
+            values = raw[1]
+            state = dict(zip(headers, values))
+        else:
+            state = {}
 
         # 🔥 FIX: convert sheet array → dict
         if isinstance(state, list):
