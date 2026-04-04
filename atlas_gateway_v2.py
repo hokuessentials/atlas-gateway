@@ -522,7 +522,7 @@ def atlas_action():
         if input_data.get("execute"):
 
             loop_count = 0
-            max_loops = 3  # safety limit
+            max_loops = 1  # safety limit
 
             start_time = time.time() 
             failure_count = 0  # ✅ SAFE INIT
@@ -692,33 +692,6 @@ def atlas_action():
                     }
 
                     save_state_to_sheet(final_state)
-                    
-                    # 🔥 EXECUTION LOG
-                    try:
-                        log_execution_to_sheet({
-                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "session_id": SAFE_SESSION_ID,
-                            "executed_step": previous_step,
-                            "next_step": current_step,
-                            "status": "success"
-                        })
-                    except Exception as e:
-                        print("❌ EXECUTION LOG ERROR:", e)
-
-
-                    # 🔥 DECISION LOG
-                    try:
-                        log_decision_to_sheet({
-                            "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                            "Session_ID": SAFE_SESSION_ID,
-                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "Title": previous_step,
-                            "Module": "Execution Engine",
-                            "Decision_Quality": decision_quality,
-                            "Outcome_Status": "success"
-                        })
-                    except Exception as e:
-                        print("❌ DECISION LOG ERROR:", e)
 
                     # 🔥 LOG EXECUTION (STEP 1)
                     try:
