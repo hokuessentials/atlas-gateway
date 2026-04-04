@@ -21,7 +21,7 @@ def read_active_state_from_sheet():
 
         data = response.json()
 
-        return data.get("active_state")
+        return data.get("data")
 
     except Exception as e:
         print("❌ ACTIVE_STATE READ ERROR:", e)
@@ -47,7 +47,7 @@ def save_state_to_sheet(active_state):
             APPS_SCRIPT_URL,
             json={
                 "action": "update_active_state",
-                "data": active_state
+                "payload": active_state
             },
             headers={"Content-Type": "application/json"},
             timeout=5,
