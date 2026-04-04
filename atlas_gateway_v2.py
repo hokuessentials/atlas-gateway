@@ -797,29 +797,6 @@ def atlas_action():
                             }
                         })
 
-                # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
-                decision_quality = "final_step"
-                
-                if not SAFE_SESSION_ID:
-                    raise Exception("SESSION ID MISSING — BLOCKING WRITE")
-                
-                return jsonify({
-                    "status": "success",
-                    "decision": "complete",
-                    "Decision_Quality": decision_quality,
-                    "Score": decision_score,  # 🔥 use dynamic score
-                    "reason": step_decision.get("reason"),
-                    "metrics": step_decision.get("metrics"),
-                    "debug": {
-                        "current_step": current_step,
-                        "completed_steps": completed_steps,
-                        "pending_steps": [],
-                        "failed_steps": [],
-                        "recent_updates": step_updates[-5:],
-                        "product_count": len(product_data)
-                    }
-                })
-
             # =========================
             # 🔁 RETRY + SWITCH LOGIC
             # =========================
@@ -906,7 +883,9 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     })
+            print("🔥 FINAL RESPONSE TRIGGERED")
 
+            return jsonify(final_response)
     except Exception as e:
         print("❌ FATAL ERROR:", e)
         print("✅ FINAL RETURN EXECUTED")
