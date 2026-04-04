@@ -415,19 +415,17 @@ def atlas_action():
         if isinstance(parsed_state, list):
             parsed_state = {}
 
-        SAFE_SESSION_ID = session_id  # LOCKED
+        # =========================
+        # 🔒 SESSION LOCK (FINAL FIX)
+        # =========================
 
-        # 🔥 HARD LOCK SESSION (NO LOSS ALLOWED)
         if not parsed_state or not parsed_state.get("session_id"):
             SAFE_SESSION_ID = "S-" + str(int(time.time()))
         else:
             SAFE_SESSION_ID = parsed_state.get("session_id")
 
-        if not SAFE_SESSION_ID:
+        if not SAFE_SESSION_ID or str(SAFE_SESSION_ID).strip() == "":
             raise Exception("CRITICAL: SESSION NOT INITIALIZED")
-
-        # 🔥 NEVER CHANGE AFTER THIS POINT
-        SAFE_SESSION_ID = session_id
             
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         completed_steps = list(dict.fromkeys([
@@ -513,15 +511,15 @@ def atlas_action():
                 # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
                 try:
                     save_session_to_sheet({
-                        "Session_ID": SAFE_SESSION_ID,
-                        "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "Session_Type": "execution",
-                        "Active_Module": "Execution Engine",
-                        "Active_Phase": "Phase 3.5",
-                        "Tasks_Worked": len(completed_steps),
-                        "Issues_Found": 0,
-                        "Status": "ACTIVE",
-                        "Notes": "Auto session update"
+                        "session_id": SAFE_SESSION_ID,
+                        "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "session_type": "execution",
+                        "active_module": "Execution Engine",
+                        "active_phase": "Phase 3.5",
+                        "tasks_worked": len(completed_steps),
+                        "issues_found": 0,
+                        "status": "ACTIVE",
+                        "notes": "Auto session update"
                     })
                 except:
                     pass
@@ -791,9 +789,9 @@ def atlas_action():
                 try:
                     save_session_to_sheet({
                         "session_id": SAFE_SESSION_ID,
-                        "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "Status": "CLOSED",
-                        "Notes": "Auto closed"
+                        "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "status": "CLOSED",
+                        "notes": "Auto closed"
                     })
                 except:
                     pass
