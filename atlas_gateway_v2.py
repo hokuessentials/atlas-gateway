@@ -422,21 +422,12 @@ def atlas_action():
         if not session_id:
             session_id = "S-" + str(int(time.time()))
 
-        # 🔥 FORCE WRITE IMMEDIATELY
-        save_state_to_sheet({
-            "session_id": session_id
-        })
+        current_state = load_state_from_sheet()
 
-        if not session_id:
-            session_id = "S-" + str(int(time.time()))
-            parsed_state["session_id"] = session_id
+        current_state["session_id"] = session_id
 
-            # requests.post(...)
-            save_state_to_sheet({
-                "session_id": session_id
-            })
+        save_state_to_sheet(current_state)
             
-
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         completed_steps = list(dict.fromkeys([
             s.strip() for s in completed_steps if s and str(s).strip()
@@ -815,7 +806,7 @@ def atlas_action():
                         "decision_score": decision_score or 0.5,
                         "decision_quality": decision_quality or "execution"
                     })
-                    
+
                     log_decision_to_sheet({
                         "session_id": session_id,
                         "executed_step": previous_step,
