@@ -522,7 +522,7 @@ def atlas_action():
         if input_data.get("execute"):
 
             loop_count = 0
-            max_loops = 1  # safety limit
+            max_loops = 3  # safety limit
 
             start_time = time.time() 
             failure_count = 0  # ✅ SAFE INIT
@@ -639,7 +639,7 @@ def atlas_action():
                 # =========================
                 # ⚡ EXECUTE AFTER DECISION
                 # =========================
-
+                print("🔥 FORCING LOG EXECUTION BLOCK")
                 if current_step:
                     previous_step = current_step
                     print("🔥 ABOUT TO LOG EXECUTION")
@@ -661,6 +661,7 @@ def atlas_action():
                         raise Exception("SESSION ID MISSING — BLOCKING WRITE")
                     print("🔥 CALLING EXECUTION API")
                     log_execution_to_sheet({
+                        print("🔥 EXECUTION FUNCTION CALLED")
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "session_id": SAFE_SESSION_ID,
                         "step_index": len(completed_steps),
@@ -674,13 +675,14 @@ def atlas_action():
                     
                     print("🔥 CALLING DECISION API")
                     log_decision_to_sheet({
+                        print("🔥 DECISION FUNCTION CALLED")
                         "session_id": SAFE_SESSION_ID,
                         "executed_step": previous_step or "UNKNOWN",
                         "decision_score": float(decision_score or 0.5),
                         "status": "success",
                         "lesson_learned": "auto_logged"
                     })
-
+                    time.sleep(1)
                     # =========================
                     # 🔄 MOVE STEP
                     # =========================
@@ -764,7 +766,7 @@ def atlas_action():
                 # =========================
                 # COMPLETE → ENGINE
                 # =========================
-                if not pending_steps:
+                if not pending_steps and loop_count > 1:
                     
                     current_step = None
                     # FINAL COMPLETION  
