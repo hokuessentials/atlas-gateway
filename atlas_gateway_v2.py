@@ -415,7 +415,12 @@ def atlas_action():
         if isinstance(parsed_state, list):
             parsed_state = {}
 
-        session_id = parsed_state.get("session_id")
+        if not parsed_state or not parsed_state.get("session_id"):
+            session_id = "S-" + str(int(time.time()))
+        else:
+            session_id = parsed_state.get("session_id")
+
+        SAFE_SESSION_ID = session_id  # LOCKED
 
         # 🔥 HARD LOCK SESSION (NO LOSS ALLOWED)
         if not session_id or str(session_id).strip() == "":
@@ -656,7 +661,9 @@ def atlas_action():
                     })
 
                     completed_steps.append(previous_step.strip())
-
+                    if not SAFE_SESSION_ID:
+                        raise Exception("SESSION ID LOST — SYSTEM STOPPED")
+                    
                     log_execution_to_sheet({
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "session_id": SAFE_SESSION_ID,
@@ -713,11 +720,6 @@ def atlas_action():
                         s for s in execution_plan
                         if s not in completed_steps and s != current_step
                     ]
-                    if not session_id or str(session_id).strip() == "":
-                        print("🚨 SESSION LOST — RECOVERING")
-
-                        fallback = load_state_from_sheet()
-                        session_id = fallback.get("session_id") or "S-FALLBACK"
 
                     final_response = {
                         "status": "success",
