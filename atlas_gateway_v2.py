@@ -788,7 +788,13 @@ def atlas_action():
                 if not SAFE_SESSION_ID:
                     raise Exception("SESSION ID MISSING — BLOCKING WRITE")
                 print("🔥 CALLING SESSION SAVE API")
-
+                save_session_to_sheet({
+                    "session_id": SAFE_SESSION_ID,
+                    "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "status": "CLOSED",
+                    "notes": "Auto closed"
+                })
+                print("✅ FINAL RESPONSE TRIGGERED")
                 return jsonify({
                     "status": "success",
                     "decision": "complete",
@@ -892,21 +898,6 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     })
-
-            # 🔥 UPDATE MASTER TRACKER (CORRECT)
-            try:
-                update_tracker({
-                    "module": "Execution Engine",
-                    "phase": "Phase 3.5",
-                    "task": "Control Layer Build",
-                    "status": "complete" if not pending_steps else "active",
-                    "current_step": previous_step,
-                    "next_step": current_step,
-                    "owner": "Atlas",
-                    "notes": "Live execution update"
-                })
-            except:
-                pass
 
     except Exception as e:
         print("❌ FATAL ERROR:", e)
