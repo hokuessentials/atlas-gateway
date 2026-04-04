@@ -588,7 +588,12 @@ def atlas_action():
                         completed_steps
                     )
                     previous_step = current_step
-                    next_step_candidate = selected_step
+                    remaining = [s for s in execution_plan if s not in completed_steps]
+
+                    if next_step_candidate == current_step:
+                        next_step = remaining[0] if remaining else None
+                    else:
+                        next_step = next_step_candidate
 
                     # ✅ FAIL-SAFE (SAFE CONTINUE)
                     if not next_step_candidate:
@@ -654,6 +659,32 @@ def atlas_action():
                     })
 
                     completed_steps.append(previous_step.strip())
+                    
+                    # =========================
+                    # 🔥 IMMEDIATE DECISION LOG (FIX)
+                    # =========================
+                    try:
+                       save_decision_to_sheet({
+                           "decision_id": "D-" + str(int(time.time())),
+                           "session_id": session_id,
+                           "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                           "step_title": previous_step,
+                           "title": decision,
+                           "description": step_decision.get("reason"),
+                           "module": "execution",
+                           "expected_roi": 0,
+                           "risk_score": 0,
+                           "confidence_level": 0.5,
+                           "decision_score": decision_score,
+                           "reversible_flag": True,
+                           "decision_owner": "Atlas",
+                           "tags": "execution",
+                           "decision_type": "execution",
+                           "outcome_status": "pending",
+                           "lesson_learned": ""
+                       })
+                    except Exception as e:
+                        print("❌ DECISION LOG ERROR:", e)
 
                     # =========================
                     # 🔄 MOVE STEP
