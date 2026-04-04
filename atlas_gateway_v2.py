@@ -786,7 +786,6 @@ def atlas_action():
                         "decision_score": decision_score,
                         "decision_quality": decision_quality,
 
-                        # 🔥 ADD THESE (CRITICAL FIX)
                         "step_title": previous_step,
                         "title": previous_step,
                         "description": "Step executed",
@@ -796,11 +795,9 @@ def atlas_action():
                         "confidence_level": decision_score,
                         "decision_owner": "Atlas",
                         "tags": "execution",
-                        "decision_type": "execution"
+                        "decision_type": "execution",   # ✅ COMMA FIXED HERE
 
-                        # 🚨 ADD THESE (MISSING)
-                        "lesson_learned": "auto_logged",
-                        "session_id": session_id  # 🔁 FORCE AGAIN (important for mapping)
+                        "lesson_learned": "auto_logged"  # ✅ now valid
                     })
                 except Exception as e:
                     print("❌ EXECUTION LOG ERROR:", e)
@@ -928,7 +925,6 @@ def atlas_action():
                     "decision_score": decision_score,
                     "decision_quality": decision_quality,
 
-                    # 🔥 ADD THESE (CRITICAL FIX)
                     "step_title": previous_step,
                     "title": previous_step,
                     "description": "Step executed",
@@ -938,11 +934,9 @@ def atlas_action():
                     "confidence_level": decision_score,
                     "decision_owner": "Atlas",
                     "tags": "execution",
-                    "decision_type": "execution"
+                    "decision_type": "execution",   # ✅ COMMA FIXED HERE
 
-                    # 🚨 ADD THESE (MISSING)
-                    "lesson_learned": "auto_logged",
-                    "session_id": session_id  # 🔁 FORCE AGAIN (important for mapping)
+                    "lesson_learned": "auto_logged"  # ✅ now valid
                 })
             except:
                 pass 
