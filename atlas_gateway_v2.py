@@ -415,16 +415,16 @@ def atlas_action():
         if isinstance(parsed_state, list):
             parsed_state = {}
 
-        if not parsed_state or not parsed_state.get("session_id"):
-            session_id = "S-" + str(int(time.time()))
-        else:
-            session_id = parsed_state.get("session_id")
-
         SAFE_SESSION_ID = session_id  # LOCKED
 
         # 🔥 HARD LOCK SESSION (NO LOSS ALLOWED)
-        if not session_id or str(session_id).strip() == "":
-            session_id = "S-" + str(int(time.time()))
+        if not parsed_state or not parsed_state.get("session_id"):
+            SAFE_SESSION_ID = "S-" + str(int(time.time()))
+        else:
+            SAFE_SESSION_ID = parsed_state.get("session_id")
+
+        if not SAFE_SESSION_ID:
+            raise Exception("CRITICAL: SESSION NOT INITIALIZED")
 
         # 🔥 NEVER CHANGE AFTER THIS POINT
         SAFE_SESSION_ID = session_id
