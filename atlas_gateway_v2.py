@@ -50,7 +50,7 @@ def save_state_to_sheet(active_state):
                 "payload": active_state
             },
             headers={"Content-Type": "application/json"},
-            timeout=20,
+            timeout=60,
             allow_redirects=True
         )
     except Exception as e:
@@ -65,7 +65,7 @@ def log_execution_to_sheet(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=20,
+            timeout=60,
             allow_redirects=True
         )
 
@@ -83,7 +83,7 @@ def update_tracker(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=20,
+            timeout=60,
             allow_redirects=True
         )
     except Exception as e:
@@ -148,7 +148,7 @@ def read_full_system_memory():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=20,
+            timeout=60,
         )
         
         if not resp or resp.status_code != 200:
@@ -173,7 +173,7 @@ def read_product_master():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=20,
+            timeout=60,
         )
 
         if not resp or resp.status_code != 200:
@@ -204,7 +204,7 @@ def save_product_to_sheet(product_data):
                 "data": product_data
             },
             headers={"Content-Type": "application/json"},
-            timeout=20,
+            timeout=60,
             allow_redirects=True
         )
     except Exception as e:
@@ -219,7 +219,7 @@ def log_decision_to_sheet(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=20,
+            timeout=60,
             allow_redirects=True
         )
 
@@ -249,7 +249,7 @@ def load_session_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=20,
+            timeout=60,
             allow_redirects=True
         )
 
@@ -320,7 +320,7 @@ def update_decision_outcome(decision_id, outcome, lesson):
                 APPS_SCRIPT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=20,
+                timeout=60,
                 allow_redirects=True
             )
     except Exception as e:
@@ -396,7 +396,7 @@ def save_session_to_sheet(session):
                 "data": session
             },
             headers={"Content-Type": "application/json"},
-            timeout=20,
+            timeout=60,
             allow_redirects=True
         )
 
@@ -802,7 +802,7 @@ def atlas_action():
                         }
                     },
                     headers={"Content-Type": "application/json"},
-                    timeout=30
+                    timeout=60
                 )
                 time.sleep(1)
                 return jsonify({
