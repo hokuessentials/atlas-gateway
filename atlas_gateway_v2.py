@@ -694,6 +694,7 @@ def atlas_action():
                         "decision_score": float(decision_score or 0.5),
                         "decision_quality": decision_quality or "execution",
                     })
+                    time.sleep(0.5)
                    
                     log_decision_to_sheet({
                         "session_id": SAFE_SESSION_ID,
@@ -702,7 +703,8 @@ def atlas_action():
                         "status": "success",
                         "lesson_learned": "auto_logged"
                     })
-                    
+                    time.sleep(0.5)
+
                     # =========================
                     # 🔄 MOVE STEP
                     # =========================
@@ -717,9 +719,10 @@ def atlas_action():
                     # =========================
                     # 💾 SAVE (ONLY ONE MAIN SAVE)
                     # =========================
-                    final_state = load_state_from_sheet() or {}
 
-                    final_state.update({
+                    final_state = {}
+
+                    final_state = {
                         "session_id": SAFE_SESSION_ID,
                         "current_step": current_step,
                         "completed_steps": json.dumps(completed_steps),
@@ -731,7 +734,7 @@ def atlas_action():
                         "decision_score": decision_score,
                         "status": "running",
                         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
-                    })
+                    }
 
                     save_state_to_sheet(final_state)
 
@@ -755,7 +758,7 @@ def atlas_action():
                             "product_count": len(product_data)
                         }
                     }
-    
+                    time.sleep(0.5)
                 
                     # =========================
                     # ⏱ TIME + FAILURE GUARD (FIXED)
@@ -816,6 +819,7 @@ def atlas_action():
                         "status": "CLOSED",
                         "notes": "Auto closed"
                     })
+                    time.sleep(0.5)
                 except Exception as e:
                     print("❌ SESSION ERROR:", e)
 
@@ -831,6 +835,7 @@ def atlas_action():
                         "owner": "Atlas",
                         "notes": "Live execution update"
                     })
+                    time.sleep(0.5)
                 except Exception as e:
                     print("❌ TRACKER ERROR:", e)
 
