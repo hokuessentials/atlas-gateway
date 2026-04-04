@@ -60,13 +60,11 @@ def log_execution_to_sheet(data):
     try:
         requests.post(
             APPS_SCRIPT_URL,
-            json={
+            data=json.dumps({
                 "action": "log_execution",
                 "data": data
-            },
+            }),
             headers={"Content-Type": "application/json"},
-            timeout=5,
-            allow_redirects=True
         )
     except Exception as e:
         print("❌ LOG ERROR:", e)
