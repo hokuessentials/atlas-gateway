@@ -883,9 +883,24 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     })
+
             print("🔥 FINAL RESPONSE TRIGGERED")
 
+            if not final_response:
+                print("❌ FINAL RESPONSE WAS EMPTY — FIXING")
+
+                final_response = {
+                    "status": "safe_exit",
+                    "message": "No step executed",
+                    "debug": {
+                        "current_step": current_step,
+                        "completed_steps": completed_steps,
+                        "pending_steps": pending_steps
+                    }
+                }
+
             return jsonify(final_response)
+        
     except Exception as e:
         print("❌ FATAL ERROR:", e)
         print("✅ FINAL RETURN EXECUTED")
