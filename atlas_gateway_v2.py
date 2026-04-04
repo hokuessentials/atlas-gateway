@@ -663,7 +663,10 @@ def atlas_action():
                     # =========================
                     # 🔄 MOVE STEP
                     # =========================
-                    current_step = next_step
+                    if next_step:
+                        current_step = next_step
+                    else:
+                        print("⚠️ NEXT STEP IS NONE — KEEPING CURRENT STEP")
 
                     # =========================
                     # 🧾 LOG (CLEAN)
