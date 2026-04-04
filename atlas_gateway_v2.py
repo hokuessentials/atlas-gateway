@@ -58,7 +58,7 @@ def save_state_to_sheet(active_state):
 
 def log_execution_to_sheet(data):
     try:
-        requests.post(
+        response = requests.post(
             APPS_SCRIPT_URL,
             json={
                 "action": "log_execution",
@@ -68,6 +68,9 @@ def log_execution_to_sheet(data):
             timeout=5,
             allow_redirects=True
         )
+
+        print("🚀 EXECUTION STATUS:", response.status_code)
+        print("🚀 EXECUTION RESPONSE:", response.text)
     except Exception as e:
         print("❌ LOG ERROR:", e)
 
@@ -439,7 +442,11 @@ def atlas_action():
         if not parsed_state or not parsed_state.get("session_id"):
             SAFE_SESSION_ID = "S-" + str(int(time.time()))
         else:
-            SAFE_SESSION_ID = parsed_state.get("session_id")
+            SAFE_SESSION_ID = str(parsed_state.get("session_id")).strip()
+
+        # 🔥 HARD SAFETY
+        if not SAFE_SESSION_ID or SAFE_SESSION_ID == "None":
+            SAFE_SESSION_ID = "S-" + str(int(time.time()))
 
         if not SAFE_SESSION_ID or str(SAFE_SESSION_ID).strip() == "":
             raise Exception("CRITICAL: SESSION NOT INITIALIZED")
@@ -677,7 +684,7 @@ def atlas_action():
 
                     completed_steps.append(previous_step.strip())
                     if not SAFE_SESSION_ID:
-                        raise Exception("SESSION ID LOST — SYSTEM STOPPED")
+                        raise Exception("SESSION ID MISSING — BLOCKING WRITE")
                     
                     log_execution_to_sheet({
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -690,7 +697,8 @@ def atlas_action():
                         "decision_score": float(decision_score or 0.5),
                         "decision_quality": decision_quality or "execution",
                     })
-
+                    if not SAFE_SESSION_ID:
+                        raise Exception("SESSION ID MISSING — BLOCKING WRITE")
                     log_decision_to_sheet({
                         "session_id": SAFE_SESSION_ID,
                         "executed_step": previous_step or "UNKNOWN",
@@ -802,7 +810,9 @@ def atlas_action():
 
                 # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
                 decision_quality = "final_step"
-
+                
+                if not SAFE_SESSION_ID:
+                    raise Exception("SESSION ID MISSING — BLOCKING WRITE")
                 try:
                     save_session_to_sheet({
                         "session_id": SAFE_SESSION_ID,
