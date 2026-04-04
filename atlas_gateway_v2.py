@@ -530,23 +530,10 @@ def atlas_action():
             final_response = None
 
             while loop_count < max_loops:
+                if time.time() - start_time > 8:
+                    print("⚠️ TIME LIMIT HIT — BREAKING LOOP")
+                    break
                 loop_count += 1
-
-                # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
-                try:
-                    save_session_to_sheet({
-                        "session_id": SAFE_SESSION_ID,
-                        "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "session_type": "execution",
-                        "active_module": "Execution Engine",
-                        "active_phase": "Phase 3.5",
-                        "tasks_worked": len(completed_steps),
-                        "issues_found": 0,
-                        "status": "ACTIVE",
-                        "notes": "Auto session update"
-                    })
-                except Exception as e:
-                    print("❌ ERROR:", e)
 
                 # =========================
                 # 🔥 NOW DECIDE NEXT STEP
@@ -801,30 +788,6 @@ def atlas_action():
                 if not SAFE_SESSION_ID:
                     raise Exception("SESSION ID MISSING — BLOCKING WRITE")
                 print("🔥 CALLING SESSION SAVE API")
-                try:
-                    save_session_to_sheet({
-                        "session_id": SAFE_SESSION_ID,
-                        "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "status": "CLOSED",
-                        "notes": "Auto closed"
-                    })
-                except Exception as e:
-                    print("❌ SESSION ERROR:", e)
-
-                # 🔥 UPDATE TRACKER
-                try:
-                    update_tracker({
-                        "module": "Execution Engine",
-                        "phase": "Phase 3.5",
-                        "task": "Control Layer Build",
-                        "status": "complete" if not pending_steps else "active",
-                        "current_step": previous_step,
-                        "next_step": current_step,
-                        "owner": "Atlas",
-                        "notes": "Live execution update"
-                    })
-                except Exception as e:
-                    print("❌ TRACKER ERROR:", e)
 
                 return jsonify({
                     "status": "success",
@@ -908,6 +871,15 @@ def atlas_action():
                         }
                     }
                 else:
+                    print("🔥 FINAL SESSION SAVE")
+
+                    save_session_to_sheet({
+                        "session_id": SAFE_SESSION_ID,
+                        "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "status": "CLOSED",
+                        "notes": "Auto closed"
+                    })
+
                     return jsonify({
                         "status": "hold",
                         "reason": "All steps failed after retry",
