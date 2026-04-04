@@ -167,7 +167,47 @@ def read_full_system_memory():
     except Exception as e:
         print("❌ FULL MEMORY READ ERROR:", e)
         return {}
+def read_product_master():
+    try:
+        url = APPS_SCRIPT_URL + "?action=get_product_master"
 
+        resp = requests.get(
+            url,
+            headers={"Accept": "application/json"},
+            timeout=3
+        )
+
+        if not resp or resp.status_code != 200:
+            return []
+
+        data = resp.json().get("data", [])
+
+        if not data or len(data) < 2:
+            return []
+
+        headers = data[0]
+        rows = data[1:]
+
+        products = [dict(zip(headers, row)) for row in rows]
+
+        return products
+
+    except Exception as e:
+        print("❌ PRODUCT MASTER ERROR:", e)
+        return []
+def save_product_to_sheet(product_data):
+    try:
+        requests.post(
+            APPS_SCRIPT_URL,
+            json={
+                "action": "save_product",
+                "data": product_data
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
+    except Exception as e:
+        print("❌ PRODUCT SAVE ERROR:", e)    
 # =========================
 # SESSION LOAD
 # =========================
@@ -352,6 +392,7 @@ def atlas_action():
         # 🔹 LOAD MEMORY
         # =========================
         system_memory = read_full_system_memory() or {}
+        product_data = read_product_master()
         active_raw = system_memory.get("active_state", [])
 
         def safe_json_parse(value):
@@ -641,7 +682,8 @@ def atlas_action():
                             "current_step": current_step,
                             "completed_steps": completed_steps,
                             "pending_steps": pending_steps,
-                            "recent_updates": step_updates[-5:]
+                            "recent_updates": step_updates[-5:],
+                            "product_count": len(product_data)
                         }
                     }
     
@@ -803,23 +845,23 @@ def atlas_action():
             # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
             try:
                 save_decision_to_sheet({
-                    "decision_id": generated_id,
+                    "decision_id": "D-" + str(int(time.time())),
                     "session_id": session_id,
-                    "timestamp": current_time,
-                    "step_title": previous_step,   # 🔥 NEW
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "step_title": previous_step,
                     "title": decision,
                     "description": step_decision.get("reason"),
                     "module": "execution",
-                    "expected_roi": estimated_roi,
-                    "risk_score": estimated_risk,
-                    "confidence_level": confidence,
-                    "decision_score": decision_score,  # 🔥 NEW
+                    "expected_roi": 0,
+                    "risk_score": 0,
+                    "confidence_level": 0.5,
+                    "decision_score": decision_score,
                     "reversible_flag": True,
                     "decision_owner": "Atlas",
                     "tags": "execution",
                     "decision_type": "execution",
                     "outcome_status": "pending",
-                    "Lesson_Learned": ""
+                    "lesson_learned": ""
                 })
             except:
                 pass
@@ -843,13 +885,14 @@ def atlas_action():
             try:
                 log_execution_to_sheet({
                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "session_id": session_id,
+                    "step_index": len(completed_steps),
                     "executed_step": previous_step,
                     "next_step": current_step,
-                    "current_step": current_step,
-                    "completed_steps": ";".join(completed_steps),
-                    "pending_steps": ";".join(pending_steps),
                     "status": final_response.get("status", "success"),
-                    "decision": final_response.get("decision", "proceed")
+                    "decision": final_response.get("decision", "proceed"),
+                    "decision_score": decision_score,
+                    "decision_quality": decision_quality
                 })
             except:
                 pass 
