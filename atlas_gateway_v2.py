@@ -528,7 +528,7 @@ def atlas_action():
                 # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
                 try:
                     save_session_to_sheet({
-                        "session_id": session_id,
+                        "session_id": SAFE_SESSION_ID,
                         "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "session_type": "execution",
                         "active_module": "Execution Engine",
@@ -805,13 +805,13 @@ def atlas_action():
 
                 try:
                     save_session_to_sheet({
-                        "session_id": session_id,
+                        "session_id": SAFE_SESSION_ID,
                         "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
                         "status": "CLOSED",
                         "notes": "Auto closed"
                     })
-                except:
-                    pass
+                except Exception as e:
+                    print("❌ SESSION ERROR:", e)
 
                 # 🔥 UPDATE TRACKER
                 try:
