@@ -112,6 +112,20 @@ def update_decision_outcome(decision_id, outcome, lesson):
     except Exception as e:
         print("❌ Update decision error:", e)
 
+def save_session_to_sheet(data):
+    print("🧪 SESSION SAVE (BYPASSED)")
+
+def save_state_to_sheet(data):
+    print("🧪 STATE SAVE (BYPASSED)")
+
+def log_execution_to_sheet(data):
+    print("🧪 EXECUTION LOG (BYPASSED)")
+
+def update_tracker(data):
+    print("🧪 TRACKER (BYPASSED)")
+
+def save_decision_to_sheet(data):
+    print("🧪 DECISION LOG (BYPASSED)")
 # =========================
 # ROUTES (UNCHANGED)
 # =========================
@@ -333,12 +347,6 @@ def atlas_action():
             while loop_count < max_loops:
                 loop_count += 1
 
-                # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
-                def save_session_to_sheet(data):
-                    print("🧪 SESSION SAVE (BYPASSED)")
-                
-              
-
                 # =========================
                 # 🔥 NOW DECIDE NEXT STEP
                 # =========================
@@ -493,9 +501,6 @@ def atlas_action():
                     # =========================
                     # 💾 SAVE (ONLY ONE MAIN SAVE)
                     # =========================
-                    
-                    def save_state_to_sheet(data):
-                        print("🧪 STATE SAVE (BYPASSED)")
 
                     pending_steps = [
                         s for s in execution_plan
@@ -518,6 +523,7 @@ def atlas_action():
                         }
                     }
     
+                    return jsonify(final_response)
                 
                     # =========================
                     # ⏱ TIME + FAILURE GUARD (FIXED)
@@ -649,22 +655,6 @@ def atlas_action():
                             "recent_updates": step_updates[-5:]
                         }
                     })
-
-            # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
-    
-                def save_decision_to_sheet(data):
-                    print("🧪 DECISION LOG (BYPASSED)")
-
-            # 🔥 UPDATE MASTER TRACKER (CORRECT)
-       
-                def update_tracker(data):
-                    print("🧪 TRACKER (BYPASSED)")
-        
-
-            # 🔥 AUTO LOG EXECUTION
-         
-                def log_execution_to_sheet(data):
-                    print("🧪 EXECUTION LOG (BYPASSED)")
 
             return jsonify(final_response)
 
