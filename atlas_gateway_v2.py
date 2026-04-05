@@ -393,8 +393,16 @@ def atlas_action():
     try:
         session_payload = {
             "session_id": f"S-{int(datetime.now().timestamp())}",
-            "start_time": datetime.now().isoformat(),
-            "status": "ACTIVE"
+            "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": "",
+            "session_type": "execution",
+            "active_module": "Execution Engine",
+            "active_phase": "Phase 3.5",
+            "tasks_worked": 0,
+            "issues_found": 0,
+            "status": "ACTIVE",
+            "snapshot_id": "",
+            "notes": "Auto session start"
         }
 
         res = requests.post(
