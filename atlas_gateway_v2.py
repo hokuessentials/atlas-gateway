@@ -98,104 +98,15 @@ def save_decision_to_sheet(decision_data):
         print("❌ DECISION SAVE ERROR:", e)       
 
 def load_state_from_sheet():
-    try:
-        url = APPS_SCRIPT_URL + "?action=read_active_state"
-        resp = requests.get(
-            url,
-            headers={"Accept": "application/json"},
-            timeout=30,
-            allow_redirects=True
-        )
-
-        print("🔥 LOAD RESPONSE RAW:", resp.text)
-
-        if not resp or resp.status_code != 200:
-            return {}
-
-        text = resp.text
-
-        if text.startswith(")]}'"):
-            text = text[4:]
-
-        data = json.loads(text)
-
-        state = data.get("active_state", {})
-
-        # 🔥 FIX: convert sheet array → dict
-        if isinstance(state, list):
-            try:
-                headers = state[0]
-                values = state[-1]
-                state = dict(zip(headers, values))
-            except:
-                state = {}
-
-        # 🔥 safety
-        if not isinstance(state, dict):
-            state = {}
-
-        return state
-
-    except Exception as e:
-        print("STATE LOAD ERROR:", e)
-        return {}
+    print("🧪 STATE LOAD (BYPASSED)")
+    return {}
 
 def read_full_system_memory():
-    try:
-        print("🔥 USING URL:", APPS_SCRIPT_URL)
-
-        url = APPS_SCRIPT_URL + "?action=read_full_memory"
-
-        resp = requests.get(
-            url,
-            headers={"Accept": "application/json"},
-            timeout=30
-        )
-        
-        if not resp or resp.status_code != 200:
-            return {}
-
-        data = resp.json()
-
-        return {
-            "active_state": data.get("active_state", {}),
-            "roadmap": data.get("roadmap_memory", []),
-            "problems": data.get("problem_intelligence", []),
-            "decisions": data.get("decision_log", [])
-        }
-
-    except Exception as e:
-        print("❌ FULL MEMORY READ ERROR:", e)
-        return {}
+    print("🧪 FULL MEMORY (BYPASSED)")
+    return {}
 def read_product_master():
-    try:
-        url = APPS_SCRIPT_URL + "?action=get_product_master"
-
-        resp = requests.get(
-            url,
-            headers={"Accept": "application/json"},
-            timeout=10
-        )
-
-        if not resp or resp.status_code != 200:
-            return []
-
-        data = resp.json().get("data", [])
-
-        if not data or len(data) < 2:
-            return []
-
-        headers = data[0]
-        rows = data[1:]
-        # 🔥 CLEAN EMPTY ROWS
-        rows = [r for r in rows if any(str(x).strip() for x in r)]
-        products = [dict(zip(headers, row)) for row in rows]
-
-        return products
-
-    except Exception as e:
-        print("❌ PRODUCT MASTER ERROR:", e)
-        return []
+    print("🧪 PRODUCT LOAD (BYPASSED)")
+    return []
 def save_product_to_sheet(product_data):
     try:
         requests.post(
@@ -214,8 +125,8 @@ def save_product_to_sheet(product_data):
 # =========================
 
 def load_session_from_sheet():
-
-    session_data = {
+    print("🧪 SESSION LOAD (BYPASSED)")
+    return {
         "session_id": None,
         "decisions": [],
         "module_count": {},
@@ -224,67 +135,6 @@ def load_session_from_sheet():
         "confidence_list": [],
         "outcome_list": []
     }
-
-    try:
-        url = APPS_SCRIPT_URL + "?action=get_last_session"
-        resp = requests.get(
-            url,
-            headers={"Accept": "application/json"},
-            timeout=10,
-            allow_redirects=True
-        )
-
-        if not resp or resp.status_code != 200:
-            return session_data
-
-        text = resp.text
-
-        if text.startswith(")]}'"):
-            text = text[4:]
-
-        data = json.loads(text)
-        records = data.get("records", [])
-
-        # 🔥 LIMIT MEMORY (ONLY LAST 10 RECORDS)
-        records = records[-10:]
-
-        for r in records:
-            title = r.get("Title")
-            module = r.get("Module")
-
-            if not title or not module:
-                continue
-
-            session_data["session_id"] = r.get("Session_ID")
-            session_data["decisions"].append(title)
-
-            session_data["module_count"][module] = \
-                session_data["module_count"].get(module, 0) + 1
-
-            session_data["roi_list"].append(float(r.get("Expected_ROI") or 0))
-            session_data["risk_list"].append(float(r.get("Risk_Score") or 0))
-            session_data["confidence_list"].append(float(r.get("Confidence_Level") or 0))
-            val = r.get("Outcome_Status") or ""
-            session_data["outcome_list"].append(str(val).strip().lower())
-
-            # 🔥 FAILURE COUNT SIGNAL
-            session_data["failure_count"] = session_data.get("failure_count", 0)
-
-            if str(val).strip().lower() == "failed":
-                session_data["failure_count"] += 1
-
-        session_data["decisions"].reverse()
-        session_data["roi_list"].reverse()
-        session_data["risk_list"].reverse()
-        session_data["confidence_list"].reverse()
-        session_data["outcome_list"].reverse()
-
-    except Exception as e:
-        print("SESSION ERROR:", e)
-
-    return session_data
-
-import threading
 def update_decision_outcome(decision_id, outcome, lesson):
 
     payload = {
@@ -451,13 +301,12 @@ def atlas_action():
         print("✅ BEFORE SESSION POST")
 
         print("🧪 SESSION SYNC (BYPASSED)", session_payload)
-        
+
         print("📤 RAW SENT:", json.dumps({
             "action": "save_session",
             "data": session_payload
         }))
         print("✅ AFTER SESSION POST")
-        print("🔥 SESSION RESPONSE:", res.status_code, res.text)
 
         if isinstance(parsed_state, list):
             parsed_state = {}
