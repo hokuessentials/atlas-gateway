@@ -399,9 +399,10 @@ def atlas_action():
         # =========================
         # 🔹 LOAD MEMORY
         # =========================
-        system_memory = read_full_system_memory() or {}
-        product_data = read_product_master()
-        active_raw = system_memory.get("active_state", [])
+        # 🔥 TEMP BYPASS (CRITICAL FIX)
+        system_memory = {}
+        product_data = []
+        active_raw = []
 
         def safe_json_parse(value):
             if isinstance(value, list):
@@ -438,7 +439,9 @@ def atlas_action():
         }
 
         print("🚀 SESSION SYNC:", session_payload)
-
+        print("✅ BEFORE SESSION POST")
+        print("✅ AFTER SESSION POST")
+        
         res = requests.post(
             APPS_SCRIPT_URL,
             data=json.dumps({
