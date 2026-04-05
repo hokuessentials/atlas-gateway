@@ -103,7 +103,7 @@ def load_state_from_sheet():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=10,
+            timeout=30,
             allow_redirects=True
         )
 
@@ -149,7 +149,7 @@ def read_full_system_memory():
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=10
+            timeout=30
         )
         
         if not resp or resp.status_code != 200:
@@ -447,7 +447,10 @@ def atlas_action():
             }),
                 headers={"Content-Type": "application/json"},
         )
-
+        print("📤 RAW SENT:", json.dumps({
+            "action": "save_session",
+            "data": session_payload
+        }))
         print("🔥 SESSION RESPONSE:", res.status_code, res.text)
 
         if isinstance(parsed_state, list):
