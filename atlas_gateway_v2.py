@@ -397,16 +397,17 @@ def atlas_action():
             "status": "ACTIVE"
         }
 
-        res = requests.post(
+        requests.post(
             APPS_SCRIPT_URL,
-            json={
+            data=json.dumps({
                 "action": "save_session",
-               "data": session_payload
-            },
-            timeout=10
+                "data": session_payload
+            }),
+            headers={"Content-Type": "application/json"},
         )
 
-        print("🔥 SAVE SESSION RESPONSE:", res.text)
+        print("🔥 STATUS:", res.status_code)
+        print("🔥 RESPONSE:", res.text)
 
     except Exception as e:
         print("❌ SAVE SESSION ERROR:", str(e))
