@@ -699,7 +699,8 @@ def atlas_action():
 
                     # save_state_to_sheet(final_state)
 
-                    # 🔥 LOG EXECUTION (STEP 1)
+                # 🔥 LOG EXECUTION (STEP 1)
+                def background_logging():
                     try:
                         log_execution_to_sheet({
                             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -708,12 +709,9 @@ def atlas_action():
                             "next_step": current_step,
                             "status": "success"
                         })
-                    except Exception as e:
-                        print("❌ EXECUTION LOG ERROR:", e)
 
 
                     # 🔥 LOG DECISION (STEP 2)
-                    try:
                         log_decision_to_sheet({
                             "Decision_ID": "D-" + str(int(time.time() * 1000)),
                             "Session_ID": SAFE_SESSION_ID,
@@ -732,8 +730,12 @@ def atlas_action():
                             "Outcome_Status": "success",
                             "Lesson_Learned": "Step executed"
                         })
+                    
                     except Exception as e:
-                        print("❌ DECISION LOG ERROR:", e)
+                        print("❌ BACKGROUND LOG ERROR:", e)
+
+
+                        threading.Thread(target=background_logging).start()
 
                     pending_steps = [
                         s for s in execution_plan
@@ -755,8 +757,12 @@ def atlas_action():
                             "product_count": len(product_data)
                         }
                     }
+                    threading.Thread(target=background_logging).start()
                     print("✅ EARLY RETURN TRIGGERED")
                     return jsonify(final_response)
+
+
+                    # ⛔ NOTHING SHOULD RUN AFTER THIS
                     # =========================
                     # ⏱ TIME + FAILURE GUARD (FIXED)
                     # =========================
