@@ -450,16 +450,8 @@ def atlas_action():
 
         print("✅ BEFORE SESSION POST")
 
-        res = requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps({
-                "action": "save_session",
-                "data": session_payload
-            }),
-                headers={"Content-Type": "application/json"},
-                timeout=15,
-                allow_redirects=True
-        )
+        print("🧪 SESSION SYNC (BYPASSED)", session_payload)
+        
         print("📤 RAW SENT:", json.dumps({
             "action": "save_session",
             "data": session_payload
@@ -553,12 +545,10 @@ def atlas_action():
                 loop_count += 1
 
                 # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
-                try:
-                    def save_session_to_sheet(data):
-                        print("🧪 SESSION SAVE (BYPASSED)")
+                def save_session_to_sheet(data):
+                    print("🧪 SESSION SAVE (BYPASSED)")
                 
-                except:
-                    pass
+              
 
                 # =========================
                 # 🔥 NOW DECIDE NEXT STEP
@@ -892,26 +882,20 @@ def atlas_action():
                     })
 
             # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
-            try:
+    
                 def save_decision_to_sheet(data):
                     print("🧪 DECISION LOG (BYPASSED)")
-            except:
-                pass
 
             # 🔥 UPDATE MASTER TRACKER (CORRECT)
-            try:
+       
                 def update_tracker(data):
                     print("🧪 TRACKER (BYPASSED)")
         
-            except:
-                pass
 
             # 🔥 AUTO LOG EXECUTION
-            try:
+         
                 def log_execution_to_sheet(data):
                     print("🧪 EXECUTION LOG (BYPASSED)")
-            except:
-                pass 
 
             return jsonify(final_response)
 
