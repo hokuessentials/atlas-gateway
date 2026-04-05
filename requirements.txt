@@ -1,4 +1,3 @@
-Flask
-requests
+flask
 gunicorn
-openai
+requests
