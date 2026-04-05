@@ -385,7 +385,15 @@ def save_session_to_sheet(session):
 
     except Exception as e:
         print("❌ SESSION SAVE ERROR:", e)
-        
+
+@app.route("/test", methods=["GET"])
+def test():
+    print("✅ TEST ROUTE HIT")
+    return "OK"
+@app.before_request
+def log_all_requests():
+    print("🌍 INCOMING:", request.method, request.path)
+            
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
     print("🚀 REQUEST STARTED")
