@@ -622,13 +622,10 @@ def atlas_action():
                 # =========================
 
                 if candidates:
-
-                    selected_step = select_better_step(
-                        current_step,
-                        candidates,
-                        step_updates,
-                        completed_steps
-                    )
+                    selected_step = candidates[0]   # 🔥 HARD BYPASS
+                    previous_step = current_step
+                    next_step_candidate = selected_step
+                    
                     previous_step = current_step
                     next_step_candidate = selected_step
 
