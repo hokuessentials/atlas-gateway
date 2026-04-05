@@ -735,7 +735,10 @@ def atlas_action():
                         print("❌ BACKGROUND LOG ERROR:", e)
 
 
-                        threading.Thread(target=background_logging).start()
+                    threading.Thread(target=background_logging).start()
+                
+                    print("✅ EARLY RETURN TRIGGERED")
+                    return jsonify(final_response)
 
                     pending_steps = [
                         s for s in execution_plan
@@ -757,9 +760,6 @@ def atlas_action():
                             "product_count": len(product_data)
                         }
                     }
-                    threading.Thread(target=background_logging).start()
-                    print("✅ EARLY RETURN TRIGGERED")
-                    return jsonify(final_response)
 
 
                     # ⛔ NOTHING SHOULD RUN AFTER THIS
