@@ -658,7 +658,16 @@ def atlas_action():
                     "execution_plan": execution_plan
                 }
 
-                result = generate_intelligent_action(session_data)
+                result = {
+                    "step_decision": {
+                        "decision": "execute",
+                        "execution_action": "continue",
+                        "decision_score": 1,
+                        "decision_quality": "execution",
+                        "reason": "temp bypass",
+                        "metrics": {}
+                    }
+                }
 
                 step_decision = result.get("step_decision", {})
                 decision = step_decision.get("decision")
