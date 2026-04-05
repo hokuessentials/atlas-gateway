@@ -393,10 +393,17 @@ def atlas_action():
     import requests
     from datetime import datetime
 
-    # 🔥 FORCE SESSION SAVE (ADD THIS)
+    # ✅ SESSION SAFE INIT (ONLY CREATE ONCE)
     try:
+        # use existing session if available
+        session_id = parsed_state.get("session_id")
+
+        # create only if not exists
+        if not session_id:
+            session_id = f"S-{int(datetime.now().timestamp())}"
+
         session_payload = {
-            "session_id": f"S-{int(datetime.now().timestamp())}",
+            "session_id": session_id,
             "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "end_time": "",
             "session_type": "execution",
@@ -408,6 +415,11 @@ def atlas_action():
             "snapshot_id": "",
             "notes": "Auto session start"
         }
+
+        print("🚀 SENDING SESSION:", json.dumps({
+            "action": "save_session",
+            "data": session_payload
+        }))
 
         res = requests.post(
             APPS_SCRIPT_URL,
