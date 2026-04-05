@@ -21,7 +21,7 @@ def read_active_state_from_sheet():
 
         data = response.json()
 
-        return data.get("data")
+        return data.get("active_state")
 
     except Exception as e:
         print("❌ ACTIVE_STATE READ ERROR:", e)
@@ -36,14 +36,12 @@ ACTIVE_STATE = state_engine.ACTIVE_STATE
 app = Flask(__name__)
 
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
-FAST_MODE = True
+
 # =========================
 # 🔵 MEMORY LAYER
 # =========================
 
 def save_state_to_sheet(active_state):
-    if FAST_MODE:
-        return
     try:
         requests.post(
             APPS_SCRIPT_URL,
@@ -52,35 +50,26 @@ def save_state_to_sheet(active_state):
                 "payload": active_state
             },
             headers={"Content-Type": "application/json"},
-            timeout=3,
-            allow_redirects=True
+            timeout=3
         )
     except Exception as e:
         print("❌ STATE SAVE ERROR:", e)
 
 def log_execution_to_sheet(data):
-    if FAST_MODE:
-        return
     try:
-        response = requests.post(
+        requests.post(
             APPS_SCRIPT_URL,
             json={
                 "action": "log_execution",
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=3,
-            allow_redirects=True
+            timeout=3
         )
-
-        print("🚀 EXECUTION STATUS:", response.status_code)
-        print("🚀 EXECUTION RESPONSE:", response.text)
     except Exception as e:
         print("❌ LOG ERROR:", e)
 
 def update_tracker(data):
-    if FAST_MODE:
-        return
     try:
         requests.post(
             APPS_SCRIPT_URL,
@@ -89,15 +78,26 @@ def update_tracker(data):
                 "data": data
             },
             headers={"Content-Type": "application/json"},
-            timeout=3,
-            allow_redirects=True
+            timeout=3
         )
     except Exception as e:
-        print("❌ TRACKER ERROR:", e)       
+        print("❌ TRACKER ERROR:", e)
+
+def save_decision_to_sheet(decision_data):
+    try:
+        requests.post(
+            APPS_SCRIPT_URL,
+            json={
+                "action": "log_decision",
+                "data": decision_data
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=3
+        )
+    except Exception as e:
+        print("❌ DECISION SAVE ERROR:", e)       
 
 def load_state_from_sheet():
-    if FAST_MODE:
-        return {}
     try:
         url = APPS_SCRIPT_URL + "?action=read_active_state"
         resp = requests.get(
@@ -119,14 +119,7 @@ def load_state_from_sheet():
 
         data = json.loads(text)
 
-        raw = data.get("data", [])
-
-        if isinstance(raw, list) and len(raw) >= 2:
-            headers = raw[0]
-            values = raw[1]
-            state = dict(zip(headers, values))
-        else:
-            state = {}
+        state = data.get("active_state", {})
 
         # 🔥 FIX: convert sheet array → dict
         if isinstance(state, list):
@@ -148,8 +141,6 @@ def load_state_from_sheet():
         return {}
 
 def read_full_system_memory():
-    if FAST_MODE:
-        return {}
     try:
         print("🔥 USING URL:", APPS_SCRIPT_URL)
 
@@ -177,15 +168,13 @@ def read_full_system_memory():
         print("❌ FULL MEMORY READ ERROR:", e)
         return {}
 def read_product_master():
-    if FAST_MODE:
-        return []
     try:
         url = APPS_SCRIPT_URL + "?action=get_product_master"
 
         resp = requests.get(
             url,
             headers={"Accept": "application/json"},
-            timeout=3,
+            timeout=3
         )
 
         if not resp or resp.status_code != 200:
@@ -208,8 +197,6 @@ def read_product_master():
         print("❌ PRODUCT MASTER ERROR:", e)
         return []
 def save_product_to_sheet(product_data):
-    if FAST_MODE:
-        return
     try:
         requests.post(
             APPS_SCRIPT_URL,
@@ -218,47 +205,25 @@ def save_product_to_sheet(product_data):
                 "data": product_data
             },
             headers={"Content-Type": "application/json"},
-            timeout=3,
-            allow_redirects=True
+            timeout=3
         )
     except Exception as e:
-        print("❌ PRODUCT SAVE ERROR:", e) 
-
-def log_decision_to_sheet(data):
-    if FAST_MODE:
-        return
-    try:
-        response = requests.post(
-            APPS_SCRIPT_URL,
-            json={
-                "action": "log_decision",
-                "data": data
-            },
-            headers={"Content-Type": "application/json"},
-            timeout=3,
-            allow_redirects=True
-        )
-
-        print("DECISION STATUS:", response.status_code)
-        print("DECISION RESPONSE:", response.text)
-
-    except Exception as e:
-        print("❌ DECISION LOG ERROR:", e)
+        print("❌ PRODUCT SAVE ERROR:", e)    
 # =========================
 # SESSION LOAD
 # =========================
 
 def load_session_from_sheet():
-    if FAST_MODE:
-        return {
-            "session_id": None,
-            "decisions": [],
-            "module_count": {},
-            "roi_list": [],
-            "risk_list": [],
-            "confidence_list": [],
-            "outcome_list": []
-        }
+
+    session_data = {
+        "session_id": None,
+        "decisions": [],
+        "module_count": {},
+        "roi_list": [],
+        "risk_list": [],
+        "confidence_list": [],
+        "outcome_list": []
+    }
 
     try:
         url = APPS_SCRIPT_URL + "?action=get_last_session"
@@ -290,7 +255,7 @@ def load_session_from_sheet():
             if not title or not module:
                 continue
 
-            session_data["session_id"] = r.get("session_id")
+            session_data["session_id"] = r.get("Session_ID")
             session_data["decisions"].append(title)
 
             session_data["module_count"][module] = \
@@ -404,25 +369,18 @@ def complete_task():
 # 🔥 MAIN ENGINE (UPDATED)
 # =========================
 def save_session_to_sheet(session):
-    if FAST_MODE:
-        return
     try:
-        response = requests.post(
+        requests.post(
             APPS_SCRIPT_URL,
             json={
                 "action": "save_session",
                 "data": session
             },
             headers={"Content-Type": "application/json"},
-            timeout=3,
-            allow_redirects=True
+            timeout=3
         )
-
-        print("SESSION SAVE STATUS:", response.status_code)
-        print("SESSION SAVE RESPONSE:", response.text)
-
     except Exception as e:
-        print("❌ SESSION SAVE ERROR:", str(e))
+        print("❌ SESSION SAVE ERROR:", e)
         
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
@@ -434,8 +392,9 @@ def atlas_action():
         # =========================
         # 🔹 LOAD MEMORY
         # =========================
-        
+        system_memory = read_full_system_memory() or {}
         product_data = read_product_master()
+        active_raw = system_memory.get("active_state", [])
 
         def safe_json_parse(value):
             if isinstance(value, list):
@@ -452,22 +411,18 @@ def atlas_action():
         if isinstance(parsed_state, list):
             parsed_state = {}
 
-        # =========================
-        # 🔒 SESSION LOCK (FINAL FIX)
-        # =========================
+        session_id = parsed_state.get("session_id") or input_data.get("session_id")
 
-        if not parsed_state or not parsed_state.get("session_id"):
-            SAFE_SESSION_ID = "S-" + str(int(time.time()))
-        else:
-            SAFE_SESSION_ID = str(parsed_state.get("session_id")).strip()
+        if not session_id:
+            session_id = "S-" + str(int(time.time()))
+            parsed_state["session_id"] = session_id
 
-        # 🔥 HARD SAFETY
-        if not SAFE_SESSION_ID or SAFE_SESSION_ID == "None":
-            SAFE_SESSION_ID = "S-" + str(int(time.time()))
-
-        if not SAFE_SESSION_ID or str(SAFE_SESSION_ID).strip() == "":
-            raise Exception("CRITICAL: SESSION NOT INITIALIZED")
+            # requests.post(...)
+            save_state_to_sheet({
+                "session_id": session_id
+            })
             
+
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
         completed_steps = list(dict.fromkeys([
             s.strip() for s in completed_steps if s and str(s).strip()
@@ -547,10 +502,23 @@ def atlas_action():
             final_response = None
 
             while loop_count < max_loops:
-                if time.time() - start_time > 15:
-                    print("⚠️ TIME LIMIT HIT — BREAKING LOOP")
-                    break
                 loop_count += 1
+
+                # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
+                try:
+                    save_session_to_sheet({
+                        "Session_ID": session_id,
+                        "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "Session_Type": "execution",
+                        "Active_Module": "Execution Engine",
+                        "Active_Phase": "Phase 3.5",
+                        "Tasks_Worked": len(completed_steps),
+                        "Issues_Found": 0,
+                        "Status": "ACTIVE",
+                        "Notes": "Auto session update"
+                    })
+                except:
+                    pass
 
                 # =========================
                 # 🔥 NOW DECIDE NEXT STEP
@@ -604,8 +572,7 @@ def atlas_action():
                 # =========================
                 # 🧠 SELECT BEST STEP
                 # =========================
-                next_step = None
-                next_step_candidate = current_step
+
                 if candidates:
 
                     selected_step = select_better_step(
@@ -615,27 +582,17 @@ def atlas_action():
                         completed_steps
                     )
                     previous_step = current_step
-                    remaining = [s for s in execution_plan if s not in completed_steps]
-                    
                     next_step_candidate = selected_step
-                    if next_step_candidate == current_step:
-                        next_step = remaining[0] if remaining else None
-                    else:
-                        next_step = next_step_candidate
 
                     # ✅ FAIL-SAFE (SAFE CONTINUE)
                     if not next_step_candidate:
                         next_step_candidate = current_step
 
-                    if not next_step:
-                        remaining = [s for s in execution_plan if s not in completed_steps]
-                        next_step = remaining[0] if remaining else None
-
                 # =========================
                 # 🧠 DECISION BEFORE EXECUTION
                 # =========================
 
-                session_data = {}
+                session_data = load_session_from_sheet()
 
                 session_data["active_state"] = {
                     "current_step": current_step,
@@ -651,22 +608,31 @@ def atlas_action():
                 execution_action = step_decision.get("execution_action")
                 decision_score = step_decision.get("decision_score", 0)
                 decision_quality = step_decision.get("decision_quality", "execution")
-                print("🧠 DECISION:", decision)
-                print("🧠 EXECUTION ACTION:", execution_action)
-                
+
                 if execution_action == "hold":
-                    print("⚠️ HOLD DETECTED — CONTINUING EXECUTION")
+                    return jsonify({
+                        "status": "hold",
+                        "decision": decision,
+                        "Decision_Quality": decision_quality,
+                        "Score": decision_score,
+                        "reason": step_decision.get("reason"),
+                        "metrics": step_decision.get("metrics"),
+                        "debug": {
+                            "current_step": current_step,
+                            "completed_steps": completed_steps,
+                            "pending_steps": pending_steps,
+                            "recent_updates": step_updates[-5:]
+                        }
+                    })
                 
                 # =========================
                 # ⚡ EXECUTE AFTER DECISION
                 # =========================
-                print("🔥 FORCING LOG EXECUTION BLOCK")
-                if current_step:
-                    previous_step = current_step
-                    print("🔥 ABOUT TO LOG EXECUTION")
 
-                    if previous_step not in completed_steps:
-                        completed_steps.append(previous_step)
+                if current_step and current_step not in completed_steps:
+
+                    previous_step = current_step
+                    next_step = next_step_candidate
 
                     # =========================
                     # ⚡ EXECUTE
@@ -677,17 +643,12 @@ def atlas_action():
                         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                     })
 
-                    # 🔥 ALWAYS LOG (OUTSIDE CONDITION)
-                    if not SAFE_SESSION_ID:
-                        raise Exception("SESSION ID MISSING — BLOCKING WRITE")
-                    
+                    completed_steps.append(previous_step.strip())
+
                     # =========================
                     # 🔄 MOVE STEP
                     # =========================
-                    if next_step:
-                        current_step = next_step
-                    else:
-                        print("⚠️ NEXT STEP IS NONE — KEEPING CURRENT STEP")
+                    current_step = next_step
 
                     # =========================
                     # 🧾 LOG (CLEAN)
@@ -698,11 +659,8 @@ def atlas_action():
                     # =========================
                     # 💾 SAVE (ONLY ONE MAIN SAVE)
                     # =========================
-
-                    final_state = {}
-
-                    final_state = {
-                        "session_id": SAFE_SESSION_ID,
+                    save_state_to_sheet({
+                        "session_id": session_id,
                         "current_step": current_step,
                         "completed_steps": json.dumps(completed_steps),
                         "pending_steps": json.dumps(pending_steps),
@@ -713,43 +671,7 @@ def atlas_action():
                         "decision_score": decision_score,
                         "status": "running",
                         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
-                    }
-
-                    save_state_to_sheet(final_state)
-
-                # 🔥 LOG EXECUTION (STEP 1)
-                    try:
-                        log_execution_to_sheet({
-                            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "session_id": SAFE_SESSION_ID,
-                            "executed_step": previous_step,
-                            "next_step": current_step,
-                            "status": "success"
-                        })
-
-
-                    # 🔥 LOG DECISION (STEP 2)
-                        log_decision_to_sheet({
-                            "Decision_ID": "D-" + str(int(time.time() * 1000)),
-                            "Session_ID": SAFE_SESSION_ID,
-                            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                            "Title": previous_step,
-                            "Description": "Step executed",
-                            "Module": "Execution Engine",
-                            "Expected_ROI": 5,
-                            "Risk_Score": 0.5,
-                            "Confidence_Level": 0.5,
-                            "Decision_Quality": decision_quality,
-                            "Reversible_Flag": True,
-                            "Decision_Owner": "Atlas",
-                            "Tags": "execution",
-                            "Decision_Type": "execution",
-                            "Outcome_Status": "success",
-                            "Lesson_Learned": "Step executed"
-                        })
-                    
-                    except Exception as e:
-                        print("❌ BACKGROUND LOG ERROR:", e)
+                    })
 
                     pending_steps = [
                         s for s in execution_plan
@@ -771,7 +693,8 @@ def atlas_action():
                             "product_count": len(product_data)
                         }
                     }
-
+    
+                
                     # =========================
                     # ⏱ TIME + FAILURE GUARD (FIXED)
                     # =========================
@@ -801,7 +724,7 @@ def atlas_action():
                 # =========================
                 # COMPLETE → ENGINE
                 # =========================
-                if not pending_steps and loop_count > 1:
+                if not pending_steps:
                     
                     current_step = None
                     # FINAL COMPLETION  
@@ -818,6 +741,36 @@ def atlas_action():
                                 "pending_steps": pending_steps
                             }
                         })
+
+                # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
+                decision_quality = "final_step"
+
+                try:
+                    save_session_to_sheet({
+                        "Session_ID": session_id,
+                        "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "Status": "CLOSED",
+                        "Notes": "Auto closed"
+                    })
+                except:
+                    pass
+
+                return jsonify({
+                    "status": "success",
+                    "decision": "complete",
+                    "Decision_Quality": decision_quality,
+                    "Score": decision_score,  # 🔥 use dynamic score
+                    "reason": step_decision.get("reason"),
+                    "metrics": step_decision.get("metrics"),
+                    "debug": {
+                        "current_step": current_step,
+                        "completed_steps": completed_steps,
+                        "pending_steps": [],
+                        "failed_steps": [],
+                        "recent_updates": step_updates[-5:],
+                        "product_count": len(product_data)
+                    }
+                })
 
             # =========================
             # 🔁 RETRY + SWITCH LOGIC
@@ -884,15 +837,6 @@ def atlas_action():
                         }
                     }
                 else:
-                    print("🔥 FINAL SESSION SAVE")
-
-                    save_session_to_sheet({
-                        "session_id": SAFE_SESSION_ID,
-                        "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "status": "CLOSED",
-                        "notes": "Auto closed"
-                    })
-
                     return jsonify({
                         "status": "hold",
                         "reason": "All steps failed after retry",
@@ -906,26 +850,67 @@ def atlas_action():
                         }
                     })
 
-            print("🔥 FINAL RESPONSE TRIGGERED")
+            # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
+            try:
+                save_decision_to_sheet({
+                    "decision_id": "D-" + str(int(time.time())),
+                    "session_id": session_id,
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "step_title": previous_step,
+                    "title": decision,
+                    "description": step_decision.get("reason"),
+                    "module": "execution",
+                    "expected_roi": 0,
+                    "risk_score": 0,
+                    "confidence_level": 0.5,
+                    "decision_score": decision_score,
+                    "reversible_flag": True,
+                    "decision_owner": "Atlas",
+                    "tags": "execution",
+                    "decision_type": "execution",
+                    "outcome_status": "pending",
+                    "lesson_learned": ""
+                })
+            except:
+                pass
 
-            if not final_response:
-                print("❌ FINAL RESPONSE WAS EMPTY — FIXING")
+            # 🔥 UPDATE MASTER TRACKER (CORRECT)
+            try:
+                update_tracker({
+                    "module": "Execution Engine",
+                    "phase": "Phase 3.5",
+                    "task": "Control Layer Build",
+                    "status": "complete" if not pending_steps else "active",
+                    "current_step": previous_step,
+                    "next_step": current_step,
+                    "owner": "Atlas",
+                    "notes": "Live execution update"
+                })
+            except:
+                pass
 
-                final_response = {
-                    "status": "safe_exit",
-                    "message": "No step executed",
-                    "debug": {
-                        "current_step": current_step,
-                        "completed_steps": completed_steps,
-                        "pending_steps": pending_steps
-                    }
-                }
-            print("✅ EARLY RETURN TRIGGERED")
+            # 🔥 AUTO LOG EXECUTION
+            try:
+                log_execution_to_sheet({
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "session_id": session_id,
+                    "step_index": len(completed_steps),
+                    "executed_step": previous_step,
+                    "next_step": current_step,
+                    "status": "success",
+                    "decision": decision,
+                    "decision_score": decision_score,
+                    "decision_quality": decision_quality
+                })
+            except:
+                pass 
+
             return jsonify(final_response)
-        
+
+        return jsonify({"status": "invalid_request"})
+
     except Exception as e:
         print("❌ FATAL ERROR:", e)
-        print("✅ FINAL RETURN EXECUTED")
         return jsonify({
             "status": "error",
             "message": str(e)
