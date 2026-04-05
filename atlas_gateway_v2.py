@@ -405,7 +405,7 @@ def atlas_action():
                 except:
                     return []
             return []
-
+        
         parsed_state = load_state_from_sheet() or {}
 
         if isinstance(parsed_state, list):
@@ -507,15 +507,15 @@ def atlas_action():
                 # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
                 try:
                     save_session_to_sheet({
-                        "Session_ID": session_id,
-                        "Start_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "Session_Type": "execution",
-                        "Active_Module": "Execution Engine",
-                        "Active_Phase": "Phase 3.5",
-                        "Tasks_Worked": len(completed_steps),
-                        "Issues_Found": 0,
-                        "Status": "ACTIVE",
-                        "Notes": "Auto session update"
+                        "session_id": session_id,
+                        "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "session_type": "execution",
+                        "active_module": "Execution Engine",
+                        "active_phase": "Phase 3.5",
+                        "tasks_worked": len(completed_steps),
+                        "issues_found": 0,
+                        "status": "ACTIVE",
+                        "notes": "Auto session update"
                     })
                 except:
                     pass
@@ -747,10 +747,10 @@ def atlas_action():
 
                 try:
                     save_session_to_sheet({
-                        "Session_ID": session_id,
-                        "End_Time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "Status": "CLOSED",
-                        "Notes": "Auto closed"
+                        "session_id": session_id,
+                        "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "status": "CLOSED",
+                        "notes": "Auto closed"
                     })
                 except:
                     pass
@@ -758,8 +758,8 @@ def atlas_action():
                 return jsonify({
                     "status": "success",
                     "decision": "complete",
-                    "Decision_Quality": decision_quality,
-                    "Score": decision_score,  # 🔥 use dynamic score
+                    "decision_quality": decision_quality,
+                    "score": decision_score,  # 🔥 use dynamic score
                     "reason": step_decision.get("reason"),
                     "metrics": step_decision.get("metrics"),
                     "debug": {
