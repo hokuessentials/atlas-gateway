@@ -387,29 +387,29 @@ def atlas_action():
     print("🚀 REQUEST STARTED")
   
     import requests
-from datetime import datetime
+    from datetime import datetime
 
-# 🔥 FORCE SESSION SAVE (ADD THIS)
-try:
-    session_payload = {
-        "session_id": f"S-{int(datetime.now().timestamp())}",
-        "start_time": datetime.now().isoformat(),
-        "status": "ACTIVE"
-    }
+    # 🔥 FORCE SESSION SAVE (ADD THIS)
+    try:
+        session_payload = {
+            "session_id": f"S-{int(datetime.now().timestamp())}",
+            "start_time": datetime.now().isoformat(),
+            "status": "ACTIVE"
+        }
 
-    res = requests.post(
-        APPS_SCRIPT_URL,
-        json={
-            "action": "save_session",
-            "data": session_payload
-        },
-        timeout=10
-    )
+        res = requests.post(
+            APPS_SCRIPT_URL,
+            json={
+                "action": "save_session",
+               "data": session_payload
+            },
+            timeout=10
+        )
 
-    print("🔥 SAVE SESSION RESPONSE:", res.text)
+        print("🔥 SAVE SESSION RESPONSE:", res.text)
 
-except Exception as e:
-    print("❌ SAVE SESSION ERROR:", str(e))
+    except Exception as e:
+        print("❌ SAVE SESSION ERROR:", str(e))
 
     try:
         input_data = request.get_json(force=True) or {}
