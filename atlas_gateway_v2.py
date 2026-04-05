@@ -36,12 +36,14 @@ ACTIVE_STATE = state_engine.ACTIVE_STATE
 app = Flask(__name__)
 
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFlMmq830hkMWsKR96Hla2yxOgzLhcPtNH-Ua3Llqjz9GAh5Xkg/exec"
-
+FAST_MODE = True
 # =========================
 # 🔵 MEMORY LAYER
 # =========================
 
 def save_state_to_sheet(active_state):
+    if FAST_MODE:
+        return
     try:
         requests.post(
             APPS_SCRIPT_URL,
@@ -57,6 +59,8 @@ def save_state_to_sheet(active_state):
         print("❌ STATE SAVE ERROR:", e)
 
 def log_execution_to_sheet(data):
+    if FAST_MODE:
+        return
     try:
         response = requests.post(
             APPS_SCRIPT_URL,
@@ -75,6 +79,8 @@ def log_execution_to_sheet(data):
         print("❌ LOG ERROR:", e)
 
 def update_tracker(data):
+    if FAST_MODE:
+        return
     try:
         requests.post(
             APPS_SCRIPT_URL,
@@ -90,6 +96,8 @@ def update_tracker(data):
         print("❌ TRACKER ERROR:", e)       
 
 def load_state_from_sheet():
+    if FAST_MODE:
+        return
     try:
         url = APPS_SCRIPT_URL + "?action=read_active_state"
         resp = requests.get(
@@ -140,6 +148,8 @@ def load_state_from_sheet():
         return {}
 
 def read_full_system_memory():
+    if FAST_MODE:
+        return
     try:
         print("🔥 USING URL:", APPS_SCRIPT_URL)
 
@@ -167,6 +177,8 @@ def read_full_system_memory():
         print("❌ FULL MEMORY READ ERROR:", e)
         return {}
 def read_product_master():
+    if FAST_MODE:
+        return
     try:
         url = APPS_SCRIPT_URL + "?action=get_product_master"
 
@@ -196,6 +208,8 @@ def read_product_master():
         print("❌ PRODUCT MASTER ERROR:", e)
         return []
 def save_product_to_sheet(product_data):
+    if FAST_MODE:
+        return
     try:
         requests.post(
             APPS_SCRIPT_URL,
@@ -211,6 +225,8 @@ def save_product_to_sheet(product_data):
         print("❌ PRODUCT SAVE ERROR:", e) 
 
 def log_decision_to_sheet(data):
+    if FAST_MODE:
+        return
     try:
         response = requests.post(
             APPS_SCRIPT_URL,
@@ -233,6 +249,8 @@ def log_decision_to_sheet(data):
 # =========================
 
 def load_session_from_sheet():
+    if FAST_MODE:
+        return
 
     session_data = {
         "session_id": None,
@@ -388,6 +406,8 @@ def complete_task():
 # 🔥 MAIN ENGINE (UPDATED)
 # =========================
 def save_session_to_sheet(session):
+    if FAST_MODE:
+        return
     try:
         response = requests.post(
             APPS_SCRIPT_URL,
@@ -697,10 +717,9 @@ def atlas_action():
                         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
                     }
 
-                    # save_state_to_sheet(final_state)
+                    save_state_to_sheet(final_state)
 
                 # 🔥 LOG EXECUTION (STEP 1)
-                def background_logging():
                     try:
                         log_execution_to_sheet({
                             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -734,12 +753,6 @@ def atlas_action():
                     except Exception as e:
                         print("❌ BACKGROUND LOG ERROR:", e)
 
-
-                    threading.Thread(target=background_logging).start()
-                
-                    print("✅ EARLY RETURN TRIGGERED")
-                    return jsonify(final_response)
-
                     pending_steps = [
                         s for s in execution_plan
                         if s not in completed_steps and s != current_step
@@ -761,8 +774,6 @@ def atlas_action():
                         }
                     }
 
-
-                    # ⛔ NOTHING SHOULD RUN AFTER THIS
                     # =========================
                     # ⏱ TIME + FAILURE GUARD (FIXED)
                     # =========================
