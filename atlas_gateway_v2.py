@@ -415,41 +415,40 @@ def atlas_action():
         
         parsed_state = load_state_from_sheet() or {}
 
-        # ✅ SESSION INIT (CORRECT FLOW)
+        # ✅ SESSION INIT
         session_id = parsed_state.get("session_id")
 
         if not session_id:
             session_id = f"S-{int(time.time())}"
             parsed_state["session_id"] = session_id
 
-        # 🔥 CREATE SESSION (ONLY FIRST TIME)
+        # 🔥 ALWAYS RUN (OUTSIDE IF)
+        session_payload = {
+            "session_id": session_id,
+            "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": "",
+            "session_type": "execution",
+            "active_module": "Execution Engine",
+            "active_phase": "Phase 3.5",
+            "tasks_worked": 0,
+            "issues_found": 0,
+            "status": "ACTIVE",
+            "snapshot_id": "",
+            "notes": "Auto session sync"
+        }
 
-            session_payload = {
-                "session_id": session_id,
-                "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "end_time": "",
-                "session_type": "execution",
-                "active_module": "Execution Engine",
-                "active_phase": "Phase 3.5",
-                "tasks_worked": 0,
-                "issues_found": 0,
-                "status": "ACTIVE",
-                "snapshot_id": "",
-                "notes": "Auto session start"
-            }
+        print("🚀 SESSION SYNC:", session_payload)
 
-            print("🚀 CREATING SESSION:", session_payload)
-
-            res = requests.post(
-                APPS_SCRIPT_URL,
-                data=json.dumps({
-                    "action": "save_session",
-                    "data": session_payload
-                }),
+        res = requests.post(
+            APPS_SCRIPT_URL,
+            data=json.dumps({
+                "action": "save_session",
+                "data": session_payload
+            }),
                 headers={"Content-Type": "application/json"},
-            )
+        )
 
-            print("🔥 SESSION CREATE:", res.status_code, res.text)
+        print("🔥 SESSION RESPONSE:", res.status_code, res.text)
 
         if isinstance(parsed_state, list):
             parsed_state = {}
