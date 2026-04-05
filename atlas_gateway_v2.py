@@ -393,12 +393,32 @@ def atlas_action():
     import requests
     from datetime import datetime
 
-    # ✅ SESSION SAFE INIT (ONLY CREATE ONCE)
     try:
-        # use existing session if available
+        input_data = request.get_json(force=True) or {}
+
+        # =========================
+        # 🔹 LOAD MEMORY
+        # =========================
+        system_memory = read_full_system_memory() or {}
+        product_data = read_product_master()
+        active_raw = system_memory.get("active_state", [])
+
+        def safe_json_parse(value):
+            if isinstance(value, list):
+                return value
+            if isinstance(value, str):
+                try:
+                    return json.loads(value)
+                except:
+                    return []
+            return []
+        
+        parsed_state = load_state_from_sheet() or {}
+
+         # ✅ SESSION SAFE INIT (ONLY CREATE ONCE)
+    try:
         session_id = parsed_state.get("session_id")
 
-        # create only if not exists
         if not session_id:
             session_id = f"S-{int(datetime.now().timestamp())}"
 
@@ -435,28 +455,6 @@ def atlas_action():
 
     except Exception as e:
         print("❌ SAVE SESSION ERROR:", str(e))
-
-    try:
-        input_data = request.get_json(force=True) or {}
-
-        # =========================
-        # 🔹 LOAD MEMORY
-        # =========================
-        system_memory = read_full_system_memory() or {}
-        product_data = read_product_master()
-        active_raw = system_memory.get("active_state", [])
-
-        def safe_json_parse(value):
-            if isinstance(value, list):
-                return value
-            if isinstance(value, str):
-                try:
-                    return json.loads(value)
-                except:
-                    return []
-            return []
-        
-        parsed_state = load_state_from_sheet() or {}
 
         if isinstance(parsed_state, list):
             parsed_state = {}
