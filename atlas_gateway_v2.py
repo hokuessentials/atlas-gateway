@@ -298,12 +298,12 @@ def update_decision_outcome(decision_id, outcome, lesson):
     # requests.post(...)
     try:
         requests.post(
-                APPS_SCRIPT_URL,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=10,
-                allow_redirects=True
-            )
+            APPS_SCRIPT_URL,
+            data=json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+            timeout=10,
+            allow_redirects=True
+        )
     except Exception as e:
         print("❌ Update decision error:", e)
 
