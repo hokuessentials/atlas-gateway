@@ -446,6 +446,8 @@ def atlas_action():
                 "data": session_payload
             }),
                 headers={"Content-Type": "application/json"},
+                timeout=15,
+                allow_redirects=True
         )
         print("📤 RAW SENT:", json.dumps({
             "action": "save_session",
@@ -455,17 +457,6 @@ def atlas_action():
 
         if isinstance(parsed_state, list):
             parsed_state = {}
-
-        session_id = parsed_state.get("session_id") or input_data.get("session_id")
-
-        if not session_id:
-            session_id = "S-" + str(int(time.time()))
-            parsed_state["session_id"] = session_id
-
-            # requests.post(...)
-            save_state_to_sheet({
-                "session_id": session_id
-            })
             
 
         completed_steps = safe_json_parse(parsed_state.get("completed_steps", []))
