@@ -423,7 +423,6 @@ def atlas_action():
             parsed_state["session_id"] = session_id
 
         # 🔥 CREATE SESSION (ONLY FIRST TIME)
-        if "session_created" not in parsed_state:
 
             session_payload = {
                 "session_id": session_id,
@@ -451,8 +450,6 @@ def atlas_action():
             )
 
             print("🔥 SESSION CREATE:", res.status_code, res.text)
-
-            parsed_state["session_created"] = True
 
         if isinstance(parsed_state, list):
             parsed_state = {}
