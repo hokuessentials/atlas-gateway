@@ -414,7 +414,7 @@ def atlas_action():
                     return []
             return []
         
-        parsed_state = load_state_from_sheet() or {}
+        parsed_state = {}
 
         # ✅ SESSION INIT
         session_id = parsed_state.get("session_id")
