@@ -173,23 +173,8 @@ def complete_task():
 # =========================
 # 🔥 MAIN ENGINE (UPDATED)
 # =========================
-def save_session_to_sheet(session):
-    try:
-        res = requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps({
-                "action": "save_session",
-                "data": session
-            }),
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-
-        print("🔥 SESSION SAVE STATUS:", res.status_code)
-        print("🔥 SESSION SAVE RESPONSE:", res.text)
-
-    except Exception as e:
-        print("❌ SESSION SAVE ERROR:", e)
+def save_session_to_sheet(data):
+    print("🧪 SESSION SAVE (BYPASSED)")
 
 @app.route("/test", methods=["GET"])
 def test():
