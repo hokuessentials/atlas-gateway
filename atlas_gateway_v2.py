@@ -5,9 +5,7 @@ import time
 import os
 import state_engine
 from step_decision_engine import decide_step_action
-from intelligence_engine import select_better_step
-from intelligence_engine import generate_intelligent_action
-from session_engine import evaluate_session_health
+
 
 def read_active_state_from_sheet():
 
@@ -112,20 +110,6 @@ def update_decision_outcome(decision_id, outcome, lesson):
     except Exception as e:
         print("❌ Update decision error:", e)
 
-def save_session_to_sheet(data):
-    print("🧪 SESSION SAVE (BYPASSED)")
-
-def save_state_to_sheet(data):
-    print("🧪 STATE SAVE (BYPASSED)")
-
-def log_execution_to_sheet(data):
-    print("🧪 EXECUTION LOG (BYPASSED)")
-
-def update_tracker(data):
-    print("🧪 TRACKER (BYPASSED)")
-
-def save_decision_to_sheet(data):
-    print("🧪 DECISION LOG (BYPASSED)")
 # =========================
 # ROUTES (UNCHANGED)
 # =========================
@@ -574,9 +558,6 @@ def atlas_action():
 
                 # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
                 decision_quality = "final_step"
-
-                def save_session_to_sheet(data):
-                    print("🧪 SESSION SAVE (BYPASSED)")
 
             # =========================
             # 🔁 RETRY + SWITCH LOGIC
