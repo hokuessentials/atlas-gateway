@@ -415,16 +415,19 @@ def atlas_action():
         
         parsed_state = load_state_from_sheet() or {}
 
-         # ✅ SESSION SAFE INIT (ONLY CREATE ONCE)
-    try:
-        session_id = parsed_state.get("session_id")
+    # ✅ SESSION INIT (CORRECT FLOW)
+    session_id = parsed_state.get("session_id")
 
-        if not session_id:
-            session_id = f"S-{int(datetime.now().timestamp())}"
+    if not session_id:
+        session_id = f"S-{int(time.time())}"
+        parsed_state["session_id"] = session_id
+
+    # 🔥 CREATE SESSION (ONLY FIRST TIME)
+    if "session_created" not in parsed_state:
 
         session_payload = {
             "session_id": session_id,
-            "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
             "end_time": "",
             "session_type": "execution",
             "active_module": "Execution Engine",
@@ -436,10 +439,7 @@ def atlas_action():
             "notes": "Auto session start"
         }
 
-        print("🚀 SENDING SESSION:", json.dumps({
-            "action": "save_session",
-            "data": session_payload
-        }))
+        print("🚀 CREATING SESSION:", session_payload)
 
         res = requests.post(
             APPS_SCRIPT_URL,
@@ -450,11 +450,9 @@ def atlas_action():
             headers={"Content-Type": "application/json"},
         )
 
-        print("🔥 STATUS:", res.status_code)
-        print("🔥 RESPONSE:", res.text)
+        print("🔥 SESSION CREATE:", res.status_code, res.text)
 
-    except Exception as e:
-        print("❌ SAVE SESSION ERROR:", str(e))
+        parsed_state["session_created"] = True
 
         if isinstance(parsed_state, list):
             parsed_state = {}
