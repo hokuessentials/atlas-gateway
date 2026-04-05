@@ -60,19 +60,7 @@ def read_full_system_memory():
 def read_product_master():
     print("🧪 PRODUCT LOAD (BYPASSED)")
     return []
-def save_product_to_sheet(product_data):
-    try:
-        requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps({
-                    "action": "save_product",
-                    "data": product_data
-            }),
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-    except Exception as e:
-        print("❌ PRODUCT SAVE ERROR:", e)    
+print("🧪 API CALL BLOCKED")   
 # =========================
 # SESSION LOAD
 # =========================
@@ -88,27 +76,7 @@ def load_session_from_sheet():
         "confidence_list": [],
         "outcome_list": []
     }
-def update_decision_outcome(decision_id, outcome, lesson):
-
-    payload = {
-        "action": "update_decision",
-        "data": {
-            "Decision_ID": decision_id,
-            "Outcome_Status": outcome,
-            "Lesson_Learned": lesson
-        }
-    }
-    # requests.post(...)
-    try:
-        requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps(payload),
-            headers={"Content-Type": "application/json"},
-            timeout=10,
-            allow_redirects=True
-        )
-    except Exception as e:
-        print("❌ Update decision error:", e)
+print("🧪 API CALL BLOCKED")
 
 # =========================
 # ROUTES (UNCHANGED)
