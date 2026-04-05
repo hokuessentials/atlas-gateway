@@ -439,9 +439,9 @@ def atlas_action():
         }
 
         print("🚀 SESSION SYNC:", session_payload)
+
         print("✅ BEFORE SESSION POST")
-        print("✅ AFTER SESSION POST")
-        
+
         res = requests.post(
             APPS_SCRIPT_URL,
             data=json.dumps({
@@ -456,6 +456,7 @@ def atlas_action():
             "action": "save_session",
             "data": session_payload
         }))
+        print("✅ AFTER SESSION POST")
         print("🔥 SESSION RESPONSE:", res.status_code, res.text)
 
         if isinstance(parsed_state, list):
