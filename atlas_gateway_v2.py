@@ -9,7 +9,7 @@ from step_decision_engine import decide_step_action
 def read_active_state_from_sheet():
     print("🧪 ACTIVE STATE BLOCKED")
     return None
-
+print("🔥 VERSION 3.5 CLEAN BUILD")
 update_state = state_engine.update_state
 add_blocker = state_engine.add_blocker
 clear_blockers = state_engine.clear_blockers
