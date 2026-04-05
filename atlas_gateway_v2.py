@@ -45,10 +45,10 @@ def save_state_to_sheet(active_state):
     try:
         requests.post(
             APPS_SCRIPT_URL,
-            json={
+            data=json.dumps({
                 "action": "update_active_state",
                 "payload": active_state
-            },
+            }),
             headers={"Content-Type": "application/json"},
             timeout=10
         )
@@ -59,13 +59,13 @@ def log_execution_to_sheet(data):
     try:
         requests.post(
             APPS_SCRIPT_URL,
-            json={
-                "action": "log_execution",
-                "data": data
+            data=json.dumps({
+                    "action": "log_execution",
+                    "data": data
             },
             headers={"Content-Type": "application/json"},
             timeout=10
-        )
+        ))
     except Exception as e:
         print("❌ LOG ERROR:", e)
 
@@ -73,13 +73,13 @@ def update_tracker(data):
     try:
         requests.post(
             APPS_SCRIPT_URL,
-            json={
-                "action": "update_tracker",
-                "data": data
+            data=json.dumps({
+                    "action": "update_tracker",
+                    "data": data
             },
             headers={"Content-Type": "application/json"},
             timeout=10
-        )
+        ))
     except Exception as e:
         print("❌ TRACKER ERROR:", e)
 
@@ -87,13 +87,13 @@ def save_decision_to_sheet(decision_data):
     try:
         requests.post(
             APPS_SCRIPT_URL,
-            json={
-                "action": "log_decision",
-                "data": decision_data
+            data=json.dumps({
+                    "action": "log_decision",
+                    "data": decision_data
             },
             headers={"Content-Type": "application/json"},
             timeout=10
-        )
+        ))
     except Exception as e:
         print("❌ DECISION SAVE ERROR:", e)       
 
@@ -200,13 +200,13 @@ def save_product_to_sheet(product_data):
     try:
         requests.post(
             APPS_SCRIPT_URL,
-            json={
-                "action": "save_product",
-                "data": product_data
+            data=json.dumps({
+                    "action": "save_product",
+                    "data": product_data
             },
             headers={"Content-Type": "application/json"},
             timeout=10
-        )
+        ))
     except Exception as e:
         print("❌ PRODUCT SAVE ERROR:", e)    
 # =========================
