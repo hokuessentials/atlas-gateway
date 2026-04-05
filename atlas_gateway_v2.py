@@ -554,17 +554,9 @@ def atlas_action():
 
                 # 🔥 AUTO SESSION UPDATE (CRITICAL FIX)
                 try:
-                    save_session_to_sheet({
-                        "session_id": session_id,
-                        "start_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "session_type": "execution",
-                        "active_module": "Execution Engine",
-                        "active_phase": "Phase 3.5",
-                        "tasks_worked": len(completed_steps),
-                        "issues_found": 0,
-                        "status": "ACTIVE",
-                        "notes": "Auto session update"
-                    })
+                    def save_session_to_sheet(data):
+                        print("🧪 SESSION SAVE (BYPASSED)")
+                
                 except:
                     pass
 
@@ -625,7 +617,7 @@ def atlas_action():
                     selected_step = candidates[0]   # 🔥 HARD BYPASS
                     previous_step = current_step
                     next_step_candidate = selected_step
-                    
+
                     previous_step = current_step
                     next_step_candidate = selected_step
 
@@ -722,19 +714,8 @@ def atlas_action():
                     # =========================
                     # 💾 SAVE (ONLY ONE MAIN SAVE)
                     # =========================
-                    save_state_to_sheet({
-                        "session_id": session_id,
-                        "current_step": current_step,
-                        "completed_steps": json.dumps(completed_steps),
-                        "pending_steps": json.dumps(pending_steps),
-                        "failed_steps": json.dumps([]),
-                        "execution_plan": json.dumps(execution_plan),
-                        "step_updates": json.dumps(step_updates),
-                        "decision": decision,
-                        "decision_score": decision_score,
-                        "status": "running",
-                        "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
-                    })
+                    def save_state_to_sheet(data):
+                        print("🧪 STATE SAVE (BYPASSED)")
 
                     pending_steps = [
                         s for s in execution_plan
@@ -809,12 +790,9 @@ def atlas_action():
                 decision_quality = "final_step"
 
                 try:
-                    save_session_to_sheet({
-                        "session_id": session_id,
-                        "end_time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "status": "CLOSED",
-                        "notes": "Auto closed"
-                    })
+                    def save_session_to_sheet(data):
+                        print("🧪 SESSION SAVE (BYPASSED)")
+                
                 except:
                     pass
 
@@ -915,56 +893,23 @@ def atlas_action():
 
             # 🔥 ALWAYS LOG DECISION (CRITICAL FIX)
             try:
-                save_decision_to_sheet({
-                    "decision_id": "D-" + str(int(time.time())),
-                    "session_id": session_id,
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "step_title": previous_step,
-                    "title": decision,
-                    "description": step_decision.get("reason"),
-                    "module": "execution",
-                    "expected_roi": 0,
-                    "risk_score": 0,
-                    "confidence_level": 0.5,
-                    "decision_score": decision_score,
-                    "reversible_flag": True,
-                    "decision_owner": "Atlas",
-                    "tags": "execution",
-                    "decision_type": "execution",
-                    "outcome_status": "pending",
-                    "lesson_learned": ""
-                })
+                def save_decision_to_sheet(data):
+                    print("🧪 DECISION LOG (BYPASSED)")
             except:
                 pass
 
             # 🔥 UPDATE MASTER TRACKER (CORRECT)
             try:
-                update_tracker({
-                    "module": "Execution Engine",
-                    "phase": "Phase 3.5",
-                    "task": "Control Layer Build",
-                    "status": "complete" if not pending_steps else "active",
-                    "current_step": previous_step,
-                    "next_step": current_step,
-                    "owner": "Atlas",
-                    "notes": "Live execution update"
-                })
+                def update_tracker(data):
+                    print("🧪 TRACKER (BYPASSED)")
+        
             except:
                 pass
 
             # 🔥 AUTO LOG EXECUTION
             try:
-                log_execution_to_sheet({
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "session_id": session_id,
-                    "step_index": len(completed_steps),
-                    "executed_step": previous_step,
-                    "next_step": current_step,
-                    "status": "success",
-                    "decision": decision,
-                    "decision_score": decision_score,
-                    "decision_quality": decision_quality
-                })
+                def log_execution_to_sheet(data):
+                    print("🧪 EXECUTION LOG (BYPASSED)")
             except:
                 pass 
 
