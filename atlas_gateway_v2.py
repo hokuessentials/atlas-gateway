@@ -397,7 +397,7 @@ def atlas_action():
             "status": "ACTIVE"
         }
 
-        requests.post(
+        res = requests.post(
             APPS_SCRIPT_URL,
             data=json.dumps({
                 "action": "save_session",
