@@ -97,7 +97,7 @@ def update_tracker(data):
 
 def load_state_from_sheet():
     if FAST_MODE:
-        return
+        return {}
     try:
         url = APPS_SCRIPT_URL + "?action=read_active_state"
         resp = requests.get(
@@ -149,7 +149,7 @@ def load_state_from_sheet():
 
 def read_full_system_memory():
     if FAST_MODE:
-        return
+        return {}
     try:
         print("🔥 USING URL:", APPS_SCRIPT_URL)
 
@@ -178,7 +178,7 @@ def read_full_system_memory():
         return {}
 def read_product_master():
     if FAST_MODE:
-        return
+        return []
     try:
         url = APPS_SCRIPT_URL + "?action=get_product_master"
 
@@ -250,17 +250,15 @@ def log_decision_to_sheet(data):
 
 def load_session_from_sheet():
     if FAST_MODE:
-        return
-
-    session_data = {
-        "session_id": None,
-        "decisions": [],
-        "module_count": {},
-        "roi_list": [],
-        "risk_list": [],
-        "confidence_list": [],
-        "outcome_list": []
-    }
+        return {
+            "session_id": None,
+            "decisions": [],
+            "module_count": {},
+            "roi_list": [],
+            "risk_list": [],
+            "confidence_list": [],
+            "outcome_list": []
+        }
 
     try:
         url = APPS_SCRIPT_URL + "?action=get_last_session"
