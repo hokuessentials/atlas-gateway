@@ -393,7 +393,7 @@ def test():
 @app.before_request
 def log_all_requests():
     print("🌍 INCOMING:", request.method, request.path)
-            
+
 @app.route("/atlas/action", methods=["POST"])
 def atlas_action():
     print("🚀 REQUEST STARTED")
@@ -640,7 +640,16 @@ def atlas_action():
                 # 🧠 DECISION BEFORE EXECUTION
                 # =========================
 
-                session_data = load_session_from_sheet()
+                session_data = {
+                    "session_id": session_id,
+                    "decisions": [],
+                    "module_count": {},
+                    "roi_list": [],
+                    "risk_list": [],
+                    "confidence_list": [],
+                    "outcome_list": [],
+                    "active_state": {}
+                }
 
                 session_data["active_state"] = {
                     "current_step": current_step,
