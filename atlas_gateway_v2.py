@@ -60,12 +60,12 @@ def log_execution_to_sheet(data):
         requests.post(
             APPS_SCRIPT_URL,
             data=json.dumps({
-                    "action": "log_execution",
-                    "data": data
-            },
+                "action": "log_execution",
+                "data": data
+            }),
             headers={"Content-Type": "application/json"},
             timeout=10
-        ))
+        )
     except Exception as e:
         print("❌ LOG ERROR:", e)
 
@@ -74,12 +74,12 @@ def update_tracker(data):
         requests.post(
             APPS_SCRIPT_URL,
             data=json.dumps({
-                    "action": "update_tracker",
-                    "data": data
-            },
+                "action": "update_tracker",
+                "data": data
+            }),
             headers={"Content-Type": "application/json"},
             timeout=10
-        ))
+        )
     except Exception as e:
         print("❌ TRACKER ERROR:", e)
 
@@ -88,12 +88,12 @@ def save_decision_to_sheet(decision_data):
         requests.post(
             APPS_SCRIPT_URL,
             data=json.dumps({
-                    "action": "log_decision",
-                    "data": decision_data
-            },
+                "action": "log_decision",
+                "data": decision_data
+            }),
             headers={"Content-Type": "application/json"},
             timeout=10
-        ))
+        )
     except Exception as e:
         print("❌ DECISION SAVE ERROR:", e)       
 
@@ -203,10 +203,10 @@ def save_product_to_sheet(product_data):
             data=json.dumps({
                     "action": "save_product",
                     "data": product_data
-            },
+            }),
             headers={"Content-Type": "application/json"},
             timeout=10
-        ))
+        )
     except Exception as e:
         print("❌ PRODUCT SAVE ERROR:", e)    
 # =========================
