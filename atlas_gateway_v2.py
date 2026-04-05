@@ -41,62 +41,17 @@ APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE0aSjAWHgONC-GT4hFl
 # 🔵 MEMORY LAYER
 # =========================
 
-def save_state_to_sheet(active_state):
-    try:
-        requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps({
-                "action": "update_active_state",
-                "payload": active_state
-            }),
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-    except Exception as e:
-        print("❌ STATE SAVE ERROR:", e)
+def save_state_to_sheet(data):
+    print("🧪 STATE SAVE (BYPASSED)")
 
 def log_execution_to_sheet(data):
-    try:
-        requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps({
-                "action": "log_execution",
-                "data": data
-            }),
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-    except Exception as e:
-        print("❌ LOG ERROR:", e)
+    print("🧪 EXECUTION LOG (BYPASSED)")
 
 def update_tracker(data):
-    try:
-        requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps({
-                "action": "update_tracker",
-                "data": data
-            }),
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-    except Exception as e:
-        print("❌ TRACKER ERROR:", e)
+    print("🧪 TRACKER (BYPASSED)")
 
-def save_decision_to_sheet(decision_data):
-    try:
-        requests.post(
-            APPS_SCRIPT_URL,
-            data=json.dumps({
-                "action": "log_decision",
-                "data": decision_data
-            }),
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-    except Exception as e:
-        print("❌ DECISION SAVE ERROR:", e)       
-
+def save_decision_to_sheet(data):
+    print("🧪 DECISION LOG (BYPASSED)")
 def load_state_from_sheet():
     print("🧪 STATE LOAD (BYPASSED)")
     return {}
@@ -553,6 +508,7 @@ def atlas_action():
                     # =========================
                     # 💾 SAVE (ONLY ONE MAIN SAVE)
                     # =========================
+                    
                     def save_state_to_sheet(data):
                         print("🧪 STATE SAVE (BYPASSED)")
 
@@ -628,29 +584,8 @@ def atlas_action():
                 # ✅ FINAL STEP — ONLY INSIDE THIS BLOCK
                 decision_quality = "final_step"
 
-                try:
-                    def save_session_to_sheet(data):
-                        print("🧪 SESSION SAVE (BYPASSED)")
-                
-                except:
-                    pass
-
-                return jsonify({
-                    "status": "success",
-                    "decision": "complete",
-                    "decision_quality": decision_quality,
-                    "score": decision_score,  # 🔥 use dynamic score
-                    "reason": step_decision.get("reason"),
-                    "metrics": step_decision.get("metrics"),
-                    "debug": {
-                        "current_step": current_step,
-                        "completed_steps": completed_steps,
-                        "pending_steps": [],
-                        "failed_steps": [],
-                        "recent_updates": step_updates[-5:],
-                        "product_count": len(product_data)
-                    }
-                })
+                def save_session_to_sheet(data):
+                    print("🧪 SESSION SAVE (BYPASSED)")
 
             # =========================
             # 🔁 RETRY + SWITCH LOGIC
